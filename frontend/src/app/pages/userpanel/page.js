@@ -15,18 +15,19 @@ export default function UserPanel() {
     setResponse(null);
 
     try {
-      // JWT token & userId from localStorage
-      // const token = localStorage.getItem("token");   // saved during login
-      // const userId = localStorage.getItem("userId"); // saved during login
+      // 🔑 JWT token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("No auth token found. Please login first.");
+      }
 
       const res = await fetch("http://localhost:5000/api/userjobs/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // "Authorization": `Bearer ${token}`, // send JWT
+          "Authorization": `Bearer ${token}`, // ✅ send JWT
         },
-        credentials: "include", // cookies ke bina auth fail hoga
-        body: JSON.stringify({ prompt }), // send prompt only
+        body: JSON.stringify({ prompt }),
       });
 
       if (!res.ok) {
@@ -34,6 +35,7 @@ export default function UserPanel() {
       }
 
       const data = await res.json();
+      console.log("API Response:", data);
       setResponse(data);
     } catch (err) {
       setError(err.message);
@@ -41,8 +43,7 @@ export default function UserPanel() {
       setLoading(false);
     }
   };
-
-
+  
   return (
     <div className="relative p-4">
       <h1 className="text-2xl font-bold mb-4">User Panel</h1>
@@ -68,6 +69,8 @@ export default function UserPanel() {
       </form>
 
       {error && <p className="text-red-500 mt-2">Error: {error}</p>}
+
+      {/* Agar response ek array hai to jobs print karo */}
       {response && Array.isArray(response) && (
         <div style={{ marginTop: "20px" }}>
           <h3>Job Results:</h3>
@@ -102,6 +105,13 @@ export default function UserPanel() {
         </div>
       )}
 
+      {/* Agar response ek object hai aur usme output hai (n8n ka message) */}
+      {response && !Array.isArray(response) && response.output && (
+        <div style={{ marginTop: "20px" }}>
+          <h3>Response:</h3>
+          <p>{response.output}</p>
+        </div>
+      )}
     </div>
   );
 }

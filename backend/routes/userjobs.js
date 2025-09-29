@@ -4,10 +4,8 @@ const auth = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-// POST /api/jobs → create jobs via n8n webhook + save with userId
-router.post("/", createJob);
-
-// GET /api/jobs/:userId → get all jobs for a user
-router.get("/:userId", getUserJobs);
+// ✅ Apply auth middleware
+router.post("/", auth, createJob);
+router.get("/", auth, getUserJobs); // no userId param, use req.userId in controller
 
 module.exports = router;
