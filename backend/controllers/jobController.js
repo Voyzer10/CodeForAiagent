@@ -3,8 +3,8 @@ const fetch = require("node-fetch");
 
 // Create job (from n8n + attach userId)
 const createJob = async (req, res) => {
+  const userId = req.user?.id || null; // 👈 authMiddleware se aa raha hai
   const { prompt } = req.body;
-  const userId = req.userId || null;
 
   if (!userId) {
     console.warn("⚠️ No authenticated user found, generating temporary sessionId");
@@ -39,10 +39,11 @@ const createJob = async (req, res) => {
 
     console.log("✅ Parsed response from n8n:", parsed);
 
+    // Case A: n8n returned an array of jobs
     if (Array.isArray(parsed) && parsed.length > 0) {
-      const jobsToSave = parsed.map(job => ({
+      const jobsToSave = parsed.map((job) => ({
         ...job,
-        ...(userId && { userId }), // attach userId
+        ...(userId && { userId }), // ✅ userId attach only if exists
       }));
 
       const savedJobs = await Job.insertMany(jobsToSave);
@@ -51,14 +52,15 @@ const createJob = async (req, res) => {
       return res.status(201).json(savedJobs);
     }
 
+    // Case B: n8n returned object with "output"
     if (parsed && typeof parsed === "object" && parsed.output) {
       console.log("📝 Returning n8n output message");
       return res.json({ output: parsed.output });
     }
 
+    // Case C: Unexpected format
     console.warn("⚠️ Unexpected n8n response format:", parsed);
     return res.json({ output: JSON.stringify(parsed) });
-
   } catch (err) {
     console.error("🔥 Error in createJob:", err);
     res.status(500).json({ error: err.message });
@@ -67,7 +69,7 @@ const createJob = async (req, res) => {
 
 // Get jobs by authenticated user
 const getUserJobs = async (req, res) => {
-  const userId = req.userId;
+  const userId = req.user?.id; // 👈 yaha bhi fix
   if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
   try {
@@ -80,9 +82,26 @@ const getUserJobs = async (req, res) => {
   }
 };
 
+// 📌 Admin only: Get all jobs from all users
+const getAllUserJobs = async (req, res) => {
+  if (req.user?.role !== "admin") {
+    return res.status(403).json({ error: "Access denied. Admins only." });
+  }
+
+  try {
+    console.log("👑 Admin fetching all jobs");
+    const jobs = await Job.find().populate("userId", "name email"); // populate user details
+    res.json(jobs);
+  } catch (err) {
+    console.error("🔥 Error in getAllUserJobs:", err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
 console.log("🔄 jobController loaded");
 
 module.exports = {
   createJob,
   getUserJobs,
+  getAllUserJobs, // 👈 export bhi karna h
 };

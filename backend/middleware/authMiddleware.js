@@ -19,9 +19,15 @@ const auth = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;        // full payload
-    req.userId = decoded.id;   // explicitly set userId
-    console.log('👤 Authenticated userId:', req.userId);
+
+    // 🔑 Attach role also
+    req.user = {
+      id: decoded.id,
+      email: decoded.email,
+      role: decoded.role || 'user', // default "user"
+    };
+
+    console.log('👤 Authenticated user:', req.user);
     next();
   } catch (err) {
     console.log('⚠️ Invalid token:', err.message);

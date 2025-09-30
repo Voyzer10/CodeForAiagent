@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
     type: Number, 
     required: true, 
     unique: true,
+    enum: ["user", "admin"],
     default: generateUserId
   },
 });
