@@ -2,12 +2,11 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 const connectDB = require("./config/db");
-const mongoose = require("mongoose");  // ✅ add this line
-
-
+const mongoose = require("mongoose");
 
 const app = express();
 app.use(express.json());
+
 // Middleware
 app.use(cors({
   origin: 'http://localhost:3000',
@@ -20,14 +19,16 @@ connectDB().then(async () => {
   console.log("📂 Collections in DB:", collections.map(c => c.name));
 });
 
-
 // routes
 const jobsRoute = require("./routes/jobs");
 const authRoutes = require("./routes/authRoutes");
 const userjobsRoute = require("./routes/userjobs");
+const adminRoutes = require("./routes/adminRoutes");  // ✅ add this
+
 app.use("/api/jobs", jobsRoute);
-app.use('/api/auth', authRoutes);
-app.use('/api/userjobs', userjobsRoute);
+app.use("/api/auth", authRoutes);
+app.use("/api/userjobs", userjobsRoute);
+app.use("/api/admin", adminRoutes); // ✅ mount admin routes
 
 // start server
 const PORT = 5000;
