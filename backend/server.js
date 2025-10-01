@@ -23,7 +23,8 @@ connectDB().then(async () => {
 const jobsRoute = require("./routes/jobs");
 const authRoutes = require("./routes/authRoutes");
 const userjobsRoute = require("./routes/userjobs");
-const adminRoutes = require("./routes/adminRoutes");  // ✅ add this
+const adminRoutes = require("./routes/adminRoutes"); 
+ // ✅ add this
 
 app.use("/api/jobs", jobsRoute);
 app.use("/api/auth", authRoutes);
