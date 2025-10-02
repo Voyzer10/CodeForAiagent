@@ -1,4 +1,4 @@
-const Job = require("../model/jobs");
+const Job = require("../model/application-tracking");
 const fetch = require("node-fetch");
 
 // Create job (from n8n + attach userId)
