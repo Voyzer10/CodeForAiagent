@@ -11,7 +11,7 @@ const JobSchema = new mongoose.Schema({
   id: { type: String } // ⚠️ consider renaming to "customId" to avoid confusion with _id
 }, { timestamps: true });
 
-module.exports = mongoose.model("Job", JobSchema, "Application-Tracking");
+module.exports = mongoose.model("application-tracking", JobSchema, "Application-Tracking");
 
 
 
