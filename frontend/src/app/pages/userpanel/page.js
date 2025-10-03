@@ -1,12 +1,38 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function UserPanel() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+
+  // ✅ Fetch current user (name + id) on mount
+  // Fetch current user
+useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/me", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.message || "Failed to fetch user");
+
+      setUser(data.user);
+    } catch (err) {
+      console.error("Fetch user error:", err);
+      setError(err.message);
+    }
+  };
+  fetchUser();
+}, []);
+
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,27 +41,20 @@ export default function UserPanel() {
     setResponse(null);
 
     try {
-      // 🔑 JWT token from localStorage
-      const token = localStorage.getItem("token");
-      if (!token) {
-        throw new Error("No auth token found. Please login first.");
-      }
-
       const res = await fetch("http://localhost:5000/api/userjobs/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`, // ✅ send JWT
         },
+        credentials: "include", // 🔑 cookie with token is auto-sent
         body: JSON.stringify({ prompt }),
       });
 
       if (!res.ok) {
-        throw new Error(`Server error: ${res.status}`);
-      }
-
+  const errorData = await res.json();
+  throw new Error(errorData.message || `Server error: ${res.status}`);
+}
       const data = await res.json();
-      console.log("API Response:", data);
       setResponse(data);
     } catch (err) {
       setError(err.message);
@@ -43,10 +62,20 @@ export default function UserPanel() {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="relative p-4">
       <h1 className="text-2xl font-bold mb-4">User Panel</h1>
+
+      {/* ✅ Show logged-in user info */}
+      {user && (
+  <div className="mb-4 p-3 border rounded bg-gray-50">
+    <p><strong>Name:</strong> {user.name}</p>
+    <p><strong>User ID:</strong> {user.userId}</p>
+  </div>
+)}
+
+
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <label htmlFor="prompt" className="font-medium">Enter your prompt:</label>
         <textarea
@@ -70,7 +99,7 @@ export default function UserPanel() {
 
       {error && <p className="text-red-500 mt-2">Error: {error}</p>}
 
-      {/* Agar response ek array hai to jobs print karo */}
+      {/* Job Results */}
       {response && Array.isArray(response) && (
         <div style={{ marginTop: "20px" }}>
           <h3>Job Results:</h3>
@@ -105,7 +134,7 @@ export default function UserPanel() {
         </div>
       )}
 
-      {/* Agar response ek object hai aur usme output hai (n8n ka message) */}
+      {/* n8n custom output */}
       {response && !Array.isArray(response) && response.output && (
         <div style={{ marginTop: "20px" }}>
           <h3>Response:</h3>
