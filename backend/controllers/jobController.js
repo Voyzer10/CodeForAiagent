@@ -24,7 +24,7 @@ const createJob = async (req, res) => {
     const n8nRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, sessionId }), // ✅ sessionId passed
+      body: JSON.stringify({ prompt, sessionId, userId }), // ✅ sessionId and userId passed
     });
 
     let parsed;
@@ -55,12 +55,12 @@ const createJob = async (req, res) => {
     // Case B: Object with "output"
     if (parsed && typeof parsed === "object" && parsed.output) {
       console.log("📝 Returning n8n output message");
-      return res.json({ output: parsed.output, sessionId });
+      return res.json({ output: parsed.output, sessionId, userId });
     }
 
     // Case C: Unexpected format
     console.warn("⚠️ Unexpected n8n response format:", parsed);
-    return res.json({ output: JSON.stringify(parsed), sessionId });
+    return res.json({ output: JSON.stringify(parsed), sessionId, userId });
   } catch (err) {
     console.error("🔥 Error in createJob:", err);
     res.status(500).json({ error: "Something went wrong. Check logs." });
