@@ -3,18 +3,19 @@ const fetch = require("node-fetch");
 
 // Create job (from n8n + attach userId)
 const createJob = async (req, res) => {
-  const userId = req.user?.id || null; // 👈 authMiddleware se aa raha hai
+  const userId = req.user?.id || null; // comes from JWT middleware
   const { prompt } = req.body;
 
   if (!userId) {
-    console.warn("⚠️ No authenticated user found, generating temporary sessionId");
+    console.warn("⚠️ No authenticated user found, saving as guest");
   }
   console.log("👤 Authenticated userId:", userId);
 
   try {
     console.log("➡️ Incoming request:", { prompt, userId });
 
-    const sessionId = userId || Date.now().toString();
+    // 🔑 Generate unique sessionId (different from userId)
+    const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Call n8n webhook
     const url = "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
@@ -23,27 +24,26 @@ const createJob = async (req, res) => {
     const n8nRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, sessionId }),
+      body: JSON.stringify({ prompt, sessionId }), // ✅ sessionId passed
     });
-
-    const rawText = await n8nRes.text();
-    console.log("📥 n8n raw response body:", rawText);
 
     let parsed;
     try {
-      parsed = JSON.parse(rawText);
+      parsed = await n8nRes.json();
     } catch (err) {
-      console.error("❌ Failed to parse JSON from n8n:", err.message);
+      const rawText = await n8nRes.text();
+      console.error("❌ Failed to parse JSON from n8n:", err.message, "Raw:", rawText);
       return res.status(500).json({ error: "Invalid JSON response from n8n" });
     }
 
     console.log("✅ Parsed response from n8n:", parsed);
 
-    // Case A: n8n returned an array of jobs
+    // Case A: Array of jobs
     if (Array.isArray(parsed) && parsed.length > 0) {
       const jobsToSave = parsed.map((job) => ({
         ...job,
-        ...(userId && { userId }), // ✅ userId attach only if exists
+        sessionId, // ✅ unique tracking ID
+        ...(userId && { userId }), // attach userId only if logged in
       }));
 
       const savedJobs = await Job.insertMany(jobsToSave);
@@ -52,18 +52,18 @@ const createJob = async (req, res) => {
       return res.status(201).json(savedJobs);
     }
 
-    // Case B: n8n returned object with "output"
+    // Case B: Object with "output"
     if (parsed && typeof parsed === "object" && parsed.output) {
       console.log("📝 Returning n8n output message");
-      return res.json({ output: parsed.output });
+      return res.json({ output: parsed.output, sessionId });
     }
 
     // Case C: Unexpected format
     console.warn("⚠️ Unexpected n8n response format:", parsed);
-    return res.json({ output: JSON.stringify(parsed) });
+    return res.json({ output: JSON.stringify(parsed), sessionId });
   } catch (err) {
     console.error("🔥 Error in createJob:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Something went wrong. Check logs." });
   }
 };
 
