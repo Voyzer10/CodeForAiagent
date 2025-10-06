@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 export default function AdminLoginPage() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");   // ✅ change username -> email
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
@@ -14,7 +14,7 @@ export default function AdminLoginPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }), // ✅ send email, not username
       });
 
       const data = await res.json();
@@ -31,25 +31,37 @@ export default function AdminLoginPage() {
 
   return (
     <div className="flex justify-center items-center min-h-screen">
-      <form onSubmit={handleLogin} className="flex flex-col gap-4 p-6 border rounded w-80">
+      <form
+        onSubmit={handleLogin}
+        className="flex flex-col gap-4 p-6 border rounded w-80"
+      >
         <h2 className="text-xl font-bold text-center">Admin Login</h2>
+
         <input
-          type="text"
-          placeholder="Username"
+          type="email"
+          placeholder="Email"       // ✅ updated label
           className="border p-2"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
         />
+
         <input
           type="password"
           placeholder="Password"
           className="border p-2"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          required
         />
-        <button type="submit" className="bg-blue-600 text-white py-2 rounded">
+
+        <button
+          type="submit"
+          className="bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+        >
           Login
         </button>
+
         {message && <p className="text-red-500">{message}</p>}
       </form>
     </div>

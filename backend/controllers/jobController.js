@@ -1,7 +1,7 @@
-const Job = require("../model/application-tracking");
+const Job = require("../model/job-information");
 const fetch = require("node-fetch");
 
-// Create job (from n8n + attach userId)
+// ✅ Create job (already working fine, no changes)
 const createJob = async (req, res) => {
   const userId = req.user?.id || null; // comes from JWT middleware
   const { prompt } = req.body;
@@ -14,17 +14,14 @@ const createJob = async (req, res) => {
   try {
     console.log("➡️ Incoming request:", { prompt, userId });
 
-    // 🔑 Generate unique sessionId (different from userId)
     const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    // Call n8n webhook
     const url = "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
     console.log("📡 Sending request to n8n:", url);
 
     const n8nRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, sessionId, userId }), // ✅ sessionId and userId passed
+      body: JSON.stringify({ prompt, sessionId, userId }),
     });
 
     let parsed;
@@ -38,12 +35,11 @@ const createJob = async (req, res) => {
 
     console.log("✅ Parsed response from n8n:", parsed);
 
-    // Case A: Array of jobs
     if (Array.isArray(parsed) && parsed.length > 0) {
       const jobsToSave = parsed.map((job) => ({
         ...job,
-        sessionId, // ✅ unique tracking ID
-        ...(userId && { userId }), // attach userId only if logged in
+        sessionId,
+        ...(userId && { userId }),
       }));
 
       const savedJobs = await Job.insertMany(jobsToSave);
@@ -52,13 +48,11 @@ const createJob = async (req, res) => {
       return res.status(201).json(savedJobs);
     }
 
-    // Case B: Object with "output"
     if (parsed && typeof parsed === "object" && parsed.output) {
       console.log("📝 Returning n8n output message");
       return res.json({ output: parsed.output, sessionId, userId });
     }
 
-    // Case C: Unexpected format
     console.warn("⚠️ Unexpected n8n response format:", parsed);
     return res.json({ output: JSON.stringify(parsed), sessionId, userId });
   } catch (err) {
@@ -67,41 +61,56 @@ const createJob = async (req, res) => {
   }
 };
 
-// Get jobs by authenticated user
+// ✅ Get jobs by authenticated user (User Panel)
 const getUserJobs = async (req, res) => {
-  const userId = req.user?.id; // 👈 yaha bhi fix
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+  const userId = req.user?.id;
+  if (!userId) {
+    console.warn("❌ No userId found in request (unauthorized)");
+    return res.status(401).json({ error: "Unauthorized" });
+  }
 
   try {
-    console.log("📡 Fetching jobs for user:", userId);
-    const jobs = await Job.find({ userId });
-    res.json(jobs);
+    console.log("📡 Fetching jobs for userId:", userId);
+    const jobs = await Job.find({ userId }).sort({ createdAt: -1 }); // latest first
+
+    if (!jobs.length) {
+      console.log("ℹ️ No jobs found for this user:", userId);
+    } else {
+      console.log(`✅ Found ${jobs.length} jobs for user ${userId}`);
+    }
+
+    return res.json(jobs);
   } catch (err) {
     console.error("🔥 Error in getUserJobs:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-// 📌 Admin only: Get all jobs from all users
+// ✅ Admin only: Get all jobs from all users (Admin Panel)
 const getAllUserJobs = async (req, res) => {
   if (req.user?.role !== "admin") {
+    console.warn("⛔ Unauthorized access attempt to admin route");
     return res.status(403).json({ error: "Access denied. Admins only." });
   }
 
   try {
-    console.log("👑 Admin fetching all jobs");
-    const jobs = await Job.find().populate("userId", "name email"); // populate user details
-    res.json(jobs);
+    console.log("👑 Admin fetching all jobs with user details...");
+    const jobs = await Job.find()
+      .populate("userId", "name email") // show user details
+      .sort({ createdAt: -1 });
+
+    console.log(`✅ Admin fetched ${jobs.length} total jobs`);
+    return res.json(jobs);
   } catch (err) {
     console.error("🔥 Error in getAllUserJobs:", err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
 
-console.log("🔄 jobController loaded");
+console.log("🔄 jobController loaded with debugging");
 
 module.exports = {
   createJob,
   getUserJobs,
-  getAllUserJobs, // 👈 export bhi karna h
+  getAllUserJobs,
 };

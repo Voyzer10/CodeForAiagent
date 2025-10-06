@@ -22,16 +22,16 @@ connectDB().then(async () => {
 });
 
 // routes
-const jobsRoute = require("./routes/jobs");
+
 const authRoutes = require("./routes/authRoutes");
 const userjobsRoute = require("./routes/userjobs");
 const adminRoutes = require("./routes/adminRoutes"); 
  // ✅ add this
 
-app.use("/api/jobs", jobsRoute);
 app.use("/api/auth", authRoutes);
 app.use("/api/userjobs", userjobsRoute);
 app.use("/api/admin", adminRoutes); // ✅ mount admin routes
+app.use("/api/jobs", userjobsRoute);
 
 
 app.use((req, res) => {

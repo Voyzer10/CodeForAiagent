@@ -5,7 +5,13 @@ const jwt = require("jsonwebtoken");
 // 🔹 Admin register
 const registerAdmin = async (req, res) => {
   try {
+    console.log("Incoming body:", req.body); // 🔎 Debug here
+
     const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
     const adminExists = await AdminUser.findOne({ email });
     if (adminExists) return res.status(400).json({ message: "Admin already exists" });
@@ -38,12 +44,18 @@ const loginAdmin = async (req, res) => {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // 🔑 JWT with role
+    // Generate JWT
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: "admin" },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
+
+    // ✅ Save token in DB
+    admin.token = token;
+    await admin.save();
+    console.log("Updated Admin:", admin);
+
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -60,6 +72,7 @@ const loginAdmin = async (req, res) => {
         name: admin.name,
         email: admin.email,
         role: admin.role,
+        token: admin.token, // ✅ return it
       },
     });
   } catch (err) {
@@ -67,6 +80,7 @@ const loginAdmin = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // 🔹 Get all admins (optional, only for super-admin if needed)
 const getAdmins = async (req, res) => {
