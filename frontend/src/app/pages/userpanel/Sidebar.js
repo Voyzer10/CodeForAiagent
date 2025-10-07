@@ -1,19 +1,23 @@
 "use client";
 
 export default function Sidebar({ isOpen }) {
-  if (!isOpen) return null; // Don't render if closed
-
   return (
-    <aside className="w-64 left-0 top-0 bg-gray-200 p-4 shadow-md h-screen">
-      <h2 className="font-semibold mb-4 text-gray-800">Menu</h2>
-      <ul className="space-y-2">
-        <li className="py-2 px-3 rounded hover:bg-gray-300 cursor-pointer">
+    <div
+      className={`fixed top-0 left-0 h-full w-72  bg-[#0a0f0d] border-r border-[#1b2b27]  transform ${
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      } transition-transform duration-300 ease-in-out z-40`}
+    >
+      <div className="p-6 mt-20 text-green-400 text-lg font-semibold  border-t border-[#1b2b27]">
+        Menu
+      </div>
+      <ul className="mt-4 space-y-3 text-gray-300 text-left">
+        <li className="px-6 py-3  hover:bg-[#2e3b34]  cursor-pointer ">
           Job Found
         </li>
-        <li className="py-2 px-3 rounded hover:bg-gray-300 cursor-pointer">
+        <li className="px-6 py-3   hover:bg-[#2e3b34] cursor-pointer ">
           Job Applied
         </li>
       </ul>
-    </aside>
+    </div>
   );
 }

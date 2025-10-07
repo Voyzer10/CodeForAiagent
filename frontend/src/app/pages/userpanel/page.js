@@ -72,12 +72,12 @@ export default function UserPanel() {
   };
 
   return (
-    <div className="relative min-h-screen bg-[#0a0f0d] text-white  flex flex-col items-center px-4  pb-20">
+    <div className="relative min-h-screen bg-[#0a0f0d] text-white flex flex-col items-center px-4 pb-20">
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} />
       
       {/* Title Section */}
-      <div className="text-center mt-18 mb-10">
+      <div className="text-center mt-24 mb-10">
         <h2 className=" text-gray-400 tracking-wide text-lg">
           Connect your profiles and let AI find the right opportunities for you
         </h2>
