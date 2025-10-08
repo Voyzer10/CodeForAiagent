@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 
+
   // 🔑 Separate userId for identification
   userId: { 
     type: Number, 
@@ -25,7 +26,17 @@ const userSchema = new mongoose.Schema({
   },
 
   // 🔑 Store last JWT token if needed
-  token: { type: String }
+  token: { type: String },
+  plan: {
+    type: {
+      type: String,
+      enum: ["starter", "professional", "premium", null],
+      default: null,
+    },
+    remainingJobs: { type: Number, default: 0 },
+    purchasedAt: Date,
+    expiresAt: Date,
+  },
 });
 
 module.exports = mongoose.model("User", userSchema, "applicants");

@@ -1,33 +1,36 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Header from "./components/Header";
 
 export default function Home() {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchJobs = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/jobs", {
-          cache: "no-store", // 👈 avoid stale 304 cache
-        });
-        const data = await res.json();
-        console.log("Fetched jobs:", data); // 👈 check here
-        setJobs(data);
-      } catch (err) {
-        console.error("Error fetching jobs:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchJobs();
-  }, []);
+  // useEffect(() => {
+  //   const fetchJobs = async () => {
+  //     try {
+  //       const res = await fetch("http://localhost:5000/api/jobs", {
+  //         cache: "no-store", // 👈 avoid stale 304 cache
+  //       });
+  //       const data = await res.json();
+  //       console.log("Fetched jobs:", data); // 👈 check here
+  //       setJobs(data);
+  //     } catch (err) {
+  //       console.error("Error fetching jobs:", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchJobs();
+  // }, []);
 
-  if (loading) return <p className="p-4">Loading...</p>;
+  // if (loading) return <p className="p-4">Loading...</p>;
 
   return (
-    <main className="p-6">
+    <>
+   <Header />
+    {/* <main className="p-6">
       <h1 className="text-2xl font-bold mb-4">Job Data</h1>
       <table className="w-full border-collapse border border-gray-300">
         <thead>
@@ -63,6 +66,7 @@ export default function Home() {
           )}
         </tbody>
       </table>
-    </main>
+    </main> */}
+     </>
   );
 }
