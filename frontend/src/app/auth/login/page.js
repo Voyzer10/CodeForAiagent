@@ -34,7 +34,6 @@ export default function LoginPage() {
 
       // ✅ Store token in localStorage
       if (data.token) {
-        localStorage.setItem("token", data.token);
         console.log("🔑 Token saved:", data.token);
       } else {
         console.warn("⚠️ No token received from backend");

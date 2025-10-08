@@ -1,5 +1,6 @@
 const Job = require("../model/job-information");
 const fetch = require("node-fetch");
+const User = require("../model/User"); 
 
 // ✅ Create job (already working fine, no changes)
 const createJob = async (req, res) => {
@@ -8,16 +9,37 @@ const createJob = async (req, res) => {
 
   if (!userId) {
     console.warn("⚠️ No authenticated user found, saving as guest");
+    return res.status(401).json({ message: "Unauthorized: Please log in" });
   }
+
   console.log("👤 Authenticated userId:", userId);
 
   try {
-    console.log("➡️ Incoming request:", { prompt, userId });
+    // 1️⃣ Fetch user by numeric userId (not Mongo _id)
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
+    // 2️⃣ Validate subscription
+    if (!user.plan || user.plan.expiresAt < Date.now()) {
+      return res.status(403).json({ message: "No active subscription" });
+    }
+
+    if (user.plan.remainingJobs <= 0) {
+      return res.status(403).json({ message: "Job limit reached. Please upgrade." });
+    }
+
+    // 3️⃣ Deduct one job credit
+    user.plan.remainingJobs -= 1;
+    await user.save();
+
+    console.log("➡️ Incoming request:", { prompt, userId });
     const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const url = "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
     console.log("📡 Sending request to n8n:", url);
 
+    // 4️⃣ Send to n8n
     const n8nRes = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -35,11 +57,12 @@ const createJob = async (req, res) => {
 
     console.log("✅ Parsed response from n8n:", parsed);
 
+    // 5️⃣ Save job(s) to Mongo
     if (Array.isArray(parsed) && parsed.length > 0) {
       const jobsToSave = parsed.map((job) => ({
         ...job,
         sessionId,
-        ...(userId && { userId }),
+        userId,
       }));
 
       const savedJobs = await Job.insertMany(jobsToSave);
@@ -60,6 +83,7 @@ const createJob = async (req, res) => {
     res.status(500).json({ error: "Something went wrong. Check logs." });
   }
 };
+
 
 // ✅ Get jobs by authenticated user (User Panel)
 const getUserJobs = async (req, res) => {

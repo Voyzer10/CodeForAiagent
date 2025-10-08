@@ -6,6 +6,10 @@ import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
 
+
+
+
+
 export default function UserPanel() {
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -16,6 +20,9 @@ export default function UserPanel() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
+
+  const [showPrices, setShowPrices] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
   // ✅ Fetch current user (name + id) on mount
   // Fetch current user
@@ -42,6 +49,9 @@ export default function UserPanel() {
 
 
 
+
+
+  // Step 1: Check payment before allowing job fetch
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -49,19 +59,40 @@ export default function UserPanel() {
     setResponse(null);
 
     try {
+      // 1️⃣ Check if user has active plan
+      const planRes = await fetch("http://localhost:5000/api/payment/check", {
+        method: "GET",
+        credentials: "include",
+      });
+      const planData = await planRes.json();
+
+      if (!planData.hasPlan) {
+        // ❌ No plan — open full-screen Prices popup
+        setShowPrices(true);
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Proceed only if user has plan
+      await continueToFetchJobs();
+    } catch (err) {
+      setError("Error verifying plan: " + err.message);
+      setLoading(false);
+    }
+  };
+
+  // Step 2: Function to continue with job fetching after payment verification
+  const continueToFetchJobs = async () => {
+    try {
       const res = await fetch("http://localhost:5000/api/userjobs/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include", // 🔑 cookie with token is auto-sent
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ prompt }),
       });
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || `Server error: ${res.status}`);
-      }
+      if (!res.ok) throw new Error("Server error");
+
       const data = await res.json();
       setResponse(data);
     } catch (err) {
@@ -71,11 +102,12 @@ export default function UserPanel() {
     }
   };
 
+
   return (
     <div className="relative min-h-screen bg-[#0a0f0d] text-white flex flex-col items-center px-4 pb-20">
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} />
-      
+
       {/* Title Section */}
       <div className="text-center mt-24 mb-10">
         <h2 className=" text-gray-400 tracking-wide text-lg">
@@ -313,6 +345,77 @@ export default function UserPanel() {
           </p>
         </div>
       </div>
+      {/* 💰 Prices Popup */}
+      {/* 💰 Prices Popup */}
+      {showPrices && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+          <div className="bg-[#1F2937] border border-[#1b2b27] rounded-2xl shadow-[0_0_25px_#00ff9d66] p-8 max-w-3xl w-full mx-4 text-center relative">
+            <button
+              onClick={() => setShowPrices(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-green-400 text-xl"
+            >
+              ✕
+            </button>
+
+            <h2 className="text-2xl font-bold text-white mb-6">Choose Your Plan</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Basic Plan */}
+              <div
+                onClick={() => setSelectedPlan('basic')}
+                className={`cursor-pointer p-6 rounded-xl border ${selectedPlan === 'basic'
+                    ? 'border-green-400 shadow-[0_0_20px_#00ff9d66]'
+                    : 'border-[#1b2b27]'
+                  } bg-[#0d1512] hover:scale-105 transition-transform duration-300`}
+              >
+                <h3 className="text-lg font-semibold text-green-400 mb-2">Basic</h3>
+                <p className="text-gray-300 mb-3">Access up to 10 AI job matches/month.</p>
+                <p className="text-2xl font-bold text-green-400">₹199/mo</p>
+              </div>
+
+              {/* Pro Plan */}
+              <div
+                onClick={() => setSelectedPlan('pro')}
+                className={`cursor-pointer p-6 rounded-xl border ${selectedPlan === 'pro'
+                    ? 'border-green-400 shadow-[0_0_20px_#00ff9d66]'
+                    : 'border-[#1b2b27]'
+                  } bg-[#0d1512] hover:scale-105 transition-transform duration-300`}
+              >
+                <h3 className="text-lg font-semibold text-green-400 mb-2">Pro</h3>
+                <p className="text-gray-300 mb-3">Unlimited job matches + resume AI tips.</p>
+                <p className="text-2xl font-bold text-green-400">₹499/mo</p>
+              </div>
+
+              {/* Premium Plan */}
+              <div
+                onClick={() => setSelectedPlan('premium')}
+                className={`cursor-pointer p-6 rounded-xl border ${selectedPlan === 'premium'
+                    ? 'border-green-400 shadow-[0_0_20px_#00ff9d66]'
+                    : 'border-[#1b2b27]'
+                  } bg-[#0d1512] hover:scale-105 transition-transform duration-300`}
+              >
+                <h3 className="text-lg font-semibold text-green-400 mb-2">Premium</h3>
+                <p className="text-gray-300 mb-3">
+                  Pro features + priority AI matching + profile boost.
+                </p>
+                <p className="text-2xl font-bold text-green-400">₹999/mo</p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                if (!selectedPlan) return alert('Please select a plan!');
+                // TODO: Redirect or call backend for payment
+                alert(`Proceeding with ${selectedPlan.toUpperCase()} plan...`);
+              }}
+              className="mt-8 bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black font-semibold py-2 px-6 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55]"
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
+
+
 
     </div>
   );
