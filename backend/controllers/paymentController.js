@@ -15,7 +15,6 @@ const checkPlan = async (req, res) => {
 
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // ✅ Only active, non-null plan counts as payment
     if (!user.plan || !user.plan.type || user.plan.expiresAt < Date.now()) {
       console.log("⚠️ No active plan for userId:", user.userId);
       return res.json({ hasPlan: false });
@@ -33,13 +32,11 @@ const checkPlan = async (req, res) => {
   }
 };
 
-
-
-
-// 💳 2. Create Razorpay order
+// 💳 2. Create Razorpay order with debugging
 const createOrder = async (req, res) => {
   try {
     const { planType } = req.body;
+    console.log("🟢 createOrder called with planType:", planType);
 
     const planPrices = {
       starter: 1100, // ₹11
@@ -48,7 +45,10 @@ const createOrder = async (req, res) => {
     };
 
     const amount = planPrices[planType];
-    if (!amount) return res.status(400).json({ message: "Invalid plan type" });
+    if (!amount) {
+      console.warn("⚠️ Invalid plan type:", planType);
+      return res.status(400).json({ message: "Invalid plan type" });
+    }
 
     const options = {
       amount: amount * 100, // in paise
@@ -56,17 +56,22 @@ const createOrder = async (req, res) => {
       receipt: `receipt_${Date.now()}`,
     };
 
+    console.log("💳 Creating Razorpay order with options:", options);
     const order = await razorpay.orders.create(options);
+    console.log("✅ Razorpay order created:", order);
+
     res.json(order);
   } catch (err) {
+    console.error("🔥 Error creating Razorpay order:", err.message);
     res.status(500).json({ message: "Error creating Razorpay order", error: err.message });
   }
 };
 
-// 🔐 3. Verify payment and activate plan
+// 🔐 3. Verify payment and activate plan with debugging
 const verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planType } = req.body;
+    console.log("🟢 verifyPayment called with:", { razorpay_order_id, razorpay_payment_id, planType });
 
     // Verify signature
     const sign = razorpay_order_id + "|" + razorpay_payment_id;
@@ -75,32 +80,36 @@ const verifyPayment = async (req, res) => {
       .update(sign.toString())
       .digest("hex");
 
-    if (razorpay_signature !== expectedSign)
+    console.log("🔑 Calculated signature:", expectedSign);
+    if (razorpay_signature !== expectedSign) {
+      console.warn("❌ Signature mismatch!", { razorpay_signature, expectedSign });
       return res.status(400).json({ success: false, message: "Invalid signature" });
+    }
 
-    // Define plan limits
     const planLimits = {
       starter: 500,
       professional: 1000,
       premium: 1500,
     };
 
-    // Update user plan
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user.id,
+    console.log("💾 Updating user plan for userId:", req.user.id);
+    const updatedUser = await User.findOneAndUpdate(
+      { userId: req.user.id }, // ✅ query by numeric userId
       {
         plan: {
           type: planType,
           remainingJobs: planLimits[planType],
           purchasedAt: new Date(),
-          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         },
       },
       { new: true }
     );
 
+    console.log("✅ User plan updated:", updatedUser.plan);
     res.json({ success: true, user: updatedUser });
   } catch (err) {
+    console.error("🔥 Error verifying payment:", err.message);
     res.status(500).json({ message: "Error verifying payment", error: err.message });
   }
 };
