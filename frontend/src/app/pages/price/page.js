@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-export default function Prices() {
+export default function Price() {
   const [selectedPlan, setSelectedPlan] = useState(null);
 
   const plans = [
