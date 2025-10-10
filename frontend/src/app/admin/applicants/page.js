@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { apiFetch } from "@/app/lib/api";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -9,10 +10,7 @@ export default function UsersPage() {
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/auth/users", {
-          cache: "no-store", // no cache to always get fresh data
-        });
-        const data = await res.json();
+        const data = await apiFetch("/api/auth/users");
         console.log("Fetched users:", data);
         setUsers(data);
       } catch (err) {
@@ -38,7 +36,6 @@ export default function UsersPage() {
             <th className="border p-2">ID </th>
             <th className="border p-2">Name </th>
             <th className="border p-2">Email</th>
-            <th className="border p-2">Password</th>
             <th className="border p-2">User Id </th>
         
           </tr>
@@ -50,7 +47,6 @@ export default function UsersPage() {
                   <td className="px-4 py-2 border">{user._id}</td>
                   <td className="px-4 py-2 border">{user.name}</td>
                   <td className="px-4 py-2 border">{user.email}</td>
-                  <td className="px-4 py-2 border">{user.password}</td>
                   <td className="px-4 py-2 border">{user.userId}</td>
                 </tr>
               ))
