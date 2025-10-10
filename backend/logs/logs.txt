@@ -23,3 +23,134 @@
 [2025-10-10T18:44:35.759Z] 👑 Admin fetching all jobs with user details...
 [2025-10-10T18:44:35.871Z] ✅ Admin fetched 0 total jobs
 [2025-10-10T18:44:35.892Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:12:41.556Z] 🚀 Server running on http://localhost:5000
+[2025-10-10T19:12:42.980Z] ✅ MongoDB connected
+[2025-10-10T19:12:43.146Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-10T19:13:43.597Z] Updated Admin: {
+  _id: new ObjectId('68e2583fa91c2cdbd8228c60'),
+  name: 'admin',
+  email: 'admin@gmail.com',
+  password: '$2b$10$5Fl9WJ89Kf353TiMD2mx/eFDI60QJicM/RhZFk5fTx36GE3kohjPG',
+  role: 'admin',
+  createdAt: 2025-10-05T11:36:31.836Z,
+  updatedAt: 2025-10-10T19:13:43.547Z,
+  __v: 0,
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZTI1ODNmYTkxYzJjZGJkODIyOGM2MCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYwMTIzNjIzLCJleHAiOjE3NjAxMjcyMjN9.g1KOtpqsARw2B-1j0ppyjCX7ePQqwHQ69RFO9DhGvuo'
+}
+[2025-10-10T19:13:44.352Z] Cookies received: [object Object]
+[2025-10-10T19:13:44.353Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:13:44.354Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:13:44.357Z] 🔹 Fetching all users
+[2025-10-10T19:13:44.473Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:14:17.306Z] Cookies received: [object Object]
+[2025-10-10T19:14:17.307Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:14:17.307Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:14:17.309Z] 🔹 Fetching all users
+[2025-10-10T19:14:17.311Z] Cookies received: [object Object]
+[2025-10-10T19:14:17.311Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:14:17.312Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:14:17.313Z] 🔹 Fetching all users
+[2025-10-10T19:14:17.456Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:14:17.458Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:14:19.385Z] Cookies received: [object Object]
+[2025-10-10T19:14:19.385Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:14:19.386Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:14:19.388Z] Cookies received: [object Object]
+[2025-10-10T19:14:19.389Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:14:19.389Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:14:19.427Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:14:19.432Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:14:21.206Z] 🔹 Fetching all users
+[2025-10-10T19:14:21.208Z] 🔹 Fetching all users
+[2025-10-10T19:14:22.646Z] Cookies received: [object Object]
+[2025-10-10T19:14:22.647Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:14:22.647Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:14:22.649Z] 🔹 Fetching all users
+[2025-10-10T19:14:22.650Z] Cookies received: [object Object]
+[2025-10-10T19:14:22.650Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:14:22.651Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:14:22.652Z] 🔹 Fetching all users
+[2025-10-10T19:14:22.749Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:14:22.751Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:18:38.380Z] Cookies received: [object Object]
+[2025-10-10T19:18:38.382Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:18:38.382Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:18:38.383Z] 🔹 Fetching all users
+[2025-10-10T19:18:38.423Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:18:40.031Z] 🔹 Fetching all users
+[2025-10-10T19:18:40.035Z] 🔹 Fetching all users
+[2025-10-10T19:18:42.095Z] Cookies received: [object Object]
+[2025-10-10T19:18:42.095Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:18:42.096Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:18:42.098Z] Cookies received: [object Object]
+[2025-10-10T19:18:42.098Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:18:42.098Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:18:42.283Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:18:42.284Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:18:42.637Z] Cookies received: [object Object]
+[2025-10-10T19:18:42.638Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:18:42.638Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:18:42.640Z] 🔹 Fetching all users
+[2025-10-10T19:18:42.642Z] 🔹 Fetching all users
+[2025-10-10T19:18:42.642Z] Cookies received: [object Object]
+[2025-10-10T19:18:42.643Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:18:42.643Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:18:42.740Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:18:42.741Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:18:43.462Z] Cookies received: [object Object]
+[2025-10-10T19:18:43.462Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:18:43.463Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:18:43.463Z] 🔹 Fetching all users
+[2025-10-10T19:18:43.465Z] Cookies received: [object Object]
+[2025-10-10T19:18:43.466Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:18:43.466Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:18:43.467Z] 🔹 Fetching all users
+[2025-10-10T19:18:43.659Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:18:43.660Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:20:02.738Z] Cookies received: [object Object]
+[2025-10-10T19:20:02.739Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:20:02.740Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:20:02.741Z] 🔹 Fetching all users
+[2025-10-10T19:20:02.785Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:24:20.122Z] Cookies received: [object Object]
+[2025-10-10T19:24:20.122Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T19:24:20.123Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T19:24:20.124Z] 🔹 Fetching all users
+[2025-10-10T19:24:20.164Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T19:27:22.217Z] 🔹 Register request: [object Object]
+[2025-10-10T19:27:22.632Z] ❌ User already exists: geraansh20@gmail.com
+[2025-10-10T19:28:08.528Z] 🔹 Register request: [object Object]
+[2025-10-10T19:28:08.677Z] ✅ User registered: {
+  name: 'Ansh Gera',
+  email: 'anshgeea20@gmail.com',
+  password: '$2b$10$xi./5EfOJUA7bSe1/GR0v.HSptlVKGYEvMc5j3XCkjyGuYNejVnuO',
+  role: 'user',
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68e95e48de9660bfb2bf42b5'),
+  userId: 78463,
+  __v: 0
+}
+[2025-10-10T19:28:17.968Z] 🔹 Login attempt: anshgeea20@gmail.com
+[2025-10-10T19:28:18.106Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Nzg0NjMsImVtYWlsIjoiYW5zaGdlZWEyMEBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MDEyNDQ5OCwiZXhwIjoxNzYwMTM4ODk4fQ.KTS60KLA4msDgmjONSrMtiMt2B5S9udbg215FObsMok
+[2025-10-10T19:28:18.658Z] Cookies received: [object Object]
+[2025-10-10T19:28:18.659Z] 🔹 Decoded user from token: [object Object]
+[2025-10-10T19:28:18.706Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68e95e48de9660bfb2bf42b5'),
+  name: 'Ansh Gera',
+  email: 'anshgeea20@gmail.com',
+  role: 'user',
+  userId: 78463,
+  __v: 0
+}
+[2025-10-10T19:28:18.708Z] Cookies received: [object Object]
+[2025-10-10T19:28:18.708Z] 🔹 Decoded user from token: [object Object]
+[2025-10-10T19:28:18.752Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68e95e48de9660bfb2bf42b5'),
+  name: 'Ansh Gera',
+  email: 'anshgeea20@gmail.com',
+  role: 'user',
+  userId: 78463,
+  __v: 0
+}
