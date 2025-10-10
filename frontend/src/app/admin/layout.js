@@ -10,6 +10,7 @@ export default function AdminLayout({ children }) {
     { href: "/admin/applicants", label: "Applicants" },
     { href: "/admin/jobs", label: "Jobs" },
     { href: "/admin/application-tracking", label: "Application Tracking" },
+     { href: "/admin/Logs", label: "Logs" },
   ];
 
   return (

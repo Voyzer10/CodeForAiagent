@@ -1,0 +1,25 @@
+[2025-10-10T18:37:27.055Z] 🚀 Server running on http://localhost:5000
+[2025-10-10T18:37:27.923Z] ✅ MongoDB connected
+[2025-10-10T18:37:27.977Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-10T18:38:00.812Z] 🚀 Server running on http://localhost:5000
+[2025-10-10T18:38:01.408Z] ✅ MongoDB connected
+[2025-10-10T18:38:01.461Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-10T18:38:11.434Z] 🚀 Server running on http://localhost:5000
+[2025-10-10T18:38:12.004Z] ✅ MongoDB connected
+[2025-10-10T18:38:12.049Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-10T18:38:52.599Z] 🚀 Server running on http://localhost:5000
+[2025-10-10T18:38:53.229Z] ✅ MongoDB connected
+[2025-10-10T18:38:53.275Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-10T18:39:16.490Z] 🚀 Server running on http://localhost:5000
+[2025-10-10T18:39:17.153Z] ✅ MongoDB connected
+[2025-10-10T18:39:17.200Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-10T18:44:29.447Z] 🔹 Fetching all users
+[2025-10-10T18:44:29.752Z] 🔹 Fetching all users
+[2025-10-10T18:44:34.966Z] Cookies received: [object Object]
+[2025-10-10T18:44:35.623Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T18:44:35.697Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T18:44:35.722Z] Cookies received: [object Object]
+[2025-10-10T18:44:35.752Z] ➡️ GET /api/jobs/all - Admin fetching all jobs
+[2025-10-10T18:44:35.759Z] 👑 Admin fetching all jobs with user details...
+[2025-10-10T18:44:35.871Z] ✅ Admin fetched 0 total jobs
+[2025-10-10T18:44:35.892Z] ✅ Admin fetched 0 total jobs

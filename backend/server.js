@@ -4,6 +4,7 @@ require("dotenv").config();
 const connectDB = require("./config/db");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
+const { logToFile, logErrorToFile } = require("./logger");
 
 const app = express();
 app.use(express.json());
@@ -27,6 +28,7 @@ const authRoutes = require("./routes/authRoutes");
 const userjobsRoute = require("./routes/userjobs");
 const adminRoutes = require("./routes/adminRoutes"); 
 const paymentRoutes = require("./routes/paymentRoutes");
+const logRoutes = require("./routes/logRoutes");
  // ✅ add this
 
 app.use("/api/auth", authRoutes);
@@ -34,6 +36,7 @@ app.use("/api/userjobs", userjobsRoute);
 app.use("/api/admin", adminRoutes); // ✅ mount admin routes
 app.use("/api/jobs", userjobsRoute);
 app.use("/api/payment", paymentRoutes);
+app.use("/api/admin", logRoutes);
 
 
 app.use((req, res) => {
@@ -45,6 +48,20 @@ app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err.stack);
   res.status(500).json({ message: "Server error", error: err.message });
 });
+
+// Redirect console.log
+console.log = function (...args) {
+  const message = args.join(" ");
+  logToFile(message);
+  process.stdout.write(message + "\n");
+};
+
+// Redirect console.error
+console.error = function (...args) {
+  const message = args.join(" ");
+  logErrorToFile(message);
+  process.stderr.write(message + "\n");
+};
 
 // start server
 const PORT = process.env.PORT || 5000;
