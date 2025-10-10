@@ -1,38 +1,36 @@
 "use client";
-
-// import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import { apiFetch } from "@/app/lib/api";
 
 export default function JobsPage() {
-//   const [jobs, setJobs] = useState([]);
-//   const [loading, setLoading] = useState(true);
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-//   useEffect(() => {
-//     const fetchJobs = async () => {
-//       try {
-//         const res = await fetch("http://localhost:5000/api/jobs", {
-//           cache: "no-store",
-//         });
-//         const data = await res.json();
-//         setJobs(data);
-//       } catch (err) {
-//         console.error("Error fetching jobs:", err);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const data = await apiFetch("/api/jobs/all");
+        setJobs(Array.isArray(data) ? data : []);
+      } catch (err) {
+        setError(err.message || "Failed to load jobs");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJobs();
+  }, []);
 
-//     fetchJobs();
-//   }, []);
-
-//   if (loading) return <p className="p-4">Loading jobs...</p>;
+  if (loading) return <p className="p-4">Loading jobs...</p>;
+  if (error) return <p className="p-4 text-red-600">{error}</p>;
 
   return (
-    <div>
-      <h1 className="text-2xl font-semibold mb-4">Jobs</h1>
+    <div className="space-y-4">
+      <h1 className="text-2xl font-semibold">Jobs</h1>
 
-      <div className="overflow-x-auto rounded-lg shadow">
-        <table className="w-full border-collapse bg-white text-left text-sm">
-          <thead className="bg-gray-200">
+      <div className="overflow-x-auto rounded-lg border bg-white">
+        <table className="w-full border-collapse text-left text-sm">
+          <thead className="bg-gray-100">
             <tr>
               <th className="px-4 py-2 border">ID</th>
               <th className="px-4 py-2 border">Title</th>
@@ -45,20 +43,20 @@ export default function JobsPage() {
               <th className="px-4 py-2 border">More</th>
             </tr>
           </thead>
-          {/* <tbody>
+          <tbody className="bg-white">
             {jobs.length > 0 ? (
               jobs.map((job) => (
                 <tr key={job._id} className="hover:bg-gray-50">
                   <td className="px-4 py-2 border">{job._id}</td>
-                  <td className="px-4 py-2 border">{job.title}</td>
-                  <td className="px-4 py-2 border">{job.companyName}</td>
-                  <td className="px-4 py-2 border">{job.location}</td>
+                  <td className="px-4 py-2 border">{job.title || job.email_subject || "—"}</td>
+                  <td className="px-4 py-2 border">{job.companyName || "—"}</td>
+                  <td className="px-4 py-2 border">{job.location || "—"}</td>
                   <td className="px-4 py-2 border">{job.salary || "N/A"}</td>
                   <td className="px-4 py-2 border">{job.applicantsCount || 0}</td>
                   <td className="px-4 py-2 border">{job.email_to || "—"}</td>
-                  <td className="px-4 py-2 border">{job.postedAt}</td>
+                  <td className="px-4 py-2 border">{job.createdAt ? new Date(job.createdAt).toLocaleString() : "—"}</td>
                   <td className="px-4 py-2 border">
-                    <button className="text-blue-600 underline">View</button>
+                    <button className="px-2 py-1 text-blue-600 hover:underline">View</button>
                   </td>
                 </tr>
               ))
@@ -69,7 +67,7 @@ export default function JobsPage() {
                 </td>
               </tr>
             )}
-          </tbody> */}
+          </tbody>
         </table>
       </div>
     </div>
