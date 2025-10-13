@@ -18,36 +18,26 @@ export default function RegisterPage() {
         email: '',
         password: '',
         confirmPassword: '',
+        employeeId: '',
+        termsAccepted: false,
     })
-    const [showPassword, setShowPassword] = useState(false)
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-    const [message, setMessage] = useState('')
-    const [messageType, setMessageType] = useState('') // 'success' or 'error'
-    const [isLoading, setIsLoading] = useState(false)
 
     const handleChange = (e) => {
-        const {name, value} = e.target
+        const {name, value, type, checked} = e.target
         setFormData((prev) => ({
             ...prev,
-            [name]: value,
+            [name]: type === 'checkbox' ? checked : value,
         }))
-        // Clear message when user starts typing
-        if (message) {
-            setMessage('')
-            setMessageType('')
-        }
     }
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-        setIsLoading(true)
-        setMessage('')
-        setMessageType('')
-
         if (formData.password !== formData.confirmPassword) {
-            setMessage('Passwords do not match')
-            setMessageType('error')
-            setIsLoading(false)
+            alert('Passwords do not match')
+            return
+        }
+        if (!formData.termsAccepted) {
+            alert('You must accept the terms and conditions')
             return
         }
 
@@ -57,17 +47,11 @@ export default function RegisterPage() {
                 email: formData.email,
                 password: formData.password,
             })
-            setMessage('Registration successful! Redirecting to login...')
-            setMessageType('success')
-            setTimeout(() => {
-                router.push('/auth/login')
-            }, 2000)
+            alert('Registration successful! Please log in.')
+            router.push('/auth/login')
         } catch (error) {
             console.error(error)
-            setMessage(error?.response?.data?.message || 'Registration failed. Please try again.')
-            setMessageType('error')
-        } finally {
-            setIsLoading(false)
+            alert(error?.response?.data?.message || 'Registration failed')
         }
     }
 
@@ -152,24 +136,22 @@ export default function RegisterPage() {
                         </div>
 
 
-
-                        {/* Message Display */}
-                        {message && (
-                            <div className={`p-3 rounded-lg text-sm ${
-                                messageType === 'success' 
-                                    ? 'bg-green-100 text-green-800 border border-green-200' 
-                                    : 'bg-red-100 text-red-800 border border-red-200'
-                            }`}>
-                                {message}
-                            </div>
-                        )}
+                        <div className="flex items-center text-sm text-blue-600 hover:underline">
+                            <input
+                                type="checkbox"
+                                name="termsAccepted"
+                                checked={formData.termsAccepted}
+                                onChange={handleChange}
+                                className="mr-2"
+                            />
+                            <label>I agree to the Terms and Conditions</label>
+                        </div>
 
                         <button
                             type="submit"
-                            disabled={isLoading}
-                            className="w-full bg-[#3667B1] text-white py-3 rounded-md hover:bg-blue-700 transition font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-[#3667B1] text-white py-3 rounded-md hover:bg-blue-700 transition font-bold"
                         >
-                            {isLoading ? 'Creating Account...' : 'Register'}
+                            Register
                         </button>
                     </form>
 
