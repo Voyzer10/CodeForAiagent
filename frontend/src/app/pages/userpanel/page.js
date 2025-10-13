@@ -161,7 +161,7 @@ export default function UserPanel() {
 
           {/* Location */}
           <div>
-            <label className="text-gray-400 text-sm mb-1 block">Location</label>
+            {/* <label className="text-gray-400 text-sm mb-1 block">Location</label>
             <input
               type="text"
               required
@@ -169,14 +169,14 @@ export default function UserPanel() {
               onChange={(e) => setLocation(e.target.value)}
               placeholder="e.g., Bangalore, India"
               className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-            />
-            <label className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+            /> */}
+            <label className="text-gray-400 text-sm mb-1 block">
               Location
             </label>
-            <div className="[&_*]:!text-sm">
+            <div className="[&_*]:!text-sm py-2 focus:outline-none focus:ring-2 focus:ring-green-400 " >
               <LocationDropdown
                 value={location}
-                onChange={setLocation}
+                onChange={(e) => setLocation(e.target.value)}
                 placeholder="Search city, area, or PIN"
               />
             </div>

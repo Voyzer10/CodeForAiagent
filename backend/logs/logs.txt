@@ -859,3 +859,40 @@
 [2025-10-13T13:11:23.553Z] ✅ Admin fetched 0 total jobs
 [2025-10-13T13:11:23.555Z] ✅ Admin fetched 0 total jobs
 >>>>>>> 764dc9815d92397bead411ace836ae553fdeb2c9
+[2025-10-13T14:17:19.965Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:17:23.666Z] ✅ MongoDB connected
+[2025-10-13T14:17:23.716Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:19:44.674Z] 🔹 Login attempt: garvit@gmail.com
+[2025-10-13T14:19:45.010Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODczNTYsImVtYWlsIjoiZ2Fydml0QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzYwMzY1MTg1LCJleHAiOjE3NjAzNzk1ODV9.hnAiRVy3wdhBCHwuas7xetvl8KcqmWpVlL_pWnFe_5c
+[2025-10-13T14:21:44.984Z] Cookies received: [object Object]
+[2025-10-13T14:21:45.006Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:21:45.089Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 498,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-13T14:21:45.114Z] Cookies received: [object Object]
+[2025-10-13T14:21:45.116Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:21:45.164Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 498,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
