@@ -896,3 +896,431 @@
   userId: 87356,
   __v: 0
 }
+[2025-10-13T14:34:45.812Z] 🔹 Login attempt: geraansh20@gmail.com
+[2025-10-13T14:34:46.264Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODU5NTksImVtYWlsIjoiZ2VyYWFuc2gyMEBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MDM2NjA4NiwiZXhwIjoxNzYwMzgwNDg2fQ.5Lir1vDswtYCXXM3VV7WPbgRbgVf4KXia6FzSeFGOBc
+[2025-10-13T14:34:46.780Z] Cookies received: [object Object]
+[2025-10-13T14:34:46.822Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:34:46.897Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:34:46.922Z] Cookies received: [object Object]
+[2025-10-13T14:34:46.930Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:34:46.973Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:34:46.978Z] Cookies received: [object Object]
+[2025-10-13T14:34:46.981Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:34:47.024Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:34:47.031Z] Cookies received: [object Object]
+[2025-10-13T14:34:47.034Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:34:47.078Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:39:51.517Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:39:52.487Z] ✅ MongoDB connected
+[2025-10-13T14:39:52.556Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:42:08.178Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:42:08.836Z] ✅ MongoDB connected
+[2025-10-13T14:42:08.893Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:42:26.318Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T14:44:10.258Z] Cookies received: [object Object]
+[2025-10-13T14:44:10.335Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:44:10.584Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:44:10.695Z] Cookies received: [object Object]
+[2025-10-13T14:44:10.720Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:44:10.800Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:44:12.896Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T14:44:49.541Z] Cookies received: [object Object]
+[2025-10-13T14:44:49.560Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:44:49.616Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:44:49.622Z] Cookies received: [object Object]
+[2025-10-13T14:44:49.628Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:44:49.678Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:44:50.191Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T14:46:03.665Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:46:04.354Z] ✅ MongoDB connected
+[2025-10-13T14:46:04.403Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:46:19.276Z] Cookies received: [object Object]
+[2025-10-13T14:46:19.287Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:46:19.366Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:46:19.386Z] Cookies received: [object Object]
+[2025-10-13T14:46:19.389Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:46:19.436Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:46:19.783Z] Cookies received: [object Object]
+[2025-10-13T14:46:19.785Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T14:46:19.786Z] 📡 Fetching jobs for userId: 85959
+[2025-10-13T14:46:19.830Z] ℹ️ No jobs found for this user: 85959
+[2025-10-13T14:50:40.826Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:50:41.962Z] ✅ MongoDB connected
+[2025-10-13T14:50:42.014Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:51:11.654Z] Cookies received: [object Object]
+[2025-10-13T14:51:11.675Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:51:11.762Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:51:11.789Z] Cookies received: [object Object]
+[2025-10-13T14:51:11.792Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T14:51:11.835Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T14:51:11.976Z] Cookies received: [object Object]
+[2025-10-13T14:51:11.978Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T14:51:11.979Z] 📡 Fetching jobs for userId: 85959
+[2025-10-13T14:51:12.022Z] ℹ️ No jobs found for this user: 85959
+[2025-10-13T14:51:59.392Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:52:00.050Z] ✅ MongoDB connected
+[2025-10-13T14:52:00.115Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:52:07.720Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:52:08.344Z] ✅ MongoDB connected
+[2025-10-13T14:52:08.400Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:52:28.399Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:52:28.987Z] ✅ MongoDB connected
+[2025-10-13T14:52:29.037Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:52:33.706Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:52:34.273Z] ✅ MongoDB connected
+[2025-10-13T14:52:34.332Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T14:53:13.383Z] Cookies received: [object Object]
+[2025-10-13T14:59:08.358Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T14:59:09.031Z] ✅ MongoDB connected
+[2025-10-13T14:59:09.082Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T15:02:38.265Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T15:02:38.989Z] ✅ MongoDB connected
+[2025-10-13T15:02:39.033Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T15:03:22.295Z] Cookies received: [object Object]
+[2025-10-13T15:03:22.334Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T15:03:22.455Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T15:03:22.481Z] Cookies received: [object Object]
+[2025-10-13T15:03:22.500Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T15:03:22.571Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T15:03:23.209Z] Cookies received: [object Object]
+[2025-10-13T15:03:23.211Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T15:03:23.212Z] 📡 Fetching jobs for userId: 85959
+[2025-10-13T15:03:23.324Z] ℹ️ No jobs found for this user: 85959
+[2025-10-13T15:07:02.485Z] 🚀 Server running on http://localhost:5000
+[2025-10-13T15:07:03.164Z] ✅ MongoDB connected
+[2025-10-13T15:07:03.239Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-13T15:07:32.392Z] Cookies received: [object Object]
+[2025-10-13T15:07:32.430Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T15:07:32.504Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T15:07:32.522Z] Cookies received: [object Object]
+[2025-10-13T15:07:32.526Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T15:07:32.572Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T15:07:32.826Z] Cookies received: [object Object]
+[2025-10-13T15:07:32.829Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T15:07:32.830Z] 📡 Fetching jobs for UserID: 85959
+[2025-10-13T15:07:33.184Z] ✅ Found 100 jobs for UserID 85959
+[2025-10-13T15:20:14.280Z] Updated Admin: {
+  _id: new ObjectId('68e2583fa91c2cdbd8228c60'),
+  name: 'admin',
+  email: 'admin@gmail.com',
+  password: '$2b$10$5Fl9WJ89Kf353TiMD2mx/eFDI60QJicM/RhZFk5fTx36GE3kohjPG',
+  role: 'admin',
+  createdAt: 2025-10-05T11:36:31.836Z,
+  updatedAt: 2025-10-13T15:20:14.194Z,
+  __v: 0,
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZTI1ODNmYTkxYzJjZGJkODIyOGM2MCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYwMzY4ODE0LCJleHAiOjE3NjAzNzI0MTR9.N4ohs_t511YbQTF3mgkFtEXDAXNQoapeg-B4h1jKQt4'
+}
+[2025-10-13T15:20:16.097Z] Updated Admin: {
+  _id: new ObjectId('68e2583fa91c2cdbd8228c60'),
+  name: 'admin',
+  email: 'admin@gmail.com',
+  password: '$2b$10$5Fl9WJ89Kf353TiMD2mx/eFDI60QJicM/RhZFk5fTx36GE3kohjPG',
+  role: 'admin',
+  createdAt: 2025-10-05T11:36:31.836Z,
+  updatedAt: 2025-10-13T15:20:16.060Z,
+  __v: 0,
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZTI1ODNmYTkxYzJjZGJkODIyOGM2MCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYwMzY4ODE2LCJleHAiOjE3NjAzNzI0MTZ9.ZbRjBLaUfXY1T12B2WPLJAlwdkrBdAVSK8ncR6QouC0'
+}
+[2025-10-13T15:20:18.009Z] Cookies received: [object Object]
+[2025-10-13T15:20:18.029Z] ➡️ GET /api/userjobs/all - Fetch jobs by userId
+[2025-10-13T15:20:18.040Z] 🔹 Fetching all users
+[2025-10-13T15:20:32.209Z] Updated Admin: {
+  _id: new ObjectId('68e2583fa91c2cdbd8228c60'),
+  name: 'admin',
+  email: 'admin@gmail.com',
+  password: '$2b$10$5Fl9WJ89Kf353TiMD2mx/eFDI60QJicM/RhZFk5fTx36GE3kohjPG',
+  role: 'admin',
+  createdAt: 2025-10-05T11:36:31.836Z,
+  updatedAt: 2025-10-13T15:20:32.175Z,
+  __v: 0,
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZTI1ODNmYTkxYzJjZGJkODIyOGM2MCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYwMzY4ODMyLCJleHAiOjE3NjAzNzI0MzJ9.Cyc0Gc2ai1v6azXgnc5mufzms49GgVDwjZmN3tNsLR4'
+}
+[2025-10-13T15:20:33.452Z] Cookies received: [object Object]
+[2025-10-13T15:20:33.455Z] ➡️ GET /api/userjobs/all - Fetch jobs by userId
+[2025-10-13T15:20:33.460Z] 🔹 Fetching all users
+[2025-10-13T15:20:36.128Z] 🔹 Fetching all users
+[2025-10-13T15:20:36.142Z] 🔹 Fetching all users
+[2025-10-13T16:31:53.276Z] Cookies received: [object Object]
+[2025-10-13T16:31:53.732Z] Cookies received: [object Object]
+[2025-10-13T16:32:13.723Z] 🔹 Login attempt: geraansh20@gmail.com
+[2025-10-13T16:32:14.055Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODU5NTksImVtYWlsIjoiZ2VyYWFuc2gyMEBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MDM3MzEzNCwiZXhwIjoxNzYwMzg3NTM0fQ.bJ4ttXelYHJrs8wuG945t8JKogKR7XKt5K6QhPviKBQ
+[2025-10-13T16:32:14.317Z] Cookies received: [object Object]
+[2025-10-13T16:32:14.319Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T16:32:14.374Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T16:32:14.385Z] Cookies received: [object Object]
+[2025-10-13T16:32:14.387Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T16:32:14.434Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T16:32:14.437Z] Cookies received: [object Object]
+[2025-10-13T16:32:14.440Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T16:32:14.445Z] Cookies received: [object Object]
+[2025-10-13T16:32:14.447Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T16:32:14.449Z] 📡 Fetching jobs for UserID: 85959
+[2025-10-13T16:32:14.475Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T16:32:14.479Z] Cookies received: [object Object]
+[2025-10-13T16:32:14.481Z] 🔹 Decoded user from token: [object Object]
+[2025-10-13T16:32:14.522Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-13T16:32:14.797Z] ✅ Found 100 jobs for UserID 85959
+[2025-10-13T16:32:14.836Z] Cookies received: [object Object]
+[2025-10-13T16:32:14.838Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-13T16:32:14.839Z] 📡 Fetching jobs for UserID: 85959
+[2025-10-13T16:32:14.996Z] ✅ Found 100 jobs for UserID 85959

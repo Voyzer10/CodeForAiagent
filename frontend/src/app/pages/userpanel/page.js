@@ -23,6 +23,9 @@ export default function UserPanel() {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
 
+// To open card 
+  const [isOpen, setIsOpen] = useState(false);
+
   // ✅ Step 1: Fetch current user + user's jobs
   useEffect(() => {
     const fetchUser = async () => {
@@ -245,40 +248,72 @@ export default function UserPanel() {
       )}
 
       {/* ✅ Display user's saved jobs */}
-      <div className="mt-10 w-full max-w-3xl">
-        <h3 className="text-green-400 font-semibold mb-3">Your Saved Jobs:</h3>
-        {userJobs.length > 0 ? (
-          <div className="grid gap-4">
-            {userJobs.map((job, idx) => (
-              <div
-                key={idx}
-                className="p-4 bg-[#0e1513] border border-[#1b2b27] rounded-md shadow-inner shadow-[#00ff9d22]"
-              >
-                <h4 className="text-green-300 font-semibold mb-1">
-                  {job.title}
-                </h4>
-                <p className="font-medium text-gray-300">{job.company}</p>
-                <p className="text-sm text-gray-400">{job.location}</p>
-                <p className="text-sm text-gray-500 mt-2">{job.description}</p>
-                {job.link && (
-                  <a
-                    href={job.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-green-400 underline text-sm mt-2 inline-block"
-                  >
-                    View Job
-                  </a>
-                )}
+      <div className="mt-10 w-full max-w-6xl h-[80vh] overflow-y-auto p-2">
+  <h3 className="text-green-400 font-semibold mb-3">Your Saved Jobs:</h3>
+  
+  {userJobs.length > 0 ? (
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      {userJobs.map((job, idx) => {
+        
+
+        return (
+          <div key={idx} className="relative">
+            {/* Compact Card */}
+            <div
+              className="p-4 bg-[#0e1513] border border-[#1b2b27] rounded-md shadow-inner shadow-[#00ff9d22] cursor-pointer hover:shadow-lg transition-all"
+              onClick={() => setIsOpen(!isOpen)}
+            >
+              <h4 className="text-green-300 font-semibold mb-1">{job.Title}</h4>
+              <p className="text-sm text-gray-400">{job.Location}</p>
+              {job.link && (
+                <a
+                  href={job.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green-400 underline text-sm mt-2 inline-block"
+                  onClick={(e) => e.stopPropagation()} // Prevent card toggle
+                >
+                  View Full Job
+                </a>
+              )}
+            </div>
+
+            {/* Expanded Card */}
+            {isOpen && (
+              <div className="mt-2 p-4 bg-[#1f2937] border border-[#2a3a2e] rounded-md shadow-inner shadow-[#00ff9d33] z-10 relative">
+                {Object.keys(job).map((key) => {
+                  // Skip some nested system keys
+                  if (["_id", "__v"].includes(key)) return null;
+
+                  return (
+                    <div key={key} className="mb-2">
+                      <span className="font-semibold text-green-300">{key}: </span>
+                      {key === "link" || key === "applyUrl" ? (
+                        <a
+                          href={job[key]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-400 underline"
+                        >
+                          {job[key]}
+                        </a>
+                      ) : (
+                        <span className="text-gray-300">{job[key]}</span>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
           </div>
-        ) : (
-          <p className="text-gray-500 italic">
-            No jobs available for the current user.
-          </p>
-        )}
-      </div>
+        );
+      })}
+    </div>
+  ) : (
+    <p className="text-gray-500 italic">No jobs available for the current user.</p>
+  )}
+</div>
+
 
       {/* Response from the new search */}
       {response && Array.isArray(response) && (

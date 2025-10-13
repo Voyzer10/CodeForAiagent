@@ -27,6 +27,14 @@ router.get("/", auth, (req, res, next) => {
   next();
 }, getUserJobs);
 
+// ✅ Get jobs for a specific user (by userId param)
+router.get("/:userId",  auth,(req, res, next) => {
+  console.log(`➡️ GET /api/userjobs/${req.params.userId} - Fetch jobs by userId`);
+  next();
+}, getUserJobs);
+
+
+
 
 /**
  * =========================

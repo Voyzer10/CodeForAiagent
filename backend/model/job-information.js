@@ -18,6 +18,6 @@ const JobSchema = new mongoose.Schema({
   inputUrl: { type: String },
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
   jobPosterId: { type: mongoose.Schema.Types.ObjectId, ref: 'JobPoster', required: true }
-});
+},{ collection: "Job-Information" });
 
-module.exports = mongoose.models.Job || mongoose.model('Job-information', JobSchema);
+module.exports = mongoose.models.Job || mongoose.model("Job", JobSchema);

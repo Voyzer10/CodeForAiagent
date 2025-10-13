@@ -85,30 +85,35 @@ const createJob = async (req, res) => {
 };
 
 
-// ✅ Get jobs by authenticated user (User Panel)
+
+// ✅ Get jobs by authenticated user or specific userId
 const getUserJobs = async (req, res) => {
-  const userId = req.user?.id;
+  // Support both token-based and param-based queries
+  const userId = Number(req.params.userId || req.user?.id);
+
   if (!userId) {
-    console.warn("❌ No userId found in request (unauthorized)");
-    return res.status(401).json({ error: "Unauthorized" });
+    return res.status(401).json({ error: "Unauthorized: Missing user ID" });
   }
 
   try {
-    console.log("📡 Fetching jobs for userId:", userId);
-    const jobs = await Job.find({ userId }).sort({ createdAt: -1 }); // latest first
+    console.log("📡 Fetching jobs for UserID:", userId);
+
+    // ✅ Use correct DB field name (UserID)
+    const jobs = await Job.find({ UserID: userId }).sort({ Posted_At: -1 });
 
     if (!jobs.length) {
-      console.log("ℹ️ No jobs found for this user:", userId);
-    } else {
-      console.log(`✅ Found ${jobs.length} jobs for user ${userId}`);
+      console.log("ℹ️ No jobs found for UserID:", userId);
+      return res.json({ jobs: [] });
     }
 
-    return res.json(jobs);
+    console.log(`✅ Found ${jobs.length} jobs for UserID ${userId}`);
+    return res.json({ jobs });
   } catch (err) {
     console.error("🔥 Error in getUserJobs:", err);
     return res.status(500).json({ error: err.message });
   }
 };
+
 
 // ✅ Admin only: Get all jobs from all users (Admin Panel)
 const getAllUserJobs = async (req, res) => {
