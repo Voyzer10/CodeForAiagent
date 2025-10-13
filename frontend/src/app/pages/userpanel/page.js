@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import LocationDropdown from "../../components/LocationDropdown";
 import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
@@ -169,6 +170,16 @@ export default function UserPanel() {
               placeholder="e.g., Bangalore, India"
               className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
+            <label className="flex items-center gap-2 text-gray-400 text-sm mb-1">
+              Location
+            </label>
+            <div className="[&_*]:!text-sm">
+              <LocationDropdown
+                value={location}
+                onChange={setLocation}
+                placeholder="Search city, area, or PIN"
+              />
+            </div>
           </div>
 
           {/* LinkedIn */}
