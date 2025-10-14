@@ -1810,3 +1810,618 @@
 [2025-10-14T16:45:44.702Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
 [2025-10-14T16:45:44.704Z] 📡 Fetching jobs for UserID: 87356
 [2025-10-14T16:45:44.851Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T17:54:45.529Z] 🚀 Server running on http://localhost:5000
+[2025-10-14T17:54:46.598Z] ✅ MongoDB connected
+[2025-10-14T17:54:46.650Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-14T17:54:50.730Z] 🔹 Login attempt: garvit@gmail.com
+[2025-10-14T17:54:51.001Z] 🔹 Login attempt: garvit@gmail.com
+[2025-10-14T17:54:51.030Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODczNTYsImVtYWlsIjoiZ2Fydml0QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzYwNDY0NDkxLCJleHAiOjE3NjA0Nzg4OTF9.t2fuS-WGWOI8QqGxHqYxv-LcUi7se-T1q6HEqGyePi8
+[2025-10-14T17:54:51.141Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODczNTYsImVtYWlsIjoiZ2Fydml0QGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzYwNDY0NDkxLCJleHAiOjE3NjA0Nzg4OTF9.t2fuS-WGWOI8QqGxHqYxv-LcUi7se-T1q6HEqGyePi8
+[2025-10-14T17:54:51.530Z] Cookies received: [object Object]
+[2025-10-14T17:54:51.548Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:54:51.601Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:54:51.613Z] Cookies received: [object Object]
+[2025-10-14T17:54:51.692Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:54:51.741Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:54:51.756Z] Cookies received: [object Object]
+[2025-10-14T17:54:51.758Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:54:51.763Z] Cookies received: [object Object]
+[2025-10-14T17:54:51.766Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T17:54:51.768Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T17:54:51.794Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:54:51.798Z] Cookies received: [object Object]
+[2025-10-14T17:54:51.800Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:54:51.837Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:54:52.334Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T17:54:52.352Z] Cookies received: [object Object]
+[2025-10-14T17:54:52.355Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T17:54:52.356Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T17:54:52.520Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T17:56:17.627Z] Cookies received: [object Object]
+[2025-10-14T17:56:17.859Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:56:17.945Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:56:17.958Z] Cookies received: [object Object]
+[2025-10-14T17:56:17.961Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:56:18.001Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:56:18.009Z] Cookies received: [object Object]
+[2025-10-14T17:56:18.011Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T17:56:18.012Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T17:56:18.367Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T17:58:41.440Z] Cookies received: [object Object]
+[2025-10-14T17:58:41.579Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:58:41.629Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:58:41.633Z] Cookies received: [object Object]
+[2025-10-14T17:58:41.634Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:58:41.672Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T17:58:41.872Z] Cookies received: [object Object]
+[2025-10-14T17:58:41.876Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T17:58:41.877Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T17:58:42.244Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:03:54.238Z] Cookies received: [object Object]
+[2025-10-14T18:03:54.492Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:03:54.586Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:04:31.251Z] Cookies received: [object Object]
+[2025-10-14T18:04:31.255Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:04:31.292Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:04:31.299Z] Cookies received: [object Object]
+[2025-10-14T18:04:31.300Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:04:31.301Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:04:31.617Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:04:33.176Z] Cookies received: [object Object]
+[2025-10-14T18:04:33.179Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:04:33.223Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:04:33.230Z] Cookies received: [object Object]
+[2025-10-14T18:04:33.232Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:04:33.232Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:04:33.530Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:04:35.751Z] Cookies received: [object Object]
+[2025-10-14T18:04:35.753Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:04:35.800Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:04:36.009Z] Cookies received: [object Object]
+[2025-10-14T18:04:36.010Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:04:36.011Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:04:36.287Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:04:41.620Z] Cookies received: [object Object]
+[2025-10-14T18:04:41.624Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:04:41.662Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:04:41.769Z] Cookies received: [object Object]
+[2025-10-14T18:04:41.770Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:04:41.771Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:04:42.048Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:05:04.245Z] Cookies received: [object Object]
+[2025-10-14T18:05:04.251Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:05:04.294Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:05:04.324Z] Cookies received: [object Object]
+[2025-10-14T18:05:04.325Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:05:04.326Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:05:04.603Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:06:20.377Z] Cookies received: [object Object]
+[2025-10-14T18:06:20.380Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:06:20.422Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:06:20.519Z] Cookies received: [object Object]
+[2025-10-14T18:06:20.521Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:06:20.521Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:06:21.404Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:06:36.541Z] Cookies received: [object Object]
+[2025-10-14T18:06:36.545Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:06:36.598Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:06:36.938Z] Cookies received: [object Object]
+[2025-10-14T18:06:36.940Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:06:36.941Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:06:37.253Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:07:38.204Z] Cookies received: [object Object]
+[2025-10-14T18:07:38.206Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:07:38.243Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:07:38.334Z] Cookies received: [object Object]
+[2025-10-14T18:07:38.335Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:07:38.336Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:07:38.616Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:17:49.334Z] Cookies received: [object Object]
+[2025-10-14T18:17:49.641Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:17:49.799Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:17:49.823Z] Cookies received: [object Object]
+[2025-10-14T18:17:49.825Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:17:49.826Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:17:50.199Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:20:06.338Z] Cookies received: [object Object]
+[2025-10-14T18:20:06.386Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:20:06.460Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:20:06.760Z] Cookies received: [object Object]
+[2025-10-14T18:20:06.764Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:20:06.768Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:20:07.047Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:20:20.813Z] Cookies received: [object Object]
+[2025-10-14T18:20:20.814Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:20:20.851Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:20:20.950Z] Cookies received: [object Object]
+[2025-10-14T18:20:20.951Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:20:20.952Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:20:21.218Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:20:21.376Z] Cookies received: [object Object]
+[2025-10-14T18:20:21.377Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:20:21.419Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:20:21.422Z] Cookies received: [object Object]
+[2025-10-14T18:20:21.423Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:20:21.458Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:21:53.816Z] Cookies received: [object Object]
+[2025-10-14T18:21:53.818Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:21:53.866Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:21:53.967Z] Cookies received: [object Object]
+[2025-10-14T18:21:53.968Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:21:53.969Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:21:54.240Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:21:54.388Z] Cookies received: [object Object]
+[2025-10-14T18:21:54.389Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:21:54.426Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:21:54.428Z] Cookies received: [object Object]
+[2025-10-14T18:21:54.430Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:21:54.468Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:22:57.636Z] Cookies received: [object Object]
+[2025-10-14T18:22:57.641Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:22:57.676Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:22:57.830Z] Cookies received: [object Object]
+[2025-10-14T18:22:57.831Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:22:57.832Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:22:58.114Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:23:04.370Z] Cookies received: [object Object]
+[2025-10-14T18:23:04.374Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:23:04.411Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:23:04.855Z] Cookies received: [object Object]
+[2025-10-14T18:23:04.906Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:23:04.907Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:23:05.181Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:23:55.960Z] Cookies received: [object Object]
+[2025-10-14T18:23:55.965Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:23:56.005Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:23:57.646Z] Cookies received: [object Object]
+[2025-10-14T18:23:57.651Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:23:57.652Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:23:57.993Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:23:58.226Z] Cookies received: [object Object]
+[2025-10-14T18:23:58.240Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:23:58.275Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:23:58.279Z] Cookies received: [object Object]
+[2025-10-14T18:23:58.287Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:23:58.325Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:26:21.791Z] Cookies received: [object Object]
+[2025-10-14T18:26:21.793Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:26:21.921Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:26:21.957Z] Cookies received: [object Object]
+[2025-10-14T18:26:21.958Z] ➡️ GET /api/userjobs/87356 - Fetch jobs by userId
+[2025-10-14T18:26:21.959Z] 📡 Fetching jobs for UserID: 87356
+[2025-10-14T18:26:22.249Z] ✅ Found 100 jobs for UserID 87356
+[2025-10-14T18:26:22.507Z] Cookies received: [object Object]
+[2025-10-14T18:26:22.509Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:26:22.545Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
+[2025-10-14T18:26:22.548Z] Cookies received: [object Object]
+[2025-10-14T18:26:22.549Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T18:26:22.582Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T16:55:24.014Z,
+    expiresAt: 2025-11-08T16:55:24.014Z
+  },
+  _id: new ObjectId('68e15742be94ad35431743ae'),
+  name: 'Garvit',
+  email: 'garvit@gmail.com',
+  role: 'user',
+  userId: 87356,
+  __v: 0
+}
