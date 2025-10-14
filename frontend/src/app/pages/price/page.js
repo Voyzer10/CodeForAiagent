@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function Price() {
     const [selectedPlan, setSelectedPlan] = useState(null);
+    const [paymentStatus, setPaymentStatus] = useState(null); // ✅ new: success or failure
 
     const plans = [
         {
@@ -43,23 +44,37 @@ export default function Price() {
         },
     ];
 
-    // Razorpay Payment Handler
+    // ✅ Ensure Razorpay script loaded
+    const loadRazorpay = () => {
+        if (!window.Razorpay) {
+            const script = document.createElement("script");
+            script.src = "https://checkout.razorpay.com/v1/checkout.js";
+            script.onload = () => console.log("Razorpay script loaded");
+            document.body.appendChild(script);
+        }
+    };
+    useEffect(() => {
+        loadRazorpay();
+    }, []);
+
+    // ✅ Handle Payment Flow
     const handlePayment = async (plan) => {
         setSelectedPlan(plan.name);
+        setPaymentStatus(null);
 
         try {
-            // 1️⃣ Create order on backend
+            // 1️⃣ Create Order
             const res = await fetch("http://localhost:5000/api/payment/order", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                credentials: "include", // send cookies for auth
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
                 body: JSON.stringify({ planType: plan.name.toLowerCase() }),
             });
 
+            if (!res.ok) throw new Error("Order creation failed");
+
             const order = await res.json();
-            if (!order.id) throw new Error("Order creation failed");
+            if (!order.id) throw new Error("Order ID missing");
 
             // 2️⃣ Configure Razorpay
             const options = {
@@ -71,19 +86,9 @@ export default function Price() {
                 order_id: order.id,
                 handler: async function (response) {
                     try {
-
-                        console.log("🟢 Sending payment verification request...", {
-                            orderId: response.razorpay_order_id,
-                            paymentId: response.razorpay_payment_id,
-                            signature: response.razorpay_signature,
-                            planType: plan.name.toLowerCase(),
-                        });
-                        // 3️⃣ Verify payment on backend
                         const verifyRes = await fetch("http://localhost:5000/api/payment/verify", {
                             method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                            },
+                            headers: { "Content-Type": "application/json" },
                             credentials: "include",
                             body: JSON.stringify({
                                 razorpay_order_id: response.razorpay_order_id,
@@ -92,53 +97,42 @@ export default function Price() {
                                 planType: plan.name.toLowerCase(),
                             }),
                         });
-                        console.log("📤 Request sent, waiting for response...");
                         const data = await verifyRes.json();
-                        console.log("📥 Verification response received:", data);
                         if (verifyRes.ok && data.success) {
+                            setPaymentStatus("success");
                             alert(`✅ Payment Successful for ${plan.name}!`);
-                            window.location.reload(); // refresh user panel
                         } else {
-                            console.warn("⚠️ Payment verification failed:", data);
+                            setPaymentStatus("failed");
                             alert("⚠️ Payment verification failed. Please contact support.");
                         }
                     } catch (err) {
                         console.error("Error verifying payment:", err);
+                        setPaymentStatus("failed");
                         alert("❌ Payment verification failed.");
                     }
                 },
-                prefill: {
-                    name: "Your Name",
-                    email: "user@example.com",
-                },
-                theme: {
-                    color: "#00ff9d",
-                },
+                prefill: { name: "Your Name", email: "user@example.com" },
+                theme: { color: "#00ff9d" },
             };
 
             const razor = new window.Razorpay(options);
             razor.open();
         } catch (err) {
             console.error("Payment error:", err);
-            alert("Failed to start payment. Please try again.");
+            setPaymentStatus("not_initiated"); // ✅ new state
+            alert("❌ Payment not initiated. Please try again.");
+
+            // Reset button back to default after 3s
+            setTimeout(() => {
+                setSelectedPlan(null);
+                setPaymentStatus(null);
+            }, 3000);
         }
     };
 
-    // Ensure Razorpay script is loaded
-    const loadRazorpay = () => {
-        if (!window.Razorpay) {
-            const script = document.createElement("script");
-            script.src = "https://checkout.razorpay.com/v1/checkout.js";
-            script.onload = () => console.log("Razorpay script loaded");
-            document.body.appendChild(script);
-        }
-    };
-
-    // Load script once
-    if (typeof window !== "undefined") loadRazorpay();
 
     return (
-        <div className="min-h-screen bg-[#0b0e11] text-white flex flex-col items-center px-6 py-12">
+        <div className="min-h-screen bg-[#0b0e11] text-white flex flex-col items-center px-6 py-14">
             {/* Header */}
             <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-4">
                 Choose Your <span className="text-[#00ff9d]">Plan</span>
@@ -146,6 +140,23 @@ export default function Price() {
             <p className="text-gray-400 text-center max-w-2xl mb-12">
                 Select a plan and securely pay with Razorpay.
             </p>
+
+            {/* ✅ Payment Status Display */}
+            {paymentStatus === "success" && (
+                <div className="bg-green-900/30 border border-green-500 text-green-400 px-6 py-4 rounded-xl mb-6 text-center">
+                    🎉 Payment Successful! You’ve unlocked the {selectedPlan} Plan.
+                </div>
+            )}
+            {paymentStatus === "failed" && (
+                <div className="bg-red-900/30 border border-red-500 text-red-400 px-6 py-4 rounded-xl mb-6 text-center">
+                    ❌ Payment Failed! Please try again.
+                </div>
+            )}
+            {selectedPlan && !paymentStatus && (
+                <div className="bg-[#111827] border border-[#1b2b27] text-gray-300 px-6 py-4 rounded-xl mb-6 text-center">
+                    🛒 Selected Plan: <span className="text-[#00ff9d]">{selectedPlan}</span>
+                </div>
+            )}
 
             {/* Pricing Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
@@ -173,8 +184,11 @@ export default function Price() {
                             onClick={() => handlePayment(plan)}
                             className="w-full py-3 bg-[#00ff9d] text-black font-semibold rounded-xl hover:bg-[#00e68a] transition"
                         >
-                            {selectedPlan === plan.name ? "Processing..." : "Get Started"}
+                            {selectedPlan === plan.name && paymentStatus === null && "Processing..."}
+                            {selectedPlan === plan.name && paymentStatus === "not_initiated" && "Payment Not Initiated"}
+                            {(!selectedPlan || selectedPlan !== plan.name || paymentStatus) && "Get Started"}
                         </button>
+
                     </div>
                 ))}
             </div>

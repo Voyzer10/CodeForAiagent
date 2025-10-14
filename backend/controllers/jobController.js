@@ -1,6 +1,6 @@
 const Job = require("../model/job-information");
 const fetch = require("node-fetch");
-const User = require("../model/User"); 
+const User = require("../model/User");
 
 // ✅ Create job (already working fine, no changes)
 const createJob = async (req, res) => {
@@ -26,13 +26,17 @@ const createJob = async (req, res) => {
       return res.status(403).json({ message: "No active subscription" });
     }
 
-    if (user.plan.remainingJobs <= 0) {
-      return res.status(403).json({ message: "Job limit reached. Please upgrade." });
+    // 2️⃣ Check job credits
+    if (user.plan.remainingJobs < 100) {
+      return res.status(403).json({
+        message: "Not enough credits. Each search uses 100 credits. Please upgrade your plan.",
+      });
     }
 
-    // 3️⃣ Deduct one job credit
-    user.plan.remainingJobs -= 1;
+    // 3️⃣ Deduct 100 job credits per search
+    user.plan.remainingJobs -= 100;
     await user.save();
+
 
     console.log("➡️ Incoming request:", { prompt, userId });
     const sessionId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
