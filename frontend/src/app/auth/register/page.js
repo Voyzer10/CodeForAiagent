@@ -50,7 +50,7 @@ export default function RegisterPage() {
     }
 
     return (
-        <div className="min-h-screen md:min-h-[1440px] w-full relative flex items-center justify-center bg-[#030604] px-4 py-12">
+        <div className="min-h-screen md:min-h-[1150px] w-full relative flex items-center justify-center bg-[#030604] px-4 pb-12">
             {/* Figma background dots and soft circles */}
             <div className="pointer-events-none absolute inset-0 hidden md:flex items-center justify-center">
                 <div className="relative" style={{ width: 1440, height: 1440 }}>

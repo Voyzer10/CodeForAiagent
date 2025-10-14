@@ -44,3 +44,14 @@
     at Layer.handleRequest (E:\aijobsearchagent\CodeForAiagent\backend\node_modules\router\lib\layer.js:152:17)
     at E:\aijobsearchagent\CodeForAiagent\backend\node_modules\router\index.js:295:15
     at processParams (E:\aijobsearchagent\CodeForAiagent\backend\node_modules\router\index.js:582:12)
+[2025-10-14T16:24:17.956Z] ❌ Server Error: TypeError: Cannot convert object to primitive value
+    at Array.join (<anonymous>)
+    at console.log (D:\Geraa N8N\CodeForAiagent\backend\server.js:54:24)
+    at auth (D:\Geraa N8N\CodeForAiagent\backend\middleware\authMiddleware.js:6:11)
+    at Layer.handleRequest (D:\Geraa N8N\CodeForAiagent\backend\node_modules\router\lib\layer.js:152:17)
+    at next (D:\Geraa N8N\CodeForAiagent\backend\node_modules\router\lib\route.js:157:13)
+    at Route.dispatch (D:\Geraa N8N\CodeForAiagent\backend\node_modules\router\lib\route.js:117:3)
+    at handle (D:\Geraa N8N\CodeForAiagent\backend\node_modules\router\index.js:435:11)
+    at Layer.handleRequest (D:\Geraa N8N\CodeForAiagent\backend\node_modules\router\lib\layer.js:152:17)
+    at D:\Geraa N8N\CodeForAiagent\backend\node_modules\router\index.js:295:15
+    at processParams (D:\Geraa N8N\CodeForAiagent\backend\node_modules\router\index.js:582:12)
