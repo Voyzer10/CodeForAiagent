@@ -1940,3 +1940,386 @@
 [2025-10-14T16:51:11.779Z] 🚀 Server running on http://localhost:5000
 [2025-10-14T16:51:12.782Z] ✅ MongoDB connected
 [2025-10-14T16:51:12.835Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-14T16:53:13.536Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:13.961Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:28.953Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:29.050Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:29.936Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:30.077Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:31.864Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:31.959Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:32.160Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:32.258Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:32.528Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:32.634Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:32.728Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:32.826Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:40.832Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:40.927Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:42.560Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:42.652Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:43.256Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:43.371Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:47.489Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:47.588Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:48.024Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:48.137Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:48.384Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:48.486Z] ❌ Invalid password for: vaibhav@gmail.com
+[2025-10-14T16:53:53.377Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:53:53.676Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjUyNjcsImVtYWlsIjoidmFpYmhhdkBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MDQ2MDgzMywiZXhwIjoxNzYwNDc1MjMzfQ.LoPTF02257Ubx6hGZc5HmMi4z5P3WH88fJC4wmGOFOU
+[2025-10-14T16:53:53.827Z] Cookies received: [object Object]
+[2025-10-14T16:53:53.829Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:53:53.917Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:53:53.919Z] Cookies received: [object Object]
+[2025-10-14T16:53:53.920Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:53:53.967Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:53:53.969Z] Cookies received: [object Object]
+[2025-10-14T16:53:53.970Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:53:53.972Z] Cookies received: [object Object]
+[2025-10-14T16:53:53.973Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:53:53.974Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:53:54.030Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:53:54.031Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:53:54.032Z] Cookies received: [object Object]
+[2025-10-14T16:53:54.032Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:53:54.074Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:53:54.077Z] Cookies received: [object Object]
+[2025-10-14T16:53:54.078Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:53:54.078Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:53:54.123Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:54:36.589Z] 🔹 Login attempt: vaibhav@gmail.com
+[2025-10-14T16:54:36.695Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MjUyNjcsImVtYWlsIjoidmFpYmhhdkBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MDQ2MDg3NiwiZXhwIjoxNzYwNDc1Mjc2fQ.k103is6NxPgjC21mqJmLkCDBHl4p-cgiBAXMJRfP6Yo
+[2025-10-14T16:54:36.797Z] Cookies received: [object Object]
+[2025-10-14T16:54:36.798Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:54:36.838Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:54:36.841Z] Cookies received: [object Object]
+[2025-10-14T16:54:36.842Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:54:36.895Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:54:36.896Z] Cookies received: [object Object]
+[2025-10-14T16:54:36.897Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:54:36.898Z] Cookies received: [object Object]
+[2025-10-14T16:54:36.899Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:54:36.899Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:54:36.944Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:54:36.945Z] Cookies received: [object Object]
+[2025-10-14T16:54:36.946Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:54:36.954Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:54:36.991Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:54:36.994Z] Cookies received: [object Object]
+[2025-10-14T16:54:36.994Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:54:36.995Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:54:37.033Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:55:11.387Z] Cookies received: [object Object]
+[2025-10-14T16:55:11.431Z] ⚠️ No active plan for userId: 25267
+[2025-10-14T16:55:18.032Z] Cookies received: [object Object]
+[2025-10-14T16:55:18.033Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:55:18.076Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:55:18.077Z] Cookies received: [object Object]
+[2025-10-14T16:55:18.078Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:55:18.118Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:55:18.120Z] Cookies received: [object Object]
+[2025-10-14T16:55:18.122Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:55:18.126Z] Cookies received: [object Object]
+[2025-10-14T16:55:18.128Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:55:18.131Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:55:18.167Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:55:18.168Z] Cookies received: [object Object]
+[2025-10-14T16:55:18.168Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:55:18.178Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:55:18.214Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:55:18.216Z] Cookies received: [object Object]
+[2025-10-14T16:55:18.216Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:55:18.216Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:55:18.282Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:55:45.163Z] Cookies received: [object Object]
+[2025-10-14T16:55:45.210Z] ⚠️ No active plan for userId: 25267
+[2025-10-14T16:55:48.683Z] Cookies received: [object Object]
+[2025-10-14T16:55:48.684Z] 🟢 createOrder called with planType: starter
+[2025-10-14T16:55:48.713Z] 💳 Creating Razorpay order with options: [object Object]
+[2025-10-14T16:55:50.074Z] ✅ Razorpay order created: [object Object]
+[2025-10-14T16:56:06.828Z] Cookies received: [object Object]
+[2025-10-14T16:56:06.829Z] 🟢 createOrder called with planType: starter
+[2025-10-14T16:56:06.829Z] 💳 Creating Razorpay order with options: [object Object]
+[2025-10-14T16:56:07.205Z] ✅ Razorpay order created: [object Object]
+[2025-10-14T16:57:57.195Z] Cookies received: [object Object]
+[2025-10-14T16:57:57.195Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:57:57.245Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:57:57.247Z] Cookies received: [object Object]
+[2025-10-14T16:57:57.248Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:57:57.287Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:57:57.288Z] Cookies received: [object Object]
+[2025-10-14T16:57:57.289Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:57:57.291Z] Cookies received: [object Object]
+[2025-10-14T16:57:57.292Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:57:57.292Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:57:57.328Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:57:57.329Z] Cookies received: [object Object]
+[2025-10-14T16:57:57.330Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T16:57:57.333Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:57:57.381Z] 🔹 DB lookup result: {
+  plan: { type: null, remainingJobs: 0 },
+  _id: new ObjectId('68ee7c9d8fa4794fb4612581'),
+  name: 'Vaibhav Jaitly',
+  email: 'vaibhav@gmail.com',
+  role: 'user',
+  userId: 25267,
+  __v: 0
+}
+[2025-10-14T16:57:57.384Z] Cookies received: [object Object]
+[2025-10-14T16:57:57.385Z] ➡️ GET /api/userjobs/25267 - Fetch jobs by userId
+[2025-10-14T16:57:57.385Z] 📡 Fetching jobs for UserID: 25267
+[2025-10-14T16:57:57.437Z] ℹ️ No jobs found for UserID: 25267
+[2025-10-14T16:58:02.365Z] Cookies received: [object Object]
+[2025-10-14T16:58:02.366Z] 🟢 createOrder called with planType: starter
+[2025-10-14T16:58:02.366Z] 💳 Creating Razorpay order with options: [object Object]
+[2025-10-14T16:58:02.632Z] ✅ Razorpay order created: [object Object]
+[2025-10-14T16:58:24.735Z] Cookies received: [object Object]
+[2025-10-14T16:58:24.736Z] 🟢 createOrder called with planType: starter
+[2025-10-14T16:58:24.736Z] 💳 Creating Razorpay order with options: [object Object]
+[2025-10-14T16:58:25.147Z] ✅ Razorpay order created: [object Object]
+[2025-10-14T16:58:41.998Z] Cookies received: [object Object]
+[2025-10-14T16:58:41.999Z] 🟢 createOrder called with planType: professional
+[2025-10-14T16:58:41.999Z] 💳 Creating Razorpay order with options: [object Object]
+[2025-10-14T16:58:42.239Z] ✅ Razorpay order created: [object Object]
+[2025-10-14T17:00:58.323Z] 🚀 Server running on http://localhost:5000
+[2025-10-14T17:00:59.310Z] ✅ MongoDB connected
+[2025-10-14T17:00:59.367Z] 📂 Collections in DB: job-informations,jobs,Application-Tracking,adminusers,Job-Information,Job Poster Information,Company-Information,oldjobs,applicants
+[2025-10-14T17:01:19.901Z] Cookies received: [object Object]
+[2025-10-14T17:01:19.902Z] 🟢 createOrder called with planType: starter
+[2025-10-14T17:01:19.903Z] 💳 Creating Razorpay order with options: [object Object]
+[2025-10-14T17:01:21.492Z] ✅ Razorpay order created: [object Object]
+[2025-10-14T17:01:57.572Z] Cookies received: [object Object]
+[2025-10-14T17:01:57.573Z] 🟢 createOrder called with planType: starter
+[2025-10-14T17:01:57.573Z] 💳 Creating Razorpay order with options: [object Object]
+[2025-10-14T17:01:57.941Z] ✅ Razorpay order created: [object Object]
+[2025-10-14T17:05:47.672Z] 🔹 Login attempt: geraansh20@gmail.com
+[2025-10-14T17:05:47.776Z] ✅ JWT created: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ODU5NTksImVtYWlsIjoiZ2VyYWFuc2gyMEBnbWFpbC5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc2MDQ2MTU0NywiZXhwIjoxNzYwNDc1OTQ3fQ.ToNpK1WmeZDvbq4V0feAQBF5GJb2sSlIjIPQShqAaF8
+[2025-10-14T17:05:48.635Z] Cookies received: [object Object]
+[2025-10-14T17:05:48.636Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:05:48.707Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-14T17:05:48.709Z] Cookies received: [object Object]
+[2025-10-14T17:05:48.725Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:05:48.772Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-14T17:05:48.774Z] Cookies received: [object Object]
+[2025-10-14T17:05:48.775Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:05:48.776Z] Cookies received: [object Object]
+[2025-10-14T17:05:48.777Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-14T17:05:48.777Z] 📡 Fetching jobs for UserID: 85959
+[2025-10-14T17:05:48.825Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-14T17:05:48.827Z] Cookies received: [object Object]
+[2025-10-14T17:05:48.828Z] 🔹 Decoded user from token: [object Object]
+[2025-10-14T17:05:48.876Z] 🔹 DB lookup result: {
+  plan: {
+    type: 'starter',
+    remainingJobs: 497,
+    purchasedAt: 2025-10-09T17:04:51.223Z,
+    expiresAt: 2025-11-08T17:04:51.223Z
+  },
+  _id: new ObjectId('68e3631786016506ff193e3c'),
+  name: 'Ansh Gera',
+  email: 'geraansh20@gmail.com',
+  role: 'user',
+  userId: 85959,
+  __v: 0
+}
+[2025-10-14T17:05:49.330Z] ✅ Found 100 jobs for UserID 85959
+[2025-10-14T17:05:49.407Z] Cookies received: [object Object]
+[2025-10-14T17:05:49.408Z] ➡️ GET /api/userjobs/85959 - Fetch jobs by userId
+[2025-10-14T17:05:49.408Z] 📡 Fetching jobs for UserID: 85959
+[2025-10-14T17:05:49.757Z] ✅ Found 100 jobs for UserID 85959
+[2025-10-14T17:14:18.911Z] Updated Admin: {
+  _id: new ObjectId('68e2583fa91c2cdbd8228c60'),
+  name: 'admin',
+  email: 'admin@gmail.com',
+  password: '$2b$10$5Fl9WJ89Kf353TiMD2mx/eFDI60QJicM/RhZFk5fTx36GE3kohjPG',
+  role: 'admin',
+  createdAt: 2025-10-05T11:36:31.836Z,
+  updatedAt: 2025-10-14T17:14:18.859Z,
+  __v: 0,
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZTI1ODNmYTkxYzJjZGJkODIyOGM2MCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYwNDYyMDU4LCJleHAiOjE3NjA0NjU2NTh9.kHIp1gbjoi6f8HuRWOz-8GMTRB93KEKDIL4_2_g7zJQ'
+}
+[2025-10-14T17:14:20.985Z] Cookies received: [object Object]
+[2025-10-14T17:14:20.986Z] ➡️ GET /api/userjobs/all - Fetch jobs by userId
+[2025-10-14T17:14:20.988Z] 🔹 Fetching all users
+[2025-10-14T17:14:24.652Z] Cookies received: [object Object]
+[2025-10-14T17:14:24.653Z] ➡️ GET /api/userjobs/all - Fetch jobs by userId
+[2025-10-14T17:14:24.654Z] 🔹 Fetching all users
+[2025-10-14T17:14:43.428Z] Updated Admin: {
+  _id: new ObjectId('68e2583fa91c2cdbd8228c60'),
+  name: 'admin',
+  email: 'admin@gmail.com',
+  password: '$2b$10$5Fl9WJ89Kf353TiMD2mx/eFDI60QJicM/RhZFk5fTx36GE3kohjPG',
+  role: 'admin',
+  createdAt: 2025-10-05T11:36:31.836Z,
+  updatedAt: 2025-10-14T17:14:43.383Z,
+  __v: 0,
+  token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZTI1ODNmYTkxYzJjZGJkODIyOGM2MCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzYwNDYyMDgzLCJleHAiOjE3NjA0NjU2ODN9.5H8n81BA_CHo97wB1dqsbw8-GN3G4h17SvFP5DAD0Oc'
+}
+[2025-10-14T17:14:43.764Z] Cookies received: [object Object]
+[2025-10-14T17:14:43.786Z] ➡️ GET /api/userjobs/all - Fetch jobs by userId
+[2025-10-14T17:14:43.787Z] 🔹 Fetching all users
+[2025-10-14T17:14:47.399Z] Cookies received: [object Object]
+[2025-10-14T17:14:47.400Z] ➡️ GET /api/userjobs/all - Fetch jobs by userId
+[2025-10-14T17:14:47.401Z] 🔹 Fetching all users
+[2025-10-14T17:14:48.660Z] 🔹 Fetching all users
+[2025-10-14T17:14:48.662Z] 🔹 Fetching all users
