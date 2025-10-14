@@ -29,11 +29,11 @@ export default function UserNavbar({ onSidebarToggle }) {
         fetchUser();
     }, []);
     return (
-        <nav className="flex justify-between  fixed items-center w-full bg-[#0a0f0d] p-4 text-white  z-50">
+        <nav className="flex justify-between  fixed items-center w-full bg-[#0a0f0d] p-4 text-white  z-50 cursor-pointer">
             {/* Left: Hamburger */}
             <button
                 onClick={onSidebarToggle}
-                className="text-2xl focus:outline-none"
+                className="text-2xl focus:outline-none cursor-pointer py-3"
             >
                 <svg
                     width="22"
