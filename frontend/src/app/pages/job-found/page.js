@@ -67,7 +67,7 @@ export default function JobFound() {
             <Sidebar isOpen={sidebarOpen} />
 
             <div className="flex-1 p-6 md:p-10">
-                <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2">
+                <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10 ">
                     Your Saved Jobs
                 </h2>
 
