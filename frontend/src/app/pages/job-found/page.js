@@ -6,12 +6,13 @@ import UserNavbar from "../userpanel/Navbar";
 export default function JobFound() {
     const [userJobs, setUserJobs] = useState([]);
     const [user, setUser] = useState(null);
-    const [selectedJob, setSelectedJob] = useState(null); // For modal open
+    const [selectedJob, setSelectedJob] = useState(null);
+    const [selectedJobs, setSelectedJobs] = useState([]); // ✅ multiple selection
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
+
+    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
     useEffect(() => {
         const fetchUserAndJobs = async () => {
@@ -47,6 +48,38 @@ export default function JobFound() {
         fetchUserAndJobs();
     }, []);
 
+    // ✅ Toggle job selection
+    const toggleJobSelection = (jobId) => {
+        setSelectedJobs((prev) =>
+            prev.includes(jobId)
+                ? prev.filter((id) => id !== jobId)
+                : [...prev, jobId]
+        );
+    };
+
+    // ✅ Function to trigger N8N webhook
+    const applyJobs = async (jobsToApply) => {
+        if (!jobsToApply.length) {
+            alert("No jobs selected to apply!");
+            return;
+        }
+
+        try {
+            const webhookUrl = "http://localhost:5678/webhook-test/d776d31c-a7d9-4521-b374-1e540915ed36"; // 🔗 Replace with your actual N8N webhook
+            const res = await fetch(webhookUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ jobs: jobsToApply }),
+            });
+
+            if (!res.ok) throw new Error("Failed to trigger N8N workflow");
+            alert(`Successfully triggered apply for ${jobsToApply.length} job(s)!`);
+        } catch (err) {
+            console.error(err);
+            alert("Error applying for jobs: " + err.message);
+        }
+    };
+
     if (loading)
         return (
             <div className="flex items-center justify-center h-screen text-green-400">
@@ -67,38 +100,83 @@ export default function JobFound() {
             <Sidebar isOpen={sidebarOpen} />
 
             <div className="flex-1 p-6 md:p-10">
-                <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10 ">
-                    Your Saved Jobs
-                </h2>
+                <div className="flex justify-between items-center mt-3">
+                    <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10">
+                        Your Saved Jobs
+                    </h2>
+
+                    <div className="flex gap-3">
+                        {/* ✅ Apply Now for selected jobs */}
+                        <button
+                            onClick={() => {
+                                const jobsToApply = userJobs.filter((job) =>
+                                    selectedJobs.includes(job._id)
+                                );
+                                applyJobs(jobsToApply);
+                            }}
+                            className={`px-3 py-2 text-sm rounded-md border transition ${
+                                selectedJobs.length > 0
+                                    ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
+                                    : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+                            }`}
+                            disabled={!selectedJobs.length}
+                        >
+                            Apply Now ({selectedJobs.length})
+                        </button>
+
+                        {/* ✅ Apply All */}
+                        <button
+                            className="px-3 py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition"
+                            onClick={() => applyJobs(userJobs)}
+                        >
+                            Apply All
+                        </button>
+                    </div>
+                </div>
 
                 {userJobs.length > 0 ? (
                     <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                        {userJobs.map((job, idx) => (
-                            <div
-                                key={idx}
-                                className="p-5 bg-[#111a17] border border-[#1f2d2a] rounded-xl shadow-lg hover:shadow-green-900/20 transition-all cursor-pointer"
-                                onClick={() => setSelectedJob(job)}
-                            >
-                                <h4 className="text-green-300 font-semibold mb-1 truncate">
-                                    {job.Title}
-                                </h4>
-                                <p className="text-gray-400 text-sm mb-2">{job.Location}</p>
-
-                                <p className="text-sm text-gray-500 line-clamp-2">
-                                    {job.Description || "No description available."}
-                                </p>
-
-                                <button
-                                    className="mt-3 px-3 py-1 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition"
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedJob(job);
-                                    }}
+                        {userJobs.map((job, idx) => {
+                            const isSelected = selectedJobs.includes(job._id);
+                            return (
+                                <div
+                                    key={idx}
+                                    className={`p-5 border rounded-xl shadow-lg transition-all cursor-pointer ${
+                                        isSelected
+                                            ? "bg-green-900/20 border-green-500"
+                                            : "bg-[#111a17] border-[#1f2d2a] hover:border-green-800"
+                                    }`}
+                                    onClick={() => toggleJobSelection(job._id)}
                                 >
-                                    View Details
-                                </button>
-                            </div>
-                        ))}
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="text-green-300 font-semibold mb-1 truncate">
+                                            {job.Title}
+                                        </h4>
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => toggleJobSelection(job._id)}
+                                            className="accent-green-500 cursor-pointer"
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                    <p className="text-gray-400 text-sm mb-2">{job.Location}</p>
+                                    <p className="text-sm text-gray-500 line-clamp-2">
+                                        {job.Description || "No description available."}
+                                    </p>
+
+                                    <button
+                                        className="mt-3 px-3 py-1 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setSelectedJob(job);
+                                        }}
+                                    >
+                                        View Details
+                                    </button>
+                                </div>
+                            );
+                        })}
                     </div>
                 ) : (
                     <p className="text-gray-500 italic">
@@ -126,7 +204,9 @@ export default function JobFound() {
                                 if (["_id", "__v"].includes(key)) return null;
                                 return (
                                     <div key={key} className="text-sm">
-                                        <span className="font-semibold text-green-300">{key}: </span>
+                                        <span className="font-semibold text-green-300">
+                                            {key}:{" "}
+                                        </span>
                                         {key === "link" || key === "applyUrl" ? (
                                             <a
                                                 href={selectedJob[key]}
@@ -137,13 +217,14 @@ export default function JobFound() {
                                                 {selectedJob[key]}
                                             </a>
                                         ) : (
-                                            <span className="text-gray-300">{selectedJob[key]}</span>
+                                            <span className="text-gray-300">
+                                                {selectedJob[key]}
+                                            </span>
                                         )}
                                     </div>
                                 );
                             })}
                         </div>
-
                         {selectedJob.link && (
                             <div className="mt-6 text-center">
                                 <a
