@@ -49,15 +49,6 @@ node_modules/
 .env.local
 .env.development
 .env.production
-<<<<<<< HEAD
-
-
-# Ignore logs
+# Ignore all logs
 logs/
-*.logs
-=======
-# Ignore logs
-logs/
-*.log
-
->>>>>>> 38c08e388929b83bbaf6c7e655850c99e499a790
+!logs/.gitkeep

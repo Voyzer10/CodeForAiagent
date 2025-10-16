@@ -3,6 +3,7 @@ const {
   createJob,
   getUserJobs,
   getAllUserJobs,
+  updateJobCredits,
 } = require("../controllers/jobController");
 const auth = require("../middleware/authMiddleware");
 const adminAuth = require("../middleware/adminMiddleware");
@@ -15,7 +16,7 @@ const router = express.Router();
  * =========================
  */
 
-// ✅ Create a job (user must be logged in)
+// ✅ Create a job
 router.post("/", auth, (req, res, next) => {
   console.log("➡️ POST /api/jobs - Create job request");
   next();
@@ -28,13 +29,22 @@ router.get("/", auth, (req, res, next) => {
 }, getUserJobs);
 
 // ✅ Get jobs for a specific user (by userId param)
-router.get("/:userId",  auth,(req, res, next) => {
-  console.log(`➡️ GET /api/userjobs/${req.params.userId} - Fetch jobs by userId`);
+router.get("/:userId", auth, (req, res, next) => {
+  console.log(`➡️ GET /api/jobs/${req.params.userId} - Fetch jobs by userId`);
   next();
 }, getUserJobs);
 
+/**
+ * =========================
+ * WEBHOOK ROUTE (No Auth)
+ * =========================
+ */
 
-
+// ✅ Apify/n8n webhook for updating job credits
+router.post("/update-job-credits", (req, res, next) => {
+  console.log("➡️ POST /api/jobs/update-job-credits - Webhook received");
+  next();
+}, updateJobCredits);
 
 /**
  * =========================
@@ -42,7 +52,7 @@ router.get("/:userId",  auth,(req, res, next) => {
  * =========================
  */
 
-// ✅ Get all jobs across all users
+// ✅ Admin: Fetch all jobs
 router.get("/all", auth, adminAuth, (req, res, next) => {
   console.log("➡️ GET /api/jobs/all - Admin fetching all jobs");
   next();
