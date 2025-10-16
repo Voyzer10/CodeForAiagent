@@ -7,6 +7,7 @@ const {
 } = require("../controllers/jobController");
 const auth = require("../middleware/authMiddleware");
 const adminAuth = require("../middleware/adminMiddleware");
+const { getUserCategories, addUserCategory } = require("../controllers/userController");
 
 const router = express.Router();
 
@@ -33,6 +34,12 @@ router.get("/:userId", auth, (req, res, next) => {
   console.log(`➡️ GET /api/jobs/${req.params.userId} - Fetch jobs by userId`);
   next();
 }, getUserJobs);
+
+
+
+
+router.get("/categories/:userId", auth, getUserCategories);
+router.post("/categories/:userId", auth, addUserCategory);
 
 /**
  * =========================

@@ -37,6 +37,7 @@ const userSchema = new mongoose.Schema({
     purchasedAt: Date,
     expiresAt: Date,
   },
+  customCategories: { type: [String], default: [] },
 });
 
 module.exports = mongoose.model("User", userSchema, "applicants");
