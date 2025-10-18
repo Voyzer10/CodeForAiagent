@@ -119,13 +119,34 @@ const getUserJobs = async (req, res) => {
       return res.json({ jobs: [] });
     }
 
-    console.log(`✅ Found ${jobs.length} jobs for UserID ${userId}`);
-    return res.json({ jobs });
+    // ✅ Normalize the data before sending to frontend
+    const normalizedJobs = jobs.map((job) => ({
+      id: job._id,
+      title: job.title || "Untitled Job",
+      location: job.location || "Not specified",
+      postedAt: job.postedAt || job.Posted_At || null,
+      applicantsCount: job.applicantsCount ?? 0,
+      salary: job.salary || "Not mentioned",
+      benefits: Array.isArray(job.benefits) ? job.benefits : [],
+      description: job.descriptionText || job.descriptionHtml || "No description provided",
+      seniorityLevel: job.seniorityLevel || "Not specified",
+      employmentType: job.employmentType || "Unknown",
+      jobFunction: job.jobFunction || "Uncategorized",
+      industries: Array.isArray(job.industries) ? job.industries : [],
+      link: job.link || job.applyUrl || job.inputUrl || "#",
+      companyId: job.companyId || null,
+      jobPosterId: job.jobPosterId || null,
+    }));
+
+    console.log(`✅ Found ${normalizedJobs.length} jobs for UserID ${userId}`);
+    return res.json({ jobs: normalizedJobs });
   } catch (err) {
     console.error("🔥 Error in getUserJobs:", err);
     return res.status(500).json({ error: err.message });
   }
 };
+
+module.exports = { getUserJobs };
 
 // ✅ Admin only: Get all jobs from all users
 const getAllUserJobs = async (req, res) => {
