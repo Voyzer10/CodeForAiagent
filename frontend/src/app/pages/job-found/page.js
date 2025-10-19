@@ -66,10 +66,22 @@ export default function JobFound() {
 
         try {
             const webhookUrl = "http://localhost:5678/webhook-test/d776d31c-a7d9-4521-b374-1e540915ed36"; // 🔗 Replace with your actual N8N webhook
+            // Extend payload with validated count from localStorage if available
+            let payload = { jobs: jobsToApply };
+            try {
+                const stored = typeof window !== 'undefined' ? localStorage.getItem('selectedCount') : null;
+                const parsed = stored != null ? Number(stored) : null;
+                if (Number.isFinite(parsed)) {
+                    payload.count = parsed;
+                }
+            } catch (_e) {}
+
+            console.log("Payload to n8n:", payload);
+
             const res = await fetch(webhookUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ jobs: jobsToApply }),
+                body: JSON.stringify(payload),
             });
 
             if (!res.ok) throw new Error("Failed to trigger N8N workflow");

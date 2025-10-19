@@ -26,6 +26,10 @@ export default function UserPanel() {
   // To open card 
   const [isOpen, setIsOpen] = useState(false);
 
+  // Count field state and validation (client-side only)
+  const [count, setCount] = useState(100);
+  const [countError, setCountError] = useState("");
+
   // ✅ Step 1: Fetch current user + user's jobs
   useEffect(() => {
     const fetchUser = async () => {
@@ -65,6 +69,24 @@ export default function UserPanel() {
   // ✅ Step 2 + 3: Handle submit with payment check + prompt creation
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Client-side validation for Count; prevent submit if invalid
+    const numericCount = Number(count);
+    if (!Number.isFinite(numericCount)) {
+      setCountError("Please enter a number");
+      return;
+    }
+    if (numericCount < 100) {
+      setCountError("Minimum allowed is 100");
+      return;
+    }
+    if (numericCount > 1000) {
+      setCountError("Maximum allowed is 1000");
+      return;
+    }
+
+    // Persist for client-only downstream usage (n8n payload)
+    try { localStorage.setItem("selectedCount", String(numericCount)); } catch (_e) {}
+
     setLoading(true);
     setError(null);
     setResponse(null);
@@ -89,6 +111,7 @@ export default function UserPanel() {
         Location: ${location}
         LinkedIn: ${linkedin}
         GitHub: ${github}
+        Count: ${numericCount}
       `;
 
       // Continue to backend
@@ -162,6 +185,40 @@ export default function UserPanel() {
             />
           </div>
 
+          {/* Count */}
+          <div>
+            <label className="text-gray-400 text-sm mb-1 block">Count</label>
+            <input
+              type="number"
+              value={count}
+              onChange={(e) => {
+                const raw = e.target.value;
+                setCount(raw === "" ? "" : Number(raw));
+                // live inline validation messages
+                const num = Number(raw);
+                if (raw === "" || !Number.isFinite(num)) {
+                  setCountError("Please enter a number");
+                } else if (num < 100) {
+                  setCountError("Minimum allowed is 100");
+                } else if (num > 1000) {
+                  setCountError("Maximum allowed is 1000");
+                } else {
+                  setCountError("");
+                }
+              }}
+              min={100}
+              max={1000}
+              className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
+            {countError ? (
+              <p className="mt-1 text-xs text-red-400">{countError}</p>
+            ) : (
+              typeof count === "number" && (
+                <p className="mt-1 text-xs text-gray-300">Selected: {count}</p>
+              )
+            )}
+          </div>
+
           {/* Location */}
           <div>
             {/* <label className="text-gray-400 text-sm mb-1 block">Location</label>
@@ -218,8 +275,8 @@ export default function UserPanel() {
           {/* Button */}
           <button
             type="submit"
-            disabled={loading}
-            className="mt-3 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55]"
+            disabled={loading || Boolean(countError) || count === ""}
+            className="mt-3 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
