@@ -51,45 +51,28 @@ export default function JobFound() {
         if (!userId) throw new Error("User info missing");
 
         // 2️⃣ Get user jobs
+        // 2️⃣ Get user jobs
         const jobsRes = await fetch(`http://localhost:5000/api/userjobs/${userId}`, {
           method: "GET",
           credentials: "include",
         });
         const jobsData = await jobsRes.json();
-        if (!jobsRes.ok) throw new Error(jobsData.message || "Failed to load jobs");
 
-        const extractJob = (rawJob, index) => ({
-          _id: rawJob._id || rawJob.id || rawJob.jobId || `job-${index}-${Date.now()}`,
-          title: rawJob.title || rawJob.Title || rawJob.position || "Untitled Job",
-          company: rawJob.company || rawJob.Company || "Unknown Company",
-          descriptionText:
-            rawJob.descriptionText ||
-            rawJob.Description ||
-            rawJob.description ||
-            "",
-          descriptionHtml:
-            rawJob.descriptionHtml || rawJob.description || rawJob.Details || "",
-          location: rawJob.location || rawJob.Location || "Unknown Location",
-          employmentType: rawJob.employmentType || rawJob.type || "Unknown Type",
-          postedAt: rawJob.postedAt || rawJob.PostedAt || rawJob.date || null,
-          category: rawJob.category || rawJob.Category || "Uncategorized",
-          link: rawJob.link || rawJob.url || rawJob.JobURL || null,
-          companyId: rawJob.companyId || rawJob.CompanyId || "",
-        });
-
-        let normalizedJobs = [];
-
-        if (Array.isArray(jobsData.jobs)) {
-          normalizedJobs = jobsData.jobs.flatMap((item, idx) => {
-            if (item.jobs && Array.isArray(item.jobs)) {
-              return item.jobs.map((j, subIdx) => extractJob(j, `${idx}-${subIdx}`));
-            }
-            return [extractJob(item, idx)];
-          });
+        if (!jobsRes.ok) {
+          console.error("[JobFound] error fetching jobs:", jobsData);
+          throw new Error(jobsData.message || "Failed to load jobs");
+        } else {
+          console.debug(
+            `[JobFound] got ${Array.isArray(jobsData.jobs) ? jobsData.jobs.length : 0} jobs`
+          );
+          if (Array.isArray(jobsData.jobs)) {
+            setUserJobs(jobsData.jobs);
+            setFilteredJobs(jobsData.jobs);
+          }
         }
 
-        setUserJobs(normalizedJobs);
-        setFilteredJobs(normalizedJobs);
+
+
 
         // 3️⃣ Get categories
         const catRes = await fetch(
@@ -276,7 +259,7 @@ export default function JobFound() {
         }
       />
 
-      <div className="flex-1 p-6 md:p-10">
+      < div className="flex-1 p-6 md:p-10">
         {/* HEADER */}
         <div className="flex justify-between items-center mt-3">
           <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10">
@@ -366,11 +349,23 @@ export default function JobFound() {
         )}
 
         {/* JOBS GRID */}
-        {filteredJobs.length ? (
+        {filteredJobs.length > 0 ? (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             {filteredJobs.map((job, idx) => {
+              // ✅ Handle flexible job IDs
               const jobId = job._id || job.id || job.jobId || idx;
               const isSelected = selectedJobs.includes(jobId);
+
+              // ✅ Handle flexible field names for older jobs
+              const title = job.Title || job.title || "(No title)";
+              const description = job.Description || job.descriptionText || job.descriptionHtml || "No description available.";
+              const location = job.Location || job.location || "";
+              const employmentType = job.employmentType || job.type || job.jobType || "Not specified";
+              const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
+              // const company = job.company || job.Company || job.CompanyName || job.organization || "Unknown Company";
+
+              console.log(job)
+
 
               return (
                 <div
@@ -380,11 +375,11 @@ export default function JobFound() {
                     : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
                     }`}
                   onClick={() => toggleJobSelection(jobId)}
-
                 >
+                  {/* Title + Checkbox */}
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-semibold text-green-400 truncate">
-                      {job.title || "Untitled Job"}
+                      {title}
                     </h3>
                     <input
                       type="checkbox"
@@ -395,28 +390,29 @@ export default function JobFound() {
                     />
                   </div>
 
-                  <p className="text-sm text-gray-400 mt-1">
-                    {job.company || "Unknown Company"}
-                  </p>
+                  {/* Company */}
+                  {/* <p className="text-sm text-gray-400 mt-1">{company}</p> */}
 
-                  <p className="text-sm text-gray-500 mt-2 line-clamp-3">
-                    {job.descriptionText ||
-                      (job.descriptionHtml
-                        ? job.descriptionHtml.replace(/<[^>]+>/g, "").slice(0, 150)
-                        : "No description available.")}
-                  </p>
+                  {/* Description */}
+                  <p
+                    className="text-sm text-gray-500 mt-2 line-clamp-3"
+                    dangerouslySetInnerHTML={{ __html: description }}
+                  ></p>
 
+
+                  {/* Meta Info */}
                   <div className="mt-3 text-xs text-green-300 space-y-1">
-                    <div>Location: {job.location || "Not specified"}</div>
-                    <div>Type: {job.employmentType || "Not specified"}</div>
-                    <div>
+                    <div className="text-gray-400 text-sm mb-2"> {location}</div>
+                    {/* <div>Type: {employmentType}</div> */}
+                    <div className="text-gray-400 text-sm mb-2">
                       Posted:{" "}
-                      {job.postedAt
-                        ? new Date(job.postedAt).toLocaleDateString()
+                      {postedAt
+                        ? new Date(postedAt).toLocaleDateString()
                         : "Unknown date"}
                     </div>
                   </div>
 
+                  {/* Category Selector */}
                   <div className="mt-3">
                     <label className="text-xs text-gray-400">Category:</label>
                     <select
@@ -434,6 +430,7 @@ export default function JobFound() {
                     </select>
                   </div>
 
+                  {/* Job Link */}
                   {job.link && (
                     <a
                       href={job.link}
@@ -445,6 +442,7 @@ export default function JobFound() {
                     </a>
                   )}
 
+                  {/* View Details Button */}
                   <button
                     className="mt-3 w-full px-3 py-2 bg-green-700/20 border border-green-700 text-green-300 rounded-md hover:bg-green-700/40 transition text-sm"
                     onClick={(e) => {
@@ -461,48 +459,54 @@ export default function JobFound() {
         ) : (
           <div className="text-center text-gray-400 mt-10">No jobs found.</div>
         )}
-      </div>
 
-      {/* JOB DETAILS MODAL */}
-      {selectedJob && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-          <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 shadow-lg relative">
-            <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-green-400 text-lg"
-              onClick={() => setSelectedJob(null)}
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-bold text-green-400 mb-3">
-              {selectedJob.title || selectedJob.Title}
-            </h3>
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-              {Object.entries(selectedJob).map(([key, value]) => {
-                if (["_id", "__v"].includes(key)) return null;
-                return (
-                  <div key={key} className="text-sm">
-                    <span className="font-semibold text-green-300">{key}: </span>
-                    {key === "link" ? (
-                      <a
-                        href={value}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-400 underline"
-                      >
-                        {value}
-                      </a>
-                    ) : (
-                      <span className="text-gray-300">{String(value)}</span>
-                    )}
-                  </div>
-                );
-              })}
+        {/* JOB DETAILS MODAL */}
+        {selectedJob && (
+          <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+            <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 shadow-lg relative">
+              <button
+                className="absolute top-3 right-3 text-gray-400 hover:text-green-400 text-lg"
+                onClick={() => setSelectedJob(null)}
+              >
+                ✕
+              </button>
+              <h3 className="text-xl font-bold text-green-400 mb-3">{selectedJob.Title || selectedJob.title}</h3>
+
+              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+                {Object.keys(selectedJob).map((key) => {
+                  if (["_id", "__v"].includes(key)) return null;
+                  return (
+                    <div key={key} className="text-sm">
+                      <span className="font-semibold text-green-300">{key}: </span>
+                      {key === "link" || key === "applyUrl" ? (
+                        <a href={selectedJob[key]} target="_blank" rel="noopener noreferrer" className="text-green-400 underline">
+                          {selectedJob[key]}
+                        </a>
+                      ) : (
+                        <span className="text-gray-300">{String(selectedJob[key])}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {selectedJob.link && (
+                <div className="mt-6 text-center">
+                  <a
+                    href={selectedJob.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block bg-green-600 text-black px-5 py-2 rounded-md hover:bg-green-500 transition font-semibold"
+                  >
+                    Go to Job
+                  </a>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-
+      </div>
     </div>
   );
-}
+}     

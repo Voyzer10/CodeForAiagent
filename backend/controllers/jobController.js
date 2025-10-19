@@ -114,35 +114,11 @@ const getUserJobs = async (req, res) => {
     // ✅ Use correct DB field name
     const jobs = await Job.find({ UserID: userId }).sort({ Posted_At: -1 });
 
-    if (!jobs.length) {
-      console.log("ℹ️ No jobs found for UserID:", userId);
-      return res.json({ jobs: [] });
-    }
-
-    // ✅ Normalize the data before sending to frontend
-    const normalizedJobs = jobs.map((job) => ({
-      id: job._id,
-      title: job.title || "Untitled Job",
-      location: job.location || "Not specified",
-      postedAt: job.postedAt || job.Posted_At || null,
-      applicantsCount: job.applicantsCount ?? 0,
-      salary: job.salary || "Not mentioned",
-      benefits: Array.isArray(job.benefits) ? job.benefits : [],
-      description: job.descriptionText || job.descriptionHtml || "No description provided",
-      seniorityLevel: job.seniorityLevel || "Not specified",
-      employmentType: job.employmentType || "Unknown",
-      jobFunction: job.jobFunction || "Uncategorized",
-      industries: Array.isArray(job.industries) ? job.industries : [],
-      link: job.link || job.applyUrl || job.inputUrl || "#",
-      companyId: job.companyId || null,
-      jobPosterId: job.jobPosterId || null,
-    }));
-
-    console.log(`✅ Found ${normalizedJobs.length} jobs for UserID ${userId}`);
-    return res.json({ jobs: normalizedJobs });
-  } catch (err) {
-    console.error("🔥 Error in getUserJobs:", err);
-    return res.status(500).json({ error: err.message });
+    // ✅ No normalization — send directly
+    res.status(200).json({ jobs });
+  } catch (error) {
+    console.error("[getUserJobs] Error:", error);
+    res.status(500).json({ message: "Server error fetching user jobs" });
   }
 };
 
