@@ -7,7 +7,10 @@ const cookieParser = require("cookie-parser");
 const { logToFile, logErrorToFile } = require("./logger");
 
 const app = express();
-app.use(express.json());
+// Allow larger payloads (e.g., big job arrays)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+;
 app.use(cookieParser());
 
 // Middleware

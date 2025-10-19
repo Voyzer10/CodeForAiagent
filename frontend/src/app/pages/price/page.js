@@ -101,6 +101,11 @@ export default function Price() {
                         if (verifyRes.ok && data.success) {
                             setPaymentStatus("success");
                             alert(`✅ Payment Successful for ${plan.name}!`);
+
+                            setTimeout(() => {
+                                window.location.href = "/userpanel";
+                            }, 1000);
+
                         } else {
                             setPaymentStatus("failed");
                             alert("⚠️ Payment verification failed. Please contact support.");

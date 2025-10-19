@@ -114,18 +114,15 @@ const getUserJobs = async (req, res) => {
     // ✅ Use correct DB field name
     const jobs = await Job.find({ UserID: userId }).sort({ Posted_At: -1 });
 
-    if (!jobs.length) {
-      console.log("ℹ️ No jobs found for UserID:", userId);
-      return res.json({ jobs: [] });
-    }
-
-    console.log(`✅ Found ${jobs.length} jobs for UserID ${userId}`);
-    return res.json({ jobs });
-  } catch (err) {
-    console.error("🔥 Error in getUserJobs:", err);
-    return res.status(500).json({ error: err.message });
+    // ✅ No normalization — send directly
+    res.status(200).json({ jobs });
+  } catch (error) {
+    console.error("[getUserJobs] Error:", error);
+    res.status(500).json({ message: "Server error fetching user jobs" });
   }
 };
+
+module.exports = { getUserJobs };
 
 // ✅ Admin only: Get all jobs from all users
 const getAllUserJobs = async (req, res) => {

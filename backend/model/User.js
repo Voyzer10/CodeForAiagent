@@ -11,11 +11,11 @@ const userSchema = new mongoose.Schema({
 
 
   // 🔑 Separate userId for identification
-  userId: { 
-    type: Number, 
-    required: true, 
+  userId: {
+    type: Number,
+    required: true,
     unique: true,
-    default: generateUserId 
+    default: generateUserId
   },
 
   // 🔑 Separate role field
@@ -37,6 +37,15 @@ const userSchema = new mongoose.Schema({
     purchasedAt: Date,
     expiresAt: Date,
   },
+  customCategories: { type: [String], default: [] },
+
+  savedSearches: [
+    {
+      name: String,
+      jobs: Array,
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
 });
 
 module.exports = mongoose.model("User", userSchema, "applicants");
