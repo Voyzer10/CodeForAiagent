@@ -89,7 +89,9 @@ export default function UserNavbar({ onSidebarToggle }) {
                             </div>
 
                         )}
-                        <button className="block w-full text-left px-4 py-3 hover:bg-[#2e3b34]">
+                        <button 
+                        onClick={() => (window.location.href = "/pages/profile")}
+                        className="block w-full text-left px-4 py-3 hover:bg-[#2e3b34]">
                             Profile
                         </button>
                         <button className="block w-full text-left px-4 py-3 hover:bg-[#2e3b34]">

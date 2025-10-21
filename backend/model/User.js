@@ -46,6 +46,10 @@ const userSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now },
     },
   ],
+
+  github: { type: String, default: "" },
+  linkedin: { type: String, default: "" },
+
 });
 
 module.exports = mongoose.model("User", userSchema, "applicants");
