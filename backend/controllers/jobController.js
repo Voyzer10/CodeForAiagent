@@ -40,6 +40,14 @@ const createJob = async (req, res) => {
       sessionId,
     });
 
+    console.log("🧩 [createJob] Queuing job for user:", userId);
+
+    await jobQueue.add("n8nJob", { prompt, userId, sessionId: Date.now() });
+
+    console.log("📦 [createJob] Job added to Redis queue successfully");
+
+    return res.status(200).json({ message: "Job queued successfully" });
+
     // ✅ Respond immediately
     return res.status(202).json({
       message: "Job queued successfully",
