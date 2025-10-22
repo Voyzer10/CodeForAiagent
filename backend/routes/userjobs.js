@@ -3,7 +3,7 @@ const {
   createJob,
   getUserJobs,
   getAllUserJobs,
- // updateJobCredits,
+  //updateJobCredits,
 } = require("../controllers/jobController");
 const auth = require("../middleware/authMiddleware");
 const adminAuth = require("../middleware/adminMiddleware");
@@ -37,7 +37,7 @@ router.delete("/searches/:name", auth, deleteSavedSearch);
 router.get("/:userId", auth, getUserJobs);
 
 // ✅ Webhook
-//router.post("/update-job-credits", updateJobCredits);
+router.post("/update-job-credits", updateJobCredits);
 
 // ✅ Admin routes
 router.get("/all", auth, adminAuth, getAllUserJobs);

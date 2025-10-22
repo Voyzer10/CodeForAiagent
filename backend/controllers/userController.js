@@ -1,5 +1,46 @@
 const User = require("../model/User");
 
+
+const updateSocialLinks = async (req, res) => {
+  try {
+    // 1️⃣ Identify user correctly
+    const userId = req.params.userId || req.user?.id;
+    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+
+    // 2️⃣ Determine lookup field dynamically
+    // If your User model has a numeric "userId" field → use that.
+    // Otherwise, use MongoDB's _id field.
+    const query = isNaN(userId) 
+      ? { _id: userId } 
+      : { userId: Number(userId) };
+
+    const user = await User.findOne(query);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // 3️⃣ Extract socials from body
+    const { github, linkedin } = req.body;
+    const updateData = {};
+    if (github !== undefined) updateData.github = github;
+    if (linkedin !== undefined) updateData.linkedin = linkedin;
+
+    // 4️⃣ Update
+    const updatedUser = await User.findOneAndUpdate(
+      query,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    res.status(200).json({
+      success: true,
+      message: "Social links updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update socials error:", error);
+    res.status(500).json({ message: "Server error updating socials" });
+  }
+};
+
 // 🟢 Get user's custom categories
 const getUserCategories = async (req, res) => {
   try {
@@ -113,6 +154,8 @@ const deleteSavedSearch = async (req, res) => {
 };
 
 module.exports = {
+
+  updateSocialLinks,
   getUserCategories,
   addUserCategory,
   getSavedSearches,
