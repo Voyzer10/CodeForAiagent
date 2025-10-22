@@ -1,7 +1,7 @@
 const Job = require("../model/job-information");
 const fetch = require("node-fetch");
 const User = require("../model/User");
-const {jobQueue} = require("../queues/jobQueue");
+const { jobQueue } = require("../queues/jobQueue");
 
 console.log("🔄 jobController loaded with debugging");
 
