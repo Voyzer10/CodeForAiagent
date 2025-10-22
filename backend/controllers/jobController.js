@@ -1,7 +1,7 @@
 const Job = require("../model/job-information");
 const fetch = require("node-fetch");
 const User = require("../model/User");
-const {jobQueue} = require("../queues/jobQueue");
+const { jobQueue } = require("../queues/jobQueue");
 
 console.log("🔄 jobController loaded with debugging");
 
@@ -39,6 +39,14 @@ const createJob = async (req, res) => {
       prompt,
       sessionId,
     });
+
+    console.log("🧩 [createJob] Queuing job for user:", userId);
+
+    await jobQueue.add("n8nJob", { prompt, userId, sessionId: Date.now() });
+
+    console.log("📦 [createJob] Job added to Redis queue successfully");
+
+    return res.status(200).json({ message: "Job queued successfully" });
 
     // ✅ Respond immediately
     return res.status(202).json({
