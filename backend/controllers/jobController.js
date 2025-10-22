@@ -1,146 +1,51 @@
 const Job = require("../model/job-information");
 const fetch = require("node-fetch");
 const User = require("../model/User");
+const {jobQueue} = require("../queues/jobQueue");
 
 console.log("🔄 jobController loaded with debugging");
 
 // ✅ Create job
 const createJob = async (req, res) => {
-  const userId = req.user?.id || null; // comes from JWT middleware
+  const userId = req.user?.id || null;
   const { prompt } = req.body;
 
   if (!userId) {
-    console.warn("⚠️ No authenticated user found, saving as guest");
     return res.status(401).json({ message: "Unauthorized: Please log in" });
   }
 
-  console.log("👤 Authenticated userId:", userId);
-
   try {
-    // 1️⃣ Fetch and validate user
     const user = await User.findOne({ userId });
-    if (!user) {
-      console.error("❌ [createJob] User not found:", userId);
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    console.log("👤 [createJob] User found:", user.name);
-    console.log("📦 [createJob] Plan details:", user.plan);
-
-    // 2️⃣ Validate subscription
     if (!user.plan || user.plan.expiresAt < Date.now()) {
-      console.warn("⚠️ [createJob] No active subscription or plan expired");
-      console.log("🕒 Plan Expiry:", user.plan?.expiresAt);
       return res.status(403).json({ message: "No active subscription" });
     }
 
-    // 3️⃣ Validate available tokens before proceeding
-    const availableTokens = user.plan.remainingJobs || 0;
-    console.log("🔢 [createJob] Tokens available:", availableTokens);
-
-    if (availableTokens <= 0) {
-      console.warn("🚫 [createJob] No tokens left — upgrade required");
-      console.log(
-        "💡 [Suggestion] Ask user to upgrade plan or purchase more tokens"
-      );
+    if (user.plan.remainingJobs <= 0) {
       return res.status(403).json({
-        message:
-          "Insufficient tokens. Please upgrade or purchase additional credits.",
+        message: "Insufficient tokens. Please upgrade or purchase credits.",
       });
     }
 
-    // 4️⃣ Proceed with sending prompt to n8n → Apify
+    // ✅ Generate session ID
     const sessionId = `${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 9)}`;
-    const n8nWebhook =
-      "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
 
-    console.log("📡 [createJob] Sending request to n8n webhook:", n8nWebhook);
-
-    const n8nResponse = await fetch(n8nWebhook, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, sessionId, userId }),
+    // ✅ Add job to Redis queue
+    await jobQueue.add("processJob", {
+      userId,
+      prompt,
+      sessionId,
     });
 
-    let parsed;
-    try {
-      parsed = await n8nResponse.json();
-      console.log("✅ [createJob] n8n response received:", parsed);
-    } catch (err) {
-      const rawText = await n8nResponse.text();
-      console.error(
-        "❌ [createJob] Failed to parse n8n JSON:",
-        err.message,
-        "Raw:",
-        rawText
-      );
-      return res.status(500).json({ error: "Invalid response from n8n" });
-    }
-
-    // 5️⃣ Expect dataset URL from n8n → Apify
-    if (!parsed.datasetUrl) {
-      console.warn(
-        "⚠️ [createJob] Missing datasetUrl in n8n response. Received:",
-        parsed
-      );
-      return res.status(200).json({
-        message: "n8n did not return dataset URL. Check Apify workflow.",
-      });
-    }
-
-    const datasetUrl = parsed.datasetUrl;
-    console.log("🌐 [createJob] Fetching Apify dataset from:", datasetUrl);
-
-    const APIFY_TOKEN = process.env.APIFY_TOKEN;
-    if (!APIFY_TOKEN) {
-      console.error("❌ [createJob] Missing APIFY_TOKEN in environment vars");
-      return res.status(500).json({ message: "Server misconfiguration" });
-    }
-
-    // 6️⃣ Fetch Apify dataset and count jobs
-    const datasetResponse = await fetch(`${datasetUrl}?token=${APIFY_TOKEN}`);
-    const datasetData = await datasetResponse.json();
-
-    const jobCount = Array.isArray(datasetData) ? datasetData.length : 0;
-    console.log(`📊 [createJob] Apify returned ${jobCount} job(s)`);
-
-    if (jobCount === 0) {
-      console.warn("⚠️ [createJob] No jobs found in dataset — skipping save");
-      return res
-        .status(200)
-        .json({ message: "No jobs returned from Apify dataset." });
-    }
-
-    // 7️⃣ Check if user has enough tokens for actual job count
-    if (availableTokens < jobCount) {
-      console.warn(
-        `🚫 [createJob] Insufficient tokens. Required: ${jobCount}, Available: ${availableTokens}`
-      );
-      console.log("💡 User should upgrade or repurchase plan.");
-      return res.status(403).json({
-        message: `Not enough tokens. Required: ${jobCount}, Available: ${availableTokens}`,
-      });
-    }
-
-    // 8️⃣ Deduct exact tokens used
-    user.plan.remainingJobs -= jobCount;
-    await user.save();
-    console.log(
-      `💰 [createJob] Deducted ${jobCount} tokens. Remaining: ${user.plan.remainingJobs}`
-    );
-
-    // 9️⃣ Save all jobs in MongoDB
-    const jobsToSave = datasetData.map((job) => ({
-      ...job,
-      userId,
+    // ✅ Respond immediately
+    return res.status(202).json({
+      message: "Job queued successfully",
       sessionId,
-    }));
-    const savedJobs = await Job.insertMany(jobsToSave);
-
-    console.log(`💾 [createJob] Successfully saved ${savedJobs.length} jobs`);
-    return res.status(201).json(savedJobs);
+      userId,
+    });
   } catch (err) {
     console.error("🔥 [createJob] Unexpected error:", err);
     res.status(500).json({ error: "Internal server error" });
