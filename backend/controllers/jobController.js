@@ -5,9 +5,9 @@ const { jobQueue } = require("../queues/jobQueue");
 
 console.log("🔄 jobController loaded with debugging");
 
-// ✅ Create job
+// controller/createJob.js
 const createJob = async (req, res) => {
-  const userId = req.user?.id || null;
+  const userId = req.user?.id;
   const { prompt } = req.body;
 
   if (!userId) {
@@ -33,22 +33,11 @@ const createJob = async (req, res) => {
       .toString(36)
       .substring(2, 9)}`;
 
-    // ✅ Add job to Redis queue
-    await jobQueue.add("processJob", {
-      userId,
-      prompt,
-      sessionId,
-    });
+    // ✅ Add ONE job to Redis queue
+    await jobQueue.add("n8nJob", { prompt, userId, sessionId });
 
-    console.log("🧩 [createJob] Queuing job for user:", userId);
+    console.log(`🧩 [createJob] Queued job for user ${userId} (session: ${sessionId})`);
 
-    await jobQueue.add("n8nJob", { prompt, userId, sessionId: Date.now() });
-
-    console.log("📦 [createJob] Job added to Redis queue successfully");
-
-    return res.status(200).json({ message: "Job queued successfully" });
-
-    // ✅ Respond immediately
     return res.status(202).json({
       message: "Job queued successfully",
       sessionId,
@@ -59,6 +48,7 @@ const createJob = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 
 
 // ✅ Get jobs by authenticated user or specific userId

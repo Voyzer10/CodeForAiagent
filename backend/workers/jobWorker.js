@@ -1,6 +1,6 @@
 const { Worker } = require("bullmq");
 const fetch = require("node-fetch");
-const { redisConnection } = require("../config/redis.js");
+const redisConnection = require("../config/redis");
 const Job = require("../model/job-information");
 const User = require("../model/User");
 
