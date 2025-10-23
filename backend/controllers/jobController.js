@@ -7,7 +7,7 @@ console.log("🔄 jobController loaded with debugging");
 
 // controller/createJob.js
 const createJob = async (req, res) => {
-  const userId = req.user?.id;
+  const userId = req.user?.id || null;
   const { prompt } = req.body;
 
   if (!userId) {
@@ -28,15 +28,15 @@ const createJob = async (req, res) => {
       });
     }
 
-    // ✅ Generate session ID
-    const sessionId = `${Date.now()}-${Math.random()
+    // ✅ Generate unique session ID
+    const sessionId = `${userId}-${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 9)}`;
 
-    // ✅ Add ONE job to Redis queue
-    await jobQueue.add("n8nJob", { prompt, userId, sessionId });
+    // ✅ Queue the single job properly
+    await jobQueue.add("processJob", { userId, prompt, sessionId });
 
-    console.log(`🧩 [createJob] Queued job for user ${userId} (session: ${sessionId})`);
+    console.log("🧩 [createJob] Queued job for user:", userId, "session:", sessionId);
 
     return res.status(202).json({
       message: "Job queued successfully",
@@ -48,8 +48,6 @@ const createJob = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-
 
 // ✅ Get jobs by authenticated user or specific userId
 const getUserJobs = async (req, res) => {
