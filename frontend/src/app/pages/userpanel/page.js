@@ -35,31 +35,20 @@ export default function UserPanel() {
     const fetchUser = async () => {
       try {
         const res = await fetch("http://localhost:5000/api/auth/me", {
-          method: "GET",
           credentials: "include",
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Failed to fetch user");
         setUser(data.user);
 
-        // ✅ Fetch jobs for this user
-        if (data.user && data.user.userId) {
-          const jobRes = await fetch(
-            `http://localhost:5000/api/userjobs/${data.user.userId}`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
+        if (data.user?.userId) {
+          const jobRes = await fetch(`http://localhost:5000/api/userjobs/${data.user.userId}`, {
+            credentials: "include",
+          });
           const jobData = await jobRes.json();
-          if (jobRes.ok && Array.isArray(jobData.jobs)) {
-            setUserJobs(jobData.jobs);
-          } else {
-            setUserJobs([]);
-          }
+          setUserJobs(jobData.jobs || []);
         }
       } catch (err) {
-        console.error("Fetch user error:", err);
         setError(err.message);
       }
     };
@@ -69,32 +58,22 @@ export default function UserPanel() {
   // ✅ Step 2 + 3: Handle submit with payment check + prompt creation
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Client-side validation for Count; prevent submit if invalid
-    const numericCount = Number(count);
-    if (!Number.isFinite(numericCount)) {
-      setCountError("Please enter a number");
-      return;
-    }
-    if (numericCount < 100) {
-      setCountError("Minimum allowed is 100");
-      return;
-    }
-    if (numericCount > 1000) {
-      setCountError("Maximum allowed is 1000");
-      return;
-    }
+    if (loading) return; // Prevent double submit
 
-    // Persist for client-only downstream usage (n8n payload)
-    try { localStorage.setItem("selectedCount", String(numericCount)); } catch (_e) {}
-
+    // Validation
+    const num = Number(count);
+    if (!Number.isFinite(num) || num < 100 || num > 1000) {
+      setCountError("Count must be between 100–1000");
+      return;
+    }
+    setCountError("");
     setLoading(true);
     setError(null);
-    setResponse(null);
+    console.log("📨 Submitting job request...");
 
     try {
-      // Check payment
+      // Check active plan
       const planRes = await fetch("http://localhost:5000/api/payment/check", {
-        method: "GET",
         credentials: "include",
       });
       const planData = await planRes.json();
@@ -105,23 +84,43 @@ export default function UserPanel() {
         return;
       }
 
-      // Generate hidden prompt
+      // Build prompt
       const prompt = `
         Job Title: ${jobTitle}
         Location: ${location}
         LinkedIn: ${linkedin}
         GitHub: ${github}
-        Count: ${numericCount}
+        Count: ${num}
       `;
 
-      // Continue to backend
-      await continueToFetchJobs(prompt);
+      // Call backend
+      const res = await fetch("http://localhost:5000/api/userjobs/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ prompt }),
+      });
+
+      if (!res.ok) throw new Error("Server error while enqueuing job");
+      const data = await res.json();
+      console.log("✅ Backend response:", data);
+      setResponse(data);
+
+      // Refresh user jobs
+      if (user?.userId) {
+        const jobRes = await fetch(`http://localhost:5000/api/userjobs/${user.userId}`, {
+          credentials: "include",
+        });
+        const jobData = await jobRes.json();
+        setUserJobs(jobData.jobs || []);
+      }
     } catch (err) {
-      setError("Error verifying plan: " + err.message);
+      console.error("❌ Error submitting job:", err);
+      setError(err.message);
+    } finally {
       setLoading(false);
     }
   };
-
   // ✅ Step 3: Continue fetching jobs (from backend)
   const continueToFetchJobs = async (prompt) => {
     try {

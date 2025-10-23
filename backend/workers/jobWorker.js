@@ -1,19 +1,19 @@
 const { Worker } = require("bullmq");
 const fetch = require("node-fetch");
-const redisConnection = require("../config/redis.js");
+const { redisConnection } = require("../config/redis.js");
 const Job = require("../model/job-information");
 const User = require("../model/User");
 
 const jobWorker = new Worker(
   "jobQueue",
   async (job) => {
-    console.log(`🧑‍💻 [Worker] Processing job: ${job.id} for user ${job.data.userId}`);
-
     const { prompt, userId, sessionId } = job.data;
-    const n8nWebhook = "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
+    console.log(`🧑‍💻 [Worker] Processing job: ${job.id} for user ${userId}`);
 
-    // 🔹 Step 1: Call N8N webhook with full error handling
-    let parsed;
+    const n8nWebhook = "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
+    let parsed = null;
+
+    // 🔹 Step 1: Try calling N8N webhook
     try {
       const n8nResponse = await fetch(n8nWebhook, {
         method: "POST",
@@ -27,23 +27,23 @@ const jobWorker = new Worker(
 
       parsed = await n8nResponse.json();
     } catch (err) {
-      console.error(`❌ [Worker] Failed to call N8N for job ${job.id}:`, err.message);
-      throw err; // <-- this ensures BullMQ marks the job as failed
+      console.error(`⚠️ [Worker] N8N not reachable or returned error: ${err.message}`);
+      parsed = {}; // fallback to Apify path
     }
 
-    // 🔹 Step 2: Validate dataset URL
-    if (!parsed.datasetUrl) {
-      const msg = `[Worker] Missing datasetUrl in N8N response for job ${job.id}`;
-      console.error(msg);
-      throw new Error(msg); // fail job if dataset URL is missing
+    // 🔹 Step 2: Validate dataset URL or build fallback
+    let datasetUrl = parsed.datasetUrl;
+    if (!datasetUrl) {
+      console.warn(`[Worker] N8N missing datasetUrl for job ${job.id}, falling back to APIFY_WEBHOOK_KEY`);
+      const base = process.env.APIFY_WEBHOOK_KEY;
+      if (!base) throw new Error("Missing APIFY_WEBHOOK_KEY in env");
+      datasetUrl = `${base}token=${process.env.APIFY_TOKEN}&userId=${userId}&sessionId=${sessionId}`;
     }
-
-    const datasetUrl = parsed.datasetUrl;
 
     // 🔹 Step 3: Fetch dataset from Apify
     let datasetData;
     try {
-      const datasetResponse = await fetch(`${datasetUrl}?token=${process.env.APIFY_TOKEN}`);
+      const datasetResponse = await fetch(datasetUrl);
       if (!datasetResponse.ok) {
         throw new Error(`Apify responded with status ${datasetResponse.status}`);
       }
@@ -54,6 +54,7 @@ const jobWorker = new Worker(
     }
 
     const jobCount = Array.isArray(datasetData) ? datasetData.length : 0;
+    console.log(`📦 [Worker] Retrieved ${jobCount} jobs from dataset`);
 
     // 🔹 Step 4: Deduct user tokens
     const user = await User.findOne({ userId });
@@ -62,23 +63,27 @@ const jobWorker = new Worker(
 
     user.plan.remainingJobs -= jobCount;
     await user.save();
+    console.log(`💰 [Worker] Deducted ${jobCount} tokens from user ${userId}. Remaining: ${user.plan.remainingJobs}`);
 
     // 🔹 Step 5: Save jobs in DB
-    const jobsToSave = datasetData.map(j => ({ ...j, userId, sessionId }));
-    await Job.insertMany(jobsToSave);
+    const jobsToSave = datasetData.map((j) => ({ ...j, userId, sessionId }));
+    if (jobsToSave.length > 0) {
+      await Job.insertMany(jobsToSave);
+      console.log(`💾 [Worker] Saved ${jobsToSave.length} jobs to DB`);
+    } else {
+      console.warn(`[Worker] No jobs to save for user ${userId}`);
+    }
 
-    console.log(`💾 [Worker] Saved ${jobsToSave.length} jobs to DB`);
     return { count: jobCount, datasetUrl };
   },
   {
     connection: redisConnection,
-    concurrency: 3,
+    concurrency: 2, // safer for local dev
   }
 );
 
-jobWorker.on("completed", job => console.log(`🎉 Job ${job.id} completed successfully`));
-jobWorker.on("failed", (job, err) => console.error(`❌ Job ${job.id} failed:`, err.message));
+jobWorker.on("completed", (job) => console.log(`🎉 Job ${job.id} completed successfully`));
+jobWorker.on("failed", (job, err) => console.error(`❌ Job ${job?.id} failed:`, err.message));
 
 console.log("🚀 BullMQ Worker started, waiting for jobs...");
-
 module.exports = jobWorker;
