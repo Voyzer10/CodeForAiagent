@@ -7,19 +7,10 @@ export default function JobFound() {
   const [user, setUser] = useState(null);
   const [userJobs, setUserJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
-  const [userCategories, setUserCategories] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
-
-  // UI / filter state
-  const [filterCategory, setFilterCategory] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [categoryActionMsg, setCategoryActionMsg] = useState("");
-
-  // Category creation
-  const [creatingCategory, setCreatingCategory] = useState(false);
-  const [newCategoryInput, setNewCategoryInput] = useState("");
 
   // Job selection / modal
   const [selectedJob, setSelectedJob] = useState(null);
@@ -37,7 +28,6 @@ export default function JobFound() {
       try {
         setLoading(true);
         setError("");
-        setCategoryActionMsg("");
 
         // 1️⃣ Get user
         const userRes = await fetch("http://localhost:5000/api/auth/me", {
@@ -50,7 +40,6 @@ export default function JobFound() {
         const userId = userData.user?.userId;
         if (!userId) throw new Error("User info missing");
 
-        // 2️⃣ Get user jobs
         // 2️⃣ Get user jobs
         const jobsRes = await fetch(`http://localhost:5000/api/userjobs/${userId}`, {
           method: "GET",
@@ -72,19 +61,6 @@ export default function JobFound() {
         }
 
         if (jobsData.jobs?.length > 0) setSelectedJob(jobsData.jobs[0]);
-        // 3️⃣ Get categories
-        const catRes = await fetch(
-          `http://localhost:5000/api/userjobs/categories/${userId}`,
-          { method: "GET", credentials: "include" }
-        );
-        const catText = await catRes.text();
-        let catData;
-        try {
-          catData = JSON.parse(catText);
-        } catch {
-          catData = {};
-        }
-        setUserCategories(Array.isArray(catData.categories) ? catData.categories : []);
 
         // 4️⃣ Get saved searches
         const searchesRes = await fetch(
@@ -104,17 +80,6 @@ export default function JobFound() {
     fetchUserAndJobs();
   }, []);
 
-  // Filter jobs when category changes
-  useEffect(() => {
-    if (!filterCategory) setFilteredJobs(userJobs);
-    else
-      setFilteredJobs(
-        userJobs.filter(
-          (job) => job.category?.toLowerCase() === filterCategory.toLowerCase()
-        )
-      );
-  }, [filterCategory, userJobs]);
-
   // Save current search
   const saveCurrentSearch = async () => {
     if (!newSearchName.trim()) {
@@ -126,7 +91,6 @@ export default function JobFound() {
     const jobsPayload = filteredJobs.map((job) => ({
       title: job.Title || job.title || "(No title)",
       company: job.Company || job.CompanyName || job.organization || "Unknown Company",
-      category: job.category || "Uncategorized",
       description: job.Description || job.descriptionText || job.descriptionHtml || "No description available",
       location: job.Location || job.location || "",
       link: job.link || job.applyUrl || ""
@@ -154,60 +118,6 @@ export default function JobFound() {
       alert(err.message || "Error saving search");
     }
   };
-
-
-  // Category management
-  const handleCreateNewCategory = async (categoryName) => {
-    if (!categoryName.trim()) return;
-    if (!user?.userId) return alert("You must be logged in.");
-
-    try {
-      setCategoryActionMsg("Creating category...");
-      const res = await fetch(
-        `http://localhost:5000/api/userjobs/categories/${user.userId}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ category: categoryName }),
-        }
-      );
-
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.message || "Failed to create category");
-
-      setUserCategories(body.categories || []);
-      setCreatingCategory(false);
-      setNewCategoryInput("");
-      setFilterCategory(categoryName);
-      setCategoryActionMsg("Category created!");
-      setTimeout(() => setCategoryActionMsg(""), 2000);
-    } catch (err) {
-      setCategoryActionMsg(`Error: ${err.message}`);
-    }
-  };
-
-  const handleCategoryChange = async (jobId, newCategory) => {
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/userjobs/update-category/${jobId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ category: newCategory }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update category");
-      setUserJobs((prev) => prev.map((j) => (j._id === jobId ? data.job : j)));
-      setCategoryActionMsg("Category updated!");
-      setTimeout(() => setCategoryActionMsg(""), 1500);
-    } catch (err) {
-      setCategoryActionMsg(`Error updating: ${err.message}`);
-    }
-  };
-
   // Job selection + apply logic
   const toggleJobSelection = (jobId) => {
     setSelectedJobs((prev) =>
@@ -247,9 +157,6 @@ export default function JobFound() {
         {error}
       </div>
     );
-
-  const uniqueCategories = ["All", ...new Set(userCategories)];
-
   return (
     <div className="flex min-h-screen bg-[#0b0f0e] text-white">
       <UserNavbar onSidebarToggle={toggleSidebar} />
@@ -264,31 +171,24 @@ export default function JobFound() {
       < div className="flex-1 p-6 md:p-10">
         {/* HEADER */}
         <div className="flex justify-between items-center mt-3  ">
-
-
-          {/* CATEGORY FILTER */}
-          <div className="flex flex-wrap items-center gap-3  ">
-            {uniqueCategories.map((cat, idx) => (
-              <button
-                key={idx}
-                onClick={() => setFilterCategory(cat === "All" ? "" : cat)}
-                className={`px-3 py-2 text-sm rounded-md border transition ${filterCategory === cat || (cat === "All" && !filterCategory)
-                  ? "bg-green-600 text-black border-green-600"
-                  : "bg-[#0e1513] text-green-300 border-green-700 hover:bg-green-800/40"
-                  }`}
-              >
-                {cat}
-              </button>
-            ))}
-
-            <button
-              onClick={() => setCreatingCategory(true)}
-              className="px-3 py-2  text-sm bg-green-700/10 border border-green-700 text-green-300 rounded-md hover:bg-green-700/30 transition"
-            >
-              + New Category
-            </button>
-            {categoryActionMsg && (
-              <span className="text-xs text-gray-400">{categoryActionMsg}</span>
+          <div className=" flex justify-center items-center">
+            <h2 className="text-lg mx-4 font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10">
+              Saved Searches
+            </h2>
+            {recentSearches.length > 0 ? (
+              <ul className="space-x-2 text-sm text-gray-300">
+                {recentSearches.map((search, idx) => (
+                  <li
+                    key={idx}
+                    onClick={() => onSelectSearch?.(search)}
+                    className="px-4 py-2 bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50  cursor-pointer rounded-md"
+                  >
+                    {search.name}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500 text-xs italic">No saved searches yet</p>
             )}
           </div>
           <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10">
@@ -353,35 +253,6 @@ export default function JobFound() {
           </div>
         )}
 
-
-        {/* NEW CATEGORY INPUT */}
-        {creatingCategory && (
-          <div className="flex gap-2 mb-6">
-            <input
-              type="text"
-              value={newCategoryInput}
-              onChange={(e) => setNewCategoryInput(e.target.value)}
-              placeholder="Enter new category"
-              className="bg-[#0b0f0e] border border-green-700 text-green-300 text-sm rounded-md px-3 py-2"
-            />
-            <button
-              onClick={() => handleCreateNewCategory(newCategoryInput)}
-              className="px-3 py-2 bg-green-600 text-black rounded-md hover:bg-green-500 transition"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => {
-                setCreatingCategory(false);
-                setNewCategoryInput("");
-              }}
-              className="px-3 py-2 bg-gray-700/40 text-gray-300 rounded-md hover:bg-gray-700/60 transition"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
-
         {/* JOBS GRID */}
         <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden">
           {filteredJobs.length > 0 ? (
@@ -393,9 +264,9 @@ export default function JobFound() {
 
                 // ✅ Handle flexible field names for older jobs
                 const title = job.Title || job.title || "(No title)";
-                const description = job.Description || job.descriptionText || 
-                // job.descriptionHtml || 
-                "No description available.";
+                const description = job.Description || job.descriptionText ||
+                  job.descriptionHtml ||
+                  "No description available.";
                 const location = job.Location || job.location || "";
                 const employmentType = job.employmentType || job.type || job.jobType || "Not specified";
                 const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
@@ -449,23 +320,6 @@ export default function JobFound() {
                       </div>
                     </div>
 
-                    {/* Category Selector */}
-                    <div className="mt-3">
-                      <label className="text-xs text-gray-400">Category:</label>
-                      <select
-                        value={job.category || "Uncategorized"}
-                        onChange={(e) => handleCategoryChange(job._id, e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        className="bg-[#0b0f0e] border border-green-700 text-green-300 text-xs rounded-md px-2 py-1 ml-2"
-                      >
-                        <option value="Uncategorized">Uncategorized</option>
-                        {userCategories.map((cat) => (
-                          <option key={cat} value={cat}>
-                            {cat}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
 
                     {/* Job Link */}
                     {job.link && (
