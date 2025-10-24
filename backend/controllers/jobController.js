@@ -33,7 +33,7 @@ const createJob = async (req, res) => {
       .toString(36)
       .substring(2, 9)}`;
 
-    // ✅ Queue the single job properly
+    // ✅ Queue the single job properly  
     await jobQueue.add("processJob", { userId, prompt, sessionId });
 
     console.log("🧩 [createJob] Queued job for user:", userId, "session:", sessionId);
