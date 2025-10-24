@@ -66,10 +66,12 @@ export default function JobFound() {
             `[JobFound] got ${Array.isArray(jobsData.jobs) ? jobsData.jobs.length : 0} jobs`
           );
           if (Array.isArray(jobsData.jobs)) {
-            setUserJobs(jobsData.jobs);
-            setFilteredJobs(jobsData.jobs);
+            setUserJobs(jobsData.jobs || []);
+            setFilteredJobs(jobsData.jobs || []);
           }
         }
+
+        if (jobsData.jobs?.length > 0) setSelectedJob(jobsData.jobs[0]);
         // 3️⃣ Get categories
         const catRes = await fetch(
           `http://localhost:5000/api/userjobs/categories/${userId}`,
@@ -261,11 +263,37 @@ export default function JobFound() {
 
       < div className="flex-1 p-6 md:p-10">
         {/* HEADER */}
-        <div className="flex justify-between items-center mt-3">
+        <div className="flex justify-between items-center mt-3  ">
+
+
+          {/* CATEGORY FILTER */}
+          <div className="flex flex-wrap items-center gap-3  ">
+            {uniqueCategories.map((cat, idx) => (
+              <button
+                key={idx}
+                onClick={() => setFilterCategory(cat === "All" ? "" : cat)}
+                className={`px-3 py-2 text-sm rounded-md border transition ${filterCategory === cat || (cat === "All" && !filterCategory)
+                  ? "bg-green-600 text-black border-green-600"
+                  : "bg-[#0e1513] text-green-300 border-green-700 hover:bg-green-800/40"
+                  }`}
+              >
+                {cat}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCreatingCategory(true)}
+              className="px-3 py-2  text-sm bg-green-700/10 border border-green-700 text-green-300 rounded-md hover:bg-green-700/30 transition"
+            >
+              + New Category
+            </button>
+            {categoryActionMsg && (
+              <span className="text-xs text-gray-400">{categoryActionMsg}</span>
+            )}
+          </div>
           <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10">
             Your Saved Jobs
           </h2>
-
           <div className="flex gap-3">
             <button
               onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
@@ -325,31 +353,6 @@ export default function JobFound() {
           </div>
         )}
 
-        {/* CATEGORY FILTER */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          {uniqueCategories.map((cat, idx) => (
-            <button
-              key={idx}
-              onClick={() => setFilterCategory(cat === "All" ? "" : cat)}
-              className={`px-4 py-2 text-sm rounded-md border transition ${filterCategory === cat || (cat === "All" && !filterCategory)
-                ? "bg-green-600 text-black border-green-600"
-                : "bg-[#0e1513] text-green-300 border-green-700 hover:bg-green-800/40"
-                }`}
-            >
-              {cat}
-            </button>
-          ))}
-
-          <button
-            onClick={() => setCreatingCategory(true)}
-            className="px-3 py-1 text-sm bg-green-700/10 border border-green-700 text-green-300 rounded-md hover:bg-green-700/30 transition"
-          >
-            + New Category
-          </button>
-          {categoryActionMsg && (
-            <span className="text-xs text-gray-400">{categoryActionMsg}</span>
-          )}
-        </div>
 
         {/* NEW CATEGORY INPUT */}
         {creatingCategory && (
@@ -380,163 +383,170 @@ export default function JobFound() {
         )}
 
         {/* JOBS GRID */}
-        {filteredJobs.length > 0 ? (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredJobs.map((job, idx) => {
-              // ✅ Handle flexible job IDs
-              const jobId = job._id || job.id || job.jobId || idx;
-              const isSelected = selectedJobs.includes(jobId);
+        <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden">
+          {filteredJobs.length > 0 ? (
+            <div className=" w-1/3  m-2 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 overflow-y-auto no-scrollbar">
+              {filteredJobs.map((job, idx) => {
+                // ✅ Handle flexible job IDs
+                const jobId = job._id || job.id || job.jobId || idx;
+                const isSelected = selectedJobs.includes(jobId);
 
-              // ✅ Handle flexible field names for older jobs
-              const title = job.Title || job.title || "(No title)";
-              const description = job.Description || job.descriptionText || job.descriptionHtml || "No description available.";
-              const location = job.Location || job.location || "";
-              const employmentType = job.employmentType || job.type || job.jobType || "Not specified";
-              const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
-              // const company = job.company || job.Company || job.CompanyName || job.organization || "Unknown Company";
+                // ✅ Handle flexible field names for older jobs
+                const title = job.Title || job.title || "(No title)";
+                const description = job.Description || job.descriptionText || 
+                // job.descriptionHtml || 
+                "No description available.";
+                const location = job.Location || job.location || "";
+                const employmentType = job.employmentType || job.type || job.jobType || "Not specified";
+                const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
+                // const company = job.company || job.Company || job.CompanyName || job.organization || "Unknown Company";
 
-              console.log(job)
-
-
-              return (
-                <div
-                  key={job._id || idx}
-                  className={`p-4 border rounded-xl shadow-md transition cursor-pointer ${isSelected
-                    ? "bg-green-900/20 border-green-500"
-                    : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
-                    }`}
-                  onClick={() => toggleJobSelection(jobId)}
-                >
-                  {/* Title + Checkbox */}
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-semibold text-green-400 truncate">
-                      {title}
-                    </h3>
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={() => toggleJobSelection(jobId)}
-                      className="accent-green-500 cursor-pointer"
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </div>
-
-                  {/* Company */}
-                  {/* <p className="text-sm text-gray-400 mt-1">{company}</p> */}
-
-                  {/* Description */}
-                  <p
-                    className="text-sm text-gray-500 mt-2 line-clamp-3"
-                    dangerouslySetInnerHTML={{ __html: description }}
-                  ></p>
+                console.log(job)
 
 
-                  {/* Meta Info */}
-                  <div className="mt-3 text-xs text-green-300 space-y-1">
-                    <div className="text-gray-400 text-sm mb-2"> {location}</div>
-                    {/* <div>Type: {employmentType}</div> */}
-                    <div className="text-gray-400 text-sm mb-2">
-                      Posted:{" "}
-                      {postedAt
-                        ? new Date(postedAt).toLocaleDateString()
-                        : "Unknown date"}
+                return (
+                  <div
+                    key={job._id || idx}
+                    className={`p-4 border rounded-xl shadow-md transition cursor-pointer  ${isSelected
+                      ? "bg-green-900/20 border-green-500"
+                      : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
+                      }`}
+                    onClick={() => toggleJobSelection(jobId)}
+                  >
+                    {/* Title + Checkbox */}
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-lg font-semibold text-green-400 truncate">
+                        {title}
+                      </h3>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleJobSelection(jobId)}
+                        className="accent-green-500 cursor-pointer"
+                        onClick={(e) => e.stopPropagation()}
+                      />
                     </div>
-                  </div>
 
-                  {/* Category Selector */}
-                  <div className="mt-3">
-                    <label className="text-xs text-gray-400">Category:</label>
-                    <select
-                      value={job.category || "Uncategorized"}
-                      onChange={(e) => handleCategoryChange(job._id, e.target.value)}
-                      onClick={(e) => e.stopPropagation()}
-                      className="bg-[#0b0f0e] border border-green-700 text-green-300 text-xs rounded-md px-2 py-1 ml-2"
+                    {/* Company */}
+                    {/* <p className="text-sm text-gray-400 mt-1">{company}</p> */}
+
+                    {/* Description */}
+                    <p
+                      className="text-sm text-gray-500 mt-2 line-clamp-3"
+                      dangerouslySetInnerHTML={{ __html: description }}
+                    ></p>
+
+
+                    {/* Meta Info */}
+                    <div className="mt-3 text-xs text-green-300 space-y-1">
+                      <div className="text-gray-400 text-sm mb-2"> {location}</div>
+                      {/* <div>Type: {employmentType}</div> */}
+                      <div className="text-gray-400 text-sm mb-2">
+                        Posted:{" "}
+                        {postedAt
+                          ? new Date(postedAt).toLocaleDateString()
+                          : "Unknown date"}
+                      </div>
+                    </div>
+
+                    {/* Category Selector */}
+                    <div className="mt-3">
+                      <label className="text-xs text-gray-400">Category:</label>
+                      <select
+                        value={job.category || "Uncategorized"}
+                        onChange={(e) => handleCategoryChange(job._id, e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-[#0b0f0e] border border-green-700 text-green-300 text-xs rounded-md px-2 py-1 ml-2"
+                      >
+                        <option value="Uncategorized">Uncategorized</option>
+                        {userCategories.map((cat) => (
+                          <option key={cat} value={cat}>
+                            {cat}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Job Link */}
+                    {job.link && (
+                      <a
+                        href={job.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block mt-3 text-green-400 hover:text-green-300 text-sm"
+                      >
+                        View / Apply →
+                      </a>
+                    )}
+
+                    {/* View Details Button */}
+                    <button
+                      className="mt-3 w-full px-3 py-2 bg-green-700/20 border border-green-700 text-green-300 rounded-md hover:bg-green-700/40 transition text-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedJob(job);
+                      }}
                     >
-                      <option value="Uncategorized">Uncategorized</option>
-                      {userCategories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
+                      View Details
+                    </button>
                   </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center text-gray-400 mt-10">No jobs found.</div>
+          )}
 
-                  {/* Job Link */}
-                  {job.link && (
+          <div className="w-3/4 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e]">
+            {selectedJob ? (
+              <div>
+                <h3 className="text-2xl font-bold text-green-400 mb-3">
+                  {selectedJob.Title || selectedJob.title}
+                </h3>
+
+                <div className="space-y-2 text-sm max-h-[65vh] overflow-y-auto">
+                  {Object.keys(selectedJob).map((key) => {
+                    if (["_id", "__v"].includes(key)) return null;
+                    return (
+                      <div key={key}>
+                        <span className="font-semibold text-green-300">{key}: </span>
+                        {key === "link" || key === "applyUrl" ? (
+                          <a
+                            href={selectedJob[key]}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-green-400 underline"
+                          >
+                            {selectedJob[key]}
+                          </a>
+                        ) : (
+                          <span className="text-gray-300">{String(selectedJob[key])}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {selectedJob.link && (
+                  <div className="mt-6">
                     <a
-                      href={job.link}
+                      href={selectedJob.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="block mt-3 text-green-400 hover:text-green-300 text-sm"
+                      className="inline-block bg-green-600 text-black px-5 py-2 rounded-md hover:bg-green-500 transition font-semibold"
                     >
-                      View / Apply →
+                      Go to Job
                     </a>
-                  )}
-
-                  {/* View Details Button */}
-                  <button
-                    className="mt-3 w-full px-3 py-2 bg-green-700/20 border border-green-700 text-green-300 rounded-md hover:bg-green-700/40 transition text-sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedJob(job);
-                    }}
-                  >
-                    View Details
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="text-center text-gray-400 mt-10">No jobs found.</div>
-        )}
-
-        {/* JOB DETAILS MODAL */}
-        {selectedJob && (
-          <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-            <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-2/3 lg:w-1/2 p-6 shadow-lg relative">
-              <button
-                className="absolute top-3 right-3 text-gray-400 hover:text-green-400 text-lg"
-                onClick={() => setSelectedJob(null)}
-              >
-                ✕
-              </button>
-              <h3 className="text-xl font-bold text-green-400 mb-3">{selectedJob.Title || selectedJob.title}</h3>
-
-              <div className="space-y-2 max-h-[60vh] overflow-y-auto">
-                {Object.keys(selectedJob).map((key) => {
-                  if (["_id", "__v"].includes(key)) return null;
-                  return (
-                    <div key={key} className="text-sm">
-                      <span className="font-semibold text-green-300">{key}: </span>
-                      {key === "link" || key === "applyUrl" ? (
-                        <a href={selectedJob[key]} target="_blank" rel="noopener noreferrer" className="text-green-400 underline">
-                          {selectedJob[key]}
-                        </a>
-                      ) : (
-                        <span className="text-gray-300">{String(selectedJob[key])}</span>
-                      )}
-                    </div>
-                  );
-                })}
+                  </div>
+                )}
               </div>
-
-              {selectedJob.link && (
-                <div className="mt-6 text-center">
-                  <a
-                    href={selectedJob.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block bg-green-600 text-black px-5 py-2 rounded-md hover:bg-green-500 transition font-semibold"
-                  >
-                    Go to Job
-                  </a>
-                </div>
-              )}
-            </div>
+            ) : (
+              <div className="text-gray-500 text-center mt-10">
+                Select a job to view details.
+              </div>
+            )}
           </div>
-        )}
-
+        </div>
       </div>
     </div>
   );
