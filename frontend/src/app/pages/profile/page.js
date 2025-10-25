@@ -9,6 +9,7 @@ import {
     Github,
     Linkedin,
     CheckCircle2,
+    FileText,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -346,10 +347,20 @@ export default function Profile() {
                             How to Generate Client ID & Secret
                         </h3>
                         <ol className="list-decimal pl-5 space-y-2 text-gray-300 text-sm">
-                            <li>Go to your developer portal (e.g., LinkedIn, GitHub, Google).</li>
-                            <li>Create a new OAuth App or API Application.</li>
-                            <li>Enter your website’s redirect URL (e.g., http://localhost:3000/auth/callback).</li>
-                            <li>Copy your <span className="text-green-400">Client ID</span> & <span className="text-green-400">Client Secret</span>.</li>
+                            <li>Go to your developer portal (LinkedIn, GitHub, etc.).</li>
+                            <li>Create a new OAuth / API app.</li>
+                            <li>Set redirect URL (e.g., http://localhost:3000/auth/callback).</li>
+                            <li>Copy your <span className="text-green-400">Client ID</span> and <span className="text-green-400">Client Secret</span>.</li>
+                            <li>
+                                📘 For a full guide,{" "}
+                                <a
+                                    href="/docs/guide.pdf"
+                                    target="_blank"
+                                    className="text-green-400 underline flex items-center gap-1"
+                                >
+                                    <FileText size={14} /> View PDF
+                                </a>
+                            </li>
                         </ol>
                         <button
                             onClick={() => setShowHelp(false)}
