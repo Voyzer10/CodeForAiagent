@@ -10,8 +10,8 @@ const updateSocialLinks = async (req, res) => {
     // 2️⃣ Determine lookup field dynamically
     // If your User model has a numeric "userId" field → use that.
     // Otherwise, use MongoDB's _id field.
-    const query = isNaN(userId) 
-      ? { _id: userId } 
+    const query = isNaN(userId)
+      ? { _id: userId }
       : { userId: Number(userId) };
 
     const user = await User.findOne(query);
@@ -40,6 +40,29 @@ const updateSocialLinks = async (req, res) => {
     res.status(500).json({ message: "Server error updating socials" });
   }
 };
+
+
+// Client ID nad client secret 
+const updateClientData = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { clientId, clientSecret } = req.body;
+
+    if (!clientId || !clientSecret)
+      return res.status(400).json({ message: "Both fields required" });
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { clientId, clientSecret },
+      { new: true }
+    );
+
+    res.json({ message: "Client data saved", user });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 
 // 🟢 Get user's custom categories
 const getUserCategories = async (req, res) => {
@@ -156,6 +179,7 @@ const deleteSavedSearch = async (req, res) => {
 module.exports = {
 
   updateSocialLinks,
+  updateClientData,
   getUserCategories,
   addUserCategory,
   getSavedSearches,

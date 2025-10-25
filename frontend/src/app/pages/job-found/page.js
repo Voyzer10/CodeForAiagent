@@ -12,17 +12,17 @@ export default function JobFound() {
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Job selection / modal
   const [selectedJob, setSelectedJob] = useState(null);
   const [selectedJobs, setSelectedJobs] = useState([]);
 
-  // Save Search Modal
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [newSearchName, setNewSearchName] = useState("");
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
-  // Fetch all required data
+  // Track which recent search is active
+  const [activeSearch, setActiveSearch] = useState("All Jobs");
+
   useEffect(() => {
     const fetchUserAndJobs = async () => {
       try {
@@ -40,29 +40,22 @@ export default function JobFound() {
         const userId = userData.user?.userId;
         if (!userId) throw new Error("User info missing");
 
-        // 2️⃣ Get user jobs
+        // 2️⃣ Get user jobs (All jobs)
         const jobsRes = await fetch(`http://localhost:5000/api/userjobs/${userId}`, {
           method: "GET",
           credentials: "include",
         });
         const jobsData = await jobsRes.json();
+        if (!jobsRes.ok) throw new Error(jobsData.message || "Failed to load jobs");
 
-        if (!jobsRes.ok) {
-          console.error("[JobFound] error fetching jobs:", jobsData);
-          throw new Error(jobsData.message || "Failed to load jobs");
-        } else {
-          console.debug(
-            `[JobFound] got ${Array.isArray(jobsData.jobs) ? jobsData.jobs.length : 0} jobs`
-          );
-          if (Array.isArray(jobsData.jobs)) {
-            setUserJobs(jobsData.jobs || []);
-            setFilteredJobs(jobsData.jobs || []);
-          }
+        if (Array.isArray(jobsData.jobs)) {
+          setUserJobs(jobsData.jobs);
+          setFilteredJobs(jobsData.jobs); // ✅ show all jobs initially
         }
 
         if (jobsData.jobs?.length > 0) setSelectedJob(jobsData.jobs[0]);
 
-        // 4️⃣ Get saved searches
+        // 3️⃣ Get saved searches
         const searchesRes = await fetch(
           `http://localhost:5000/api/userjobs/searches/${userId}`,
           { method: "GET", credentials: "include" }
@@ -87,13 +80,13 @@ export default function JobFound() {
       return;
     }
 
-    // map jobs using flexible field names like in display
     const jobsPayload = filteredJobs.map((job) => ({
       title: job.Title || job.title || "(No title)",
       company: job.Company || job.CompanyName || job.organization || "Unknown Company",
-      description: job.Description || job.descriptionText || job.descriptionHtml || "No description available",
+      description:
+        job.Description || job.descriptionText || job.descriptionHtml || "No description available",
       location: job.Location || job.location || "",
-      link: job.link || job.applyUrl || ""
+      link: job.link || job.applyUrl || "",
     }));
 
     try {
@@ -105,10 +98,8 @@ export default function JobFound() {
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.error || "Failed to save search");
 
-      // backend must return savedSearch object
       setRecentSearches((prev) => [data.savedSearch, ...prev.slice(0, 9)]);
       setSaveModalOpen(false);
       setNewSearchName("");
@@ -118,7 +109,7 @@ export default function JobFound() {
       alert(err.message || "Error saving search");
     }
   };
-  // Job selection + apply logic
+
   const toggleJobSelection = (jobId) => {
     setSelectedJobs((prev) =>
       prev.includes(jobId)
@@ -144,6 +135,18 @@ export default function JobFound() {
     }
   };
 
+  // ✅ Switch between searches
+  const handleSearchSelect = (search) => {
+    if (search === "All Jobs") {
+      setFilteredJobs(userJobs);
+      setActiveSearch("All Jobs");
+    } else if (search?.jobs) {
+      const flatJobs = search.jobs.flatMap((j) => j.jobs || [j]);
+      setFilteredJobs(flatJobs);
+      setActiveSearch(search.name);
+    }
+  };
+
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-green-400">
@@ -157,50 +160,64 @@ export default function JobFound() {
         {error}
       </div>
     );
+
   return (
     <div className="flex min-h-screen bg-[#0b0f0e] text-white">
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar
         isOpen={sidebarOpen}
         recentSearches={recentSearches}
-        onSelectSearch={(search) =>
-          search?.jobs && setFilteredJobs(search.jobs.flatMap((j) => j.jobs || [j]))
-        }
+        onSelectSearch={handleSearchSelect}
       />
 
-      < div className="flex-1 p-6 md:p-10">
+      <div className="flex-1 p-6 md:p-10">
         {/* HEADER */}
-        <div className="flex justify-between items-center mt-3  ">
-          <div className=" flex justify-center items-center">
-            <h2 className="text-lg mx-4 font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10">
+        <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
+          {/* 🔍 Recent Searches */}
+          <div className="flex ">
+            <h2 className="text-md font-bold text-green-400 mb-2  px-3 pt-1.5">
               Saved Searches
             </h2>
-            {recentSearches.length > 0 ? (
-              <ul className="space-x-2 text-sm text-gray-300">
-                {recentSearches.map((search, idx) => (
-                  <li
+            <div className="flex flex-wrap gap-2">
+              {/* All Jobs button */}
+              <button
+                onClick={() => handleSearchSelect("All Jobs")}
+                className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === "All Jobs"
+                    ? "bg-green-700/50 border-green-600 text-green-200"
+                    : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                  }`}
+              >
+                All Jobs
+              </button>
+
+              {/* Recent searches list */}
+              {recentSearches.length > 0 ? (
+                recentSearches.map((search, idx) => (
+                  <button
                     key={idx}
-                    onClick={() => onSelectSearch?.(search)}
-                    className="px-4 py-2 bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50  cursor-pointer rounded-md"
+                    onClick={() => handleSearchSelect(search)}
+                    className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === search.name
+                        ? "bg-green-700/50 border-green-600 text-green-200"
+                        : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                      }`}
                   >
                     {search.name}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500 text-xs italic">No saved searches yet</p>
-            )}
+                  </button>
+                ))
+              ) : (
+                <p className="text-gray-500 text-xs italic mt-2">No saved searches yet</p>
+              )}
+            </div>
           </div>
-          <h2 className="text-2xl font-bold text-green-400 mb-6 border-b border-green-900 pb-2 pt-10">
-            Your Saved Jobs
-          </h2>
-          <div className="flex gap-3">
+
+          {/* 🧩 Action Buttons */}
+          <div className="flex gap-3 mt-6 md:mt-0">
             <button
               onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
               disabled={!selectedJobs.length}
               className={`px-3 py-2 text-sm rounded-md border transition ${selectedJobs.length
-                ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
-                : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+                  ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
+                  : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
                 }`}
             >
               Apply Now ({selectedJobs.length})
@@ -221,7 +238,8 @@ export default function JobFound() {
             </button>
           </div>
         </div>
-        {/* SAVE SEARCH MODAL */}
+
+        {/* ✅ Save Search Modal */}
         {saveModalOpen && (
           <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
             <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg">
@@ -253,42 +271,31 @@ export default function JobFound() {
           </div>
         )}
 
-        {/* JOBS GRID */}
-        <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden">
-          {filteredJobs.length > 0 ? (
-            <div className=" w-1/3  m-2 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 overflow-y-auto no-scrollbar">
-              {filteredJobs.map((job, idx) => {
-                // ✅ Handle flexible job IDs
+        {/* JOBS GRID + DETAIL PANEL */}
+        <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
+          {/* Left: Job list */}
+          <div className="w-1/3 m-2 grid gap-4 grid-cols-1 lg:grid-cols-1 overflow-y-auto no-scrollbar">
+            {filteredJobs.length > 0 ? (
+              filteredJobs.map((job, idx) => {
                 const jobId = job._id || job.id || job.jobId || idx;
                 const isSelected = selectedJobs.includes(jobId);
-
-                // ✅ Handle flexible field names for older jobs
                 const title = job.Title || job.title || "(No title)";
-                const description = job.Description || job.descriptionText ||
-                  job.descriptionHtml ||
-                  "No description available.";
+                const description =
+                  job.Description || job.descriptionText || job.descriptionHtml || "No description available.";
                 const location = job.Location || job.location || "";
-                const employmentType = job.employmentType || job.type || job.jobType || "Not specified";
                 const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
-                // const company = job.company || job.Company || job.CompanyName || job.organization || "Unknown Company";
-
-                console.log(job)
-
 
                 return (
                   <div
                     key={job._id || idx}
-                    className={`p-4 border rounded-xl shadow-md transition cursor-pointer  ${isSelected
-                      ? "bg-green-900/20 border-green-500"
-                      : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
+                    className={`p-4 border rounded-xl shadow-md transition cursor-pointer ${isSelected
+                        ? "bg-green-900/20 border-green-500"
+                        : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
                       }`}
                     onClick={() => toggleJobSelection(jobId)}
                   >
-                    {/* Title + Checkbox */}
                     <div className="flex justify-between items-start">
-                      <h3 className="text-lg font-semibold text-green-400 truncate">
-                        {title}
-                      </h3>
+                      <h3 className="text-lg font-semibold text-green-400 truncate">{title}</h3>
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -298,30 +305,18 @@ export default function JobFound() {
                       />
                     </div>
 
-                    {/* Company */}
-                    {/* <p className="text-sm text-gray-400 mt-1">{company}</p> */}
-
-                    {/* Description */}
                     <p
                       className="text-sm text-gray-500 mt-2 line-clamp-3"
                       dangerouslySetInnerHTML={{ __html: description }}
                     ></p>
 
-
-                    {/* Meta Info */}
                     <div className="mt-3 text-xs text-green-300 space-y-1">
-                      <div className="text-gray-400 text-sm mb-2"> {location}</div>
-                      {/* <div>Type: {employmentType}</div> */}
+                      <div className="text-gray-400 text-sm mb-2">{location}</div>
                       <div className="text-gray-400 text-sm mb-2">
-                        Posted:{" "}
-                        {postedAt
-                          ? new Date(postedAt).toLocaleDateString()
-                          : "Unknown date"}
+                        Posted: {postedAt ? new Date(postedAt).toLocaleDateString() : "Unknown date"}
                       </div>
                     </div>
 
-
-                    {/* Job Link */}
                     {job.link && (
                       <a
                         href={job.link}
@@ -333,7 +328,6 @@ export default function JobFound() {
                       </a>
                     )}
 
-                    {/* View Details Button */}
                     <button
                       className="mt-3 w-full px-3 py-2 bg-green-700/20 border border-green-700 text-green-300 rounded-md hover:bg-green-700/40 transition text-sm"
                       onClick={(e) => {
@@ -345,12 +339,13 @@ export default function JobFound() {
                     </button>
                   </div>
                 );
-              })}
-            </div>
-          ) : (
-            <div className="text-center text-gray-400 mt-10">No jobs found.</div>
-          )}
+              })
+            ) : (
+              <div className="text-center text-gray-400 mt-10">No jobs found.</div>
+            )}
+          </div>
 
+          {/* Right: Job detail */}
           <div className="w-3/4 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e]">
             {selectedJob ? (
               <div>
@@ -404,4 +399,4 @@ export default function JobFound() {
       </div>
     </div>
   );
-}     
+}

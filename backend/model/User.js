@@ -50,6 +50,19 @@ const userSchema = new mongoose.Schema({
   github: { type: String, default: "" },
   linkedin: { type: String, default: "" },
 
-});
+  clientId: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+  clientSecret: {
+    type: String,
+    default: "",
+    trim: true,
+  },
+},
+  { timestamps: true }
+);
+
 
 module.exports = mongoose.model("User", userSchema, "applicants");

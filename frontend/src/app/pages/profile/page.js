@@ -23,6 +23,12 @@ export default function Profile() {
     const [savingLink, setSavingLink] = useState("");
     const [saveStatus, setSaveStatus] = useState(null);
 
+    // 🌐 Social & API credentials
+    const [clientData, setClientData] = useState({
+        clientId: "",
+        clientSecret: "",
+    });
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
@@ -77,7 +83,27 @@ export default function Profile() {
         }
     };
 
-
+    const handleSaveClientData = async () => {
+        if (!clientData.clientId.trim() || !clientData.clientSecret.trim()) return;
+        setSavingLink("client");
+        try {
+            const res = await fetch("http://localhost:5000/api/auth/update-client", {
+                method: "POST",
+                credentials: "include",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(clientData),
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message || "Failed to save credentials");
+            setUser((prev) => ({ ...prev, ...clientData }));
+            setSaveStatus({ platform: "client", success: true });
+        } catch (err) {
+            console.error(err);
+            setSaveStatus({ platform: "client", success: false });
+        } finally {
+            setSavingLink("");
+        }
+    };
     // 🔹 Save Edited Name
     const handleNameSave = () => {
         if (newName.trim()) {
@@ -207,6 +233,57 @@ export default function Profile() {
                         className="text-sm text-gray-300 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-500 file:text-black hover:file:opacity-90"
                         onChange={handleResumeUpload}
                     />
+                </div>
+
+                <hr className="my-6 border-[#1b2b27]" />
+                {/* 🌟 Client ID & Secret Section */}
+                <h3 className="text-xl font-semibold text-green-300 mb-3 flex items-center gap-2">
+                    🔑 API Credentials
+                    <Info
+                        size={18}
+                        className="text-green-400 cursor-pointer hover:text-green-300"
+                        onClick={() => setShowHelp(true)}
+                    />
+                </h3>
+
+                <div className="space-y-3">
+                    <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
+                        <span className="text-gray-400 text-sm">Client ID:</span>
+                        <input
+                            type="text"
+                            value={clientData.clientId}
+                            onChange={(e) =>
+                                setClientData({ ...clientData, clientId: e.target.value })
+                            }
+                            placeholder="Enter Client ID"
+                            className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-gray-200 w-2/3"
+                        />
+                    </div>
+
+                    <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
+                        <span className="text-gray-400 text-sm">Client Secret:</span>
+                        <input
+                            type="password"
+                            value={clientData.clientSecret}
+                            onChange={(e) =>
+                                setClientData({ ...clientData, clientSecret: e.target.value })
+                            }
+                            placeholder="Enter Client Secret"
+                            className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-gray-200 w-2/3"
+                        />
+                    </div>
+
+                    <button
+                        onClick={handleSaveClientData}
+                        disabled={savingLink === "client"}
+                        className="mt-2 bg-green-500 text-black px-4 py-2 rounded-lg font-medium hover:opacity-90"
+                    >
+                        {savingLink === "client"
+                            ? "Saving..."
+                            : saveStatus?.platform === "client" && saveStatus.success
+                                ? "Saved ✓"
+                                : "Save Credentials"}
+                    </button>
                 </div>
 
                 <hr className="my-6 border-[#1b2b27]" />
