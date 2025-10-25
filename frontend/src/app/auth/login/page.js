@@ -13,9 +13,10 @@ export default function LoginPage() {
   const [error, setError] = useState(null)
 
   const handleSubmit = async (e) => {
+     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     e.preventDefault()
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },

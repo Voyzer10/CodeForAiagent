@@ -32,9 +32,11 @@ export default function UserPanel() {
 
   // ✅ Step 1: Fetch current user + user's jobs
   useEffect(() => {
+     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     const fetchUser = async () => {
+
       try {
-        const res = await fetch("http://localhost:5000/api/auth/me", {
+        const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
           credentials: "include",
         });
         const data = await res.json();
@@ -42,7 +44,7 @@ export default function UserPanel() {
         setUser(data.user);
 
         if (data.user?.userId) {
-          const jobRes = await fetch(`http://localhost:5000/api/userjobs/${data.user.userId}`, {
+          const jobRes = await fetch(`${API_BASE_URL}/api/userjobs/${data.user.userId}`, {
             credentials: "include",
           });
           const jobData = await jobRes.json();
@@ -73,7 +75,7 @@ export default function UserPanel() {
 
     try {
       // Check active plan
-      const planRes = await fetch("http://localhost:5000/api/payment/check", {
+      const planRes = await fetch(`${API_BASE_URL}/api/payment/check`, {
         credentials: "include",
       });
       const planData = await planRes.json();
@@ -94,7 +96,7 @@ export default function UserPanel() {
       `;
 
       // Call backend
-      const res = await fetch("http://localhost:5000/api/userjobs/", {
+      const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -108,7 +110,7 @@ export default function UserPanel() {
 
       // Refresh user jobs
       if (user?.userId) {
-        const jobRes = await fetch(`http://localhost:5000/api/userjobs/${user.userId}`, {
+        const jobRes = await fetch(`${API_BASE_URL}/api/userjobs/${user.userId}`, {
           credentials: "include",
         });
         const jobData = await jobRes.json();
@@ -124,7 +126,7 @@ export default function UserPanel() {
   // ✅ Step 3: Continue fetching jobs (from backend)
   const continueToFetchJobs = async (prompt) => {
     try {
-      const res = await fetch("http://localhost:5000/api/userjobs/", {
+      const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -138,7 +140,7 @@ export default function UserPanel() {
       // ✅ After adding new jobs, refresh user jobs list
       if (user && user.userId) {
         const jobRes = await fetch(
-          `http://localhost:5000/api/userjobs/${user.userId}`,
+          `${API_BASE_URL}/api/userjobs/${user.userId}`,
           {
             method: "GET",
             credentials: "include",

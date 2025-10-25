@@ -36,7 +36,7 @@ export default function RegisterPage() {
         // Terms text is shown below; no checkbox gate per UI spec
 
         try {
-            await axios.post('http://localhost:5000/api/auth/register', {
+            await axios.post(`${API_BASE_URL}/api/auth/register`, {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
@@ -92,7 +92,7 @@ export default function RegisterPage() {
 
                 <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
                     <div>
-                        <label className="block text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
+                        <label className=" text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
                             <User size={12} className="text-[#00FA92]" />
                             Full Name
                         </label>
@@ -110,7 +110,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
+                        <label className=" text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
                             <Mail size={12} className="text-[#00FA92]" />
                             Email Address
                         </label>
@@ -128,7 +128,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
+                        <label className=" text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
                             <Lock size={12} className="text-[#00FA92]" />
                             Password
                         </label>
@@ -154,7 +154,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
+                        <label className=" text-sm font-medium text-[#00FA92] mb-2 flex items-center gap-2">
                             <Lock size={12} className="text-[#00FA92]" />
                             Confirm Password
                         </label>

@@ -23,14 +23,17 @@ export default function JobFound() {
   // Track which recent search is active
   const [activeSearch, setActiveSearch] = useState("All Jobs");
 
+ 
+
   useEffect(() => {
+     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     const fetchUserAndJobs = async () => {
       try {
         setLoading(true);
         setError("");
 
         // 1️⃣ Get user
-        const userRes = await fetch("http://localhost:5000/api/auth/me", {
+        const userRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
           method: "GET",
           credentials: "include",
         });
@@ -41,7 +44,7 @@ export default function JobFound() {
         if (!userId) throw new Error("User info missing");
 
         // 2️⃣ Get user jobs (All jobs)
-        const jobsRes = await fetch(`http://localhost:5000/api/userjobs/${userId}`, {
+        const jobsRes = await fetch(`${API_BASE_URL}/api/userjobs/${userId}`, {
           method: "GET",
           credentials: "include",
         });
@@ -57,7 +60,7 @@ export default function JobFound() {
 
         // 3️⃣ Get saved searches
         const searchesRes = await fetch(
-          `http://localhost:5000/api/userjobs/searches/${userId}`,
+          `${API_BASE_URL}/api/userjobs/searches/${userId}`,
           { method: "GET", credentials: "include" }
         );
         const searchesData = await searchesRes.json();
@@ -90,7 +93,7 @@ export default function JobFound() {
     }));
 
     try {
-      const res = await fetch("http://localhost:5000/api/userjobs/searches/save", {
+      const res = await fetch(`${API_BASE_URL}/api/userjobs/searches/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
