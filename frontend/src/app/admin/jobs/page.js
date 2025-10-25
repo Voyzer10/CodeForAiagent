@@ -22,7 +22,7 @@ export default function JobsPage() {
   }, []);
 
   if (loading) return <p className="p-4">Loading jobs...</p>;
-  if (error) return <p className="p-4 text-red-600">{error}</p>;
+  // if (error) return <p className="p-4 text-red-600">{error}</p>;
 
   return (
     <div className="space-y-4">
