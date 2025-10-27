@@ -15,9 +15,12 @@ app.use(cookieParser());
 
 // Middleware
 app.use(cors({
- origin: process.env.CLIENT_URL || "http://localhost:3000",
-  credentials: true
+  origin: "http://localhost:3000",
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 }));
+
+app.options("*", cors()); // handle prefligh
 
 // connect DB
 connectDB().then(async () => {
