@@ -34,7 +34,7 @@ export default function Header() {
           </button>
           <button
             onClick={("/auth/register")}className="hover:bg-[#00fa92] text-[#00fa92] font-bold text-lg  hover:text-[#030604] px-4 py-2 rounded-md">
-            Register 
+            register
           </button>
         </div>
 
