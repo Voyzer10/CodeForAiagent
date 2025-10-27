@@ -27,12 +27,15 @@ export default function Header() {
         </ul>
 
         <div>
-          <Link href="/auth/login" className="hover:bg-[#00fa92] text-[#00fa92]  font-bold text-lg hover:text-[#030604] px-4 py-2 rounded-md">
+          <button
+            onClick={("/auth/login")}
+             className="hover:bg-[#00fa92] text-[#00fa92]  font-bold text-lg hover:text-[#030604] px-4 py-2 rounded-md">
             Login
-          </Link>
-          <Link href="/auth/register" className="hover:bg-[#00fa92] text-[#00fa92] font-bold text-lg  hover:text-[#030604] px-4 py-2 rounded-md">
+          </button>
+          <button
+            onClick={("/auth/register")}className="hover:bg-[#00fa92] text-[#00fa92] font-bold text-lg  hover:text-[#030604] px-4 py-2 rounded-md">
             Register 
-          </Link>
+          </button>
         </div>
 
       </nav>
