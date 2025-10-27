@@ -15,7 +15,7 @@ app.use(cookieParser());
 
 // Middleware
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "https://code-for-aiagent-39q5.vercel.app",
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 }));
