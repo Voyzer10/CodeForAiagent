@@ -7,44 +7,57 @@ const cookieParser = require("cookie-parser");
 const { logToFile, logErrorToFile } = require("./logger");
 
 const app = express();
-// Allow larger payloads (e.g., big job arrays)
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-;
+
+// Allow larger payloads
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(cookieParser());
 
-// Middleware
-app.use(cors({
-  origin: "https://code-for-aiagent-39q5.vercel.app",
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+// ✅ FIXED CORS SETUP
+const allowedOrigins = [
+  "https://code-for-aiagent-39q5.vercel.app",
+  "http://localhost:3000", // for local testing
+];
 
-app.options("*", cors()); // handle prefligh
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.error("❌ Blocked by CORS:", origin);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
-// connect DB
+app.options("*", cors()); // ✅ handle preflight
+
+// Connect DB
 connectDB().then(async () => {
   const collections = await mongoose.connection.db.listCollections().toArray();
-  console.log("📂 Collections in DB:", collections.map(c => c.name));
+  console.log("📂 Collections in DB:", collections.map((c) => c.name));
 });
 
-// routes
-
+// Routes
 const authRoutes = require("./routes/authRoutes");
 const userjobsRoute = require("./routes/userjobs");
-const adminRoutes = require("./routes/adminRoutes"); 
+const adminRoutes = require("./routes/adminRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const logRoutes = require("./routes/logRoutes");
- // ✅ add this
 
 app.use("/api/auth", authRoutes);
 app.use("/api/userjobs", userjobsRoute);
-app.use("/api/admin", adminRoutes); // ✅ mount admin routes
+app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", userjobsRoute);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/admin", logRoutes);
 
-
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({ message: "Route not found" });
 });
@@ -69,7 +82,6 @@ console.error = function (...args) {
   process.stderr.write(message + "\n");
 };
 
-// start server
+// Start server
 const PORT = process.env.PORT || 5000;
-
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
