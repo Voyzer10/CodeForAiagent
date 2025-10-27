@@ -15,14 +15,9 @@ app.use(cookieParser());
 
 // Middleware
 app.use(cors({
-<<<<<<< HEAD
- origin: process.env.CLIENT_URL || "https://code-for-aiagent-39q5.vercel.app",
-  credentials: true
-=======
-  origin: "http://localhost:3000",
+  origin: "https://code-for-aiagent-39q5.vercel.app/",
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
->>>>>>> ade128766b2680b89f73255779131f8d2158ad0c
 }));
 
 app.options("*", cors()); // handle prefligh
