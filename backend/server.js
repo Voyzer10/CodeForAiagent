@@ -11,7 +11,7 @@ const app = express();
 
 // ✅ CORS FIRST — must be before any routes
 const allowedOrigins = [
-  "https://code-for-aiagent-39q5.vercel.app",
+  // "https://code-for-aiagent-39q5.vercel.app",
   "http://localhost:3000", // optional for local dev
 ];
 
@@ -56,11 +56,11 @@ app.use("/api/jobs", userjobsRoute);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/logs", logRoutes);
 
-// ✅ Health check
-app.get("/", (req, res) => res.send("✅ Backend is running fine!"));
+// // ✅ Health check
+// app.get("/", (req, res) => res.send("✅ Backend is running fine!"));
 
-// ✅ 404 fallback
-app.use((req, res) => res.status(404).json({ message: "Route not found" }));
+// // ✅ 404 fallback
+// app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 
 // ✅ Error handler
 app.use((err, req, res, next) => {
