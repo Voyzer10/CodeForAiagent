@@ -122,21 +122,36 @@ export default function JobFound() {
   };
 
   const applyJobs = async (jobsToApply) => {
-    if (!jobsToApply.length) return alert("No jobs selected!");
-    try {
-      const webhookUrl =
-        "http://localhost:5678/webhook-test/d776d31c-a7d9-4521-b374-1e540915ed36";
+  if (!jobsToApply.length) return alert("No jobs selected!");
+
+  const webhookUrl = "http://localhost:5678/webhook-test/d776d31c-a7d9-4521-b374-1e540915ed36";
+
+  try {
+    for (let i = 0; i < jobsToApply.length; i++) {
+      const job = jobsToApply[i];
+
       const res = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ jobs: jobsToApply }),
+        body: JSON.stringify({ job }), // 👈 send one job at a time
       });
-      if (!res.ok) throw new Error("Webhook failed");
-      alert(`Successfully triggered apply for ${jobsToApply.length} job(s)!`);
-    } catch (err) {
-      alert("Error applying: " + err.message);
+
+      if (!res.ok) {
+        console.error(`Failed to send job ${i + 1}`, await res.text());
+        continue;
+      }
+
+      console.log(`✅ Sent job ${i + 1}/${jobsToApply.length}`);
+      await new Promise((resolve) => setTimeout(resolve, 500)); // small delay (optional)
     }
-  };
+
+    alert(`Successfully triggered apply for ${jobsToApply.length} job(s) one by one!`);
+  } catch (err) {
+    console.error("Error applying:", err);
+    alert("Error applying: " + err.message);
+  }
+};
+
 
   // ✅ Switch between searches
   const handleSearchSelect = (search) => {
