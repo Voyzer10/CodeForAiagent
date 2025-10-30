@@ -122,14 +122,10 @@ export default function JobFound() {
   };
 
   const applyJobs = async (jobsToApply) => {
-  if (!jobsToApply.length) return alert("No jobs selected!");
-
-  const webhookUrl = "http://localhost:5678/webhook-test/d776d31c-a7d9-4521-b374-1e540915ed36";
-
-  try {
-    for (let i = 0; i < jobsToApply.length; i++) {
-      const job = jobsToApply[i];
-
+    if (!jobsToApply.length) return alert("No jobs selected!");
+    try {
+      const webhookUrl =
+        "http://localhost:5678/webhook/apply-jobs";
       const res = await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
