@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          # removed cache: npm to prevent lock file error
 
       - name: 💾 Cache node_modules
         uses: actions/cache@v4
