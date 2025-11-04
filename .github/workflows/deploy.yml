@@ -3,7 +3,7 @@ name: 🚀 Deploy to VPS
 on:
   push:
     branches:
-      - main  # or whichever branch you deploy
+      - main
 
 jobs:
   deploy:
@@ -16,22 +16,25 @@ jobs:
       - name: 🔑 Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" | sed 's/\\n/\n/g' > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 2.56.246.163 >> ~/.ssh/known_hosts
+
+      - name: 🔍 Test SSH Connection
+        run: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ansh@2.56.246.163 "echo Connected!"
 
       - name: 🚀 Deploy via SSH
         run: |
           ssh -i ~/.ssh/id_ed25519 ansh@2.56.246.163 << 'EOF'
-          cd ~/CodeForAiagent
-          git pull origin main
-          
-          cd backend
-          npm install --omit=dev
-          pm2 restart backend
+            cd ~/CodeForAiagent
+            git pull origin main
 
-          cd ../frontend
-          npm install --omit=dev
-          npm run build
-          pm2 restart frontend
+            cd backend
+            npm install --omit=dev
+            pm2 restart backend || pm2 start npm --name backend -- run start
+
+            cd ../frontend
+            npm install --omit=dev
+            npm run build
+            pm2 restart frontend || pm2 start npm --name frontend -- run start
           EOF
