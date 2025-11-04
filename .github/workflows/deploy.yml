@@ -17,7 +17,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          # removed cache: npm to prevent lock file error
 
       - name: 💾 Cache node_modules
         uses: actions/cache@v4
@@ -37,20 +36,40 @@ jobs:
           ssh-keyscan -H 2.56.246.163 >> ~/.ssh/known_hosts
 
       - name: 🔍 Test SSH Connection
-        run: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ansh@2.56.246.163 "echo Connected!"
+        run: ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ansh@2.56.246.163 "echo ✅ SSH Connected!"
 
       - name: 🚀 Deploy via SSH
         run: |
-          ssh -i ~/.ssh/id_ed25519 ansh@2.56.246.163 << 'EOF'
-            cd ~/CodeForAiagent
-            git pull origin main
+          ssh -i ~/.ssh/id_ed25519 -o StrictHostKeyChecking=no ansh@2.56.246.163 << 'EOF'
+            set -e  # stop script on first error
 
+            echo "🧹 Cleaning repo and pulling latest code..."
+            cd ~/CodeForAiagent
+            git fetch origin main
+            git reset --hard origin/main  # ⚡ ensures no local conflict
+            git clean -fd  # remove untracked files
+
+            echo "📦 Backend setup..."
             cd backend
-            npm install --omit=dev
+            rm -rf node_modules package-lock.json  # optional cleanup
+            npm ci --omit=dev
             pm2 restart backend || pm2 start npm --name backend -- run start
 
+            echo "🎨 Frontend setup..."
             cd ../frontend
-            npm install --omit=dev
-            npm run build
+            rm -rf node_modules package-lock.json  # optional cleanup
+            npm ci --omit=dev
+
+            # Ensure Tailwind/PostCSS installed
+            npm install -D tailwindcss postcss autoprefixer @tailwindcss/postcss
+
+            echo "🏗️ Building frontend..."
+            npm run build || { echo "❌ Build failed"; exit 1; }
+
+            echo "🚀 Restarting frontend app..."
             pm2 restart frontend || pm2 start npm --name frontend -- run start
+            pm2 save
+
+            echo "✅ Deployment successful!"
           EOF
+          
