@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/preflight";
+@import "tailwindcss/utilities";
+@import "tailwindcss/components";
+
+/* Optional: you can change the order if you prefer components before utilities */
+
 
 /* Admin UI polish to better match modern SaaS style */
 :root {
