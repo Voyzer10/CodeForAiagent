@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+
 
 /* Admin UI polish to better match modern SaaS style */
 :root {

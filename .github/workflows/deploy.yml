@@ -13,6 +13,22 @@ jobs:
       - name: 🧩 Checkout repository
         uses: actions/checkout@v4
 
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # removed cache: npm to prevent lock file error
+
+      - name: 💾 Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            backend/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('frontend/package-lock.json', 'backend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
       - name: 🔑 Setup SSH
         run: |
           mkdir -p ~/.ssh
