@@ -56,11 +56,11 @@ app.use("/api/jobs", userjobsRoute);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/logs", logRoutes);
 
-// // ✅ Health check
-// app.get("/", (req, res) => res.send("✅ Backend is running fine!"));
+// ✅ Health check
+app.get("/", (req, res) => res.send("✅ Backend is running fine!"));
 
-// // ✅ 404 fallback
-// app.use((req, res) => res.status(404).json({ message: "Route not found" }));
+// ✅ 404 fallback
+app.use((req, res) => res.status(404).json({ message: "Route not found" }));
 
 // ✅ Error handler
 app.use((err, req, res, next) => {
