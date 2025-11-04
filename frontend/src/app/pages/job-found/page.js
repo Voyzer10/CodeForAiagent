@@ -124,7 +124,7 @@ export default function JobFound() {
   const applyJobs = async (jobsToApply) => {
   if (!jobsToApply.length) return alert("No jobs selected!");
 
-  const webhookUrl = "http://localhost:5678/webhook-test/d776d31c-a7d9-4521-b374-1e540915ed36";
+  const webhookUrl = "http://localhost:5678/webhook/apply-jobs";
 
   try {
     for (let i = 0; i < jobsToApply.length; i++) {
