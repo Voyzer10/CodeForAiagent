@@ -3,7 +3,7 @@ name: 🚀 Deploy to VPS
 on:
   push:
     branches:
-      - main  # or whichever branch you deploy
+      - main  # Deploy when pushing to main branch
 
 jobs:
   deploy:
@@ -12,6 +12,22 @@ jobs:
     steps:
       - name: 🧩 Checkout repository
         uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+
+      - name: 💾 Cache node_modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            frontend/node_modules
+            backend/node_modules
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
 
       - name: 🔑 Setup SSH
         run: |
@@ -23,15 +39,22 @@ jobs:
       - name: 🚀 Deploy via SSH
         run: |
           ssh -i ~/.ssh/id_ed25519 ansh@2.56.246.163 << 'EOF'
+          set -e  # Exit on error
+
+          echo "🔄 Pulling latest code..."
           cd ~/CodeForAiagent
           git pull origin main
-          
+
+          echo "📦 Updating backend..."
           cd backend
           npm install --omit=dev
-          pm2 restart backend
+          pm2 restart backend || pm2 start npm --name "backend" -- start
 
+          echo "🌐 Building frontend..."
           cd ../frontend
-          npm install --omit=dev
+          npm install   # Full install to include Tailwind + PostCSS
           npm run build
-          pm2 restart frontend
+          pm2 restart frontend || pm2 start npm --name "frontend" -- start
+
+          echo "✅ Deployment complete!"
           EOF
