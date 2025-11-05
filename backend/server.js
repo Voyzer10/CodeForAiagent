@@ -11,7 +11,7 @@ const app = express();
 
 // ✅ CORS FIRST — must be before any routes
 const allowedOrigins = [
-  "https://techm.work.gd/",
+  "https://techm.work.gd",
   "http://localhost:3000", // optional for local dev
 ];
 
