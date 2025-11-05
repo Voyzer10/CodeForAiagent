@@ -10,7 +10,7 @@ const jobWorker = new Worker(
     const { prompt, userId, sessionId } = job.data;
     console.log(`🧑‍💻 [Worker] Processing job: ${job.id} for user ${userId}`);
 
-    const n8nWebhook = "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
+    const n8nWebhook = "https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
     let parsed = null;
 
     // 🔹 Step 1: Try calling N8N webhook
