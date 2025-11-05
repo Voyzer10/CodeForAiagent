@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from 'next/navigation'
+
 
 export default function Header() {
   return (
@@ -28,12 +30,13 @@ export default function Header() {
 
         <div>
           <button
-            onClick={("/auth/login")}
+            onClick={() => router.push('/auth/login')}
              className="hover:bg-[#00fa92] text-[#00fa92]  font-bold text-lg hover:text-[#030604] px-4 py-2 rounded-md">
             Login
           </button>
           <button
-            onClick={("/auth/register")}className="hover:bg-[#00fa92] text-[#00fa92] font-bold text-lg  hover:text-[#030604] px-4 py-2 rounded-md">
+           onClick={() => router.push('/auth/register')}
+            className="hover:bg-[#00fa92] text-[#00fa92] font-bold text-lg  hover:text-[#030604] px-4 py-2 rounded-md">
             register
           </button>
         </div>
