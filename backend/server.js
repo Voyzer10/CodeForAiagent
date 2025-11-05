@@ -57,7 +57,11 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/logs", logRoutes);
 
 // ✅ Health check
-app.get("/", (req, res) => res.send("✅ Backend is running fine!"));
+// ✅ Health check (root and /api)
+app.get(["/", "/api"], (req, res) => {
+  res.send("✅ Backend is running fine!");
+});
+
 
 // ✅ 404 fallback
 app.use((req, res) => res.status(404).json({ message: "Route not found" }));
