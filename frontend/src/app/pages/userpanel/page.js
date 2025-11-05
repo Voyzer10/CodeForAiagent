@@ -36,7 +36,7 @@ export default function UserPanel() {
     const fetchUser = async () => {
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
           credentials: "include",
         });
         const data = await res.json();
@@ -96,6 +96,7 @@ export default function UserPanel() {
       `;
 
       // Call backend
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
       const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,6 +127,7 @@ export default function UserPanel() {
   // ✅ Step 3: Continue fetching jobs (from backend)
   const continueToFetchJobs = async (prompt) => {
     try {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
       const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
