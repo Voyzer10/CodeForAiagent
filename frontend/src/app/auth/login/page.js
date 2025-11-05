@@ -16,7 +16,7 @@ export default function LoginPage() {
      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     e.preventDefault()
     try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -27,7 +27,6 @@ export default function LoginPage() {
         setError(data.message || 'Login failed')
         return
       }
-      if (data.token) localStorage.setItem('token', data.token)
       router.push('/pages/userpanel')
     } catch (err) {
       setError('Something went wrong. Try again.')

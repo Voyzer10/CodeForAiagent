@@ -95,8 +95,13 @@ const login = async (req, res) => {
   } catch (err) {
     console.error("❌ Login error:", err);
     res.status(500).json({ message: 'Server error' });
+    console.log("🔹 Login request received:", req.method, req.url);
+    console.log("🔹 Headers:", req.headers);
+    console.log("🔹 Body:", req.body);
   }
 };
+
+
 
 // CURRENT USER
 const getCurrentUser = async (req, res) => {
