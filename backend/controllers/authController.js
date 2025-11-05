@@ -98,6 +98,11 @@ const login = async (req, res) => {
   }
 };
 
+console.log("🔹 Login request received:", req.method, req.url);
+console.log("🔹 Headers:", req.headers);
+console.log("🔹 Body:", req.body);
+
+
 // CURRENT USER
 const getCurrentUser = async (req, res) => {
   try {
