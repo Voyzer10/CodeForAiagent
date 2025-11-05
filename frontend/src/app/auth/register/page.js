@@ -36,7 +36,7 @@ export default function RegisterPage() {
         // Terms text is shown below; no checkbox gate per UI spec
 
         try {
-            await axios.post(`${API_BASE_URL}/api/auth/register`, {
+            await axios.post(`${API_BASE_URL}/auth/register`, {
                 name: formData.name,
                 email: formData.email,
                 password: formData.password,
