@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useRouter } from "next/navigation";
-import SaveSearchPage from "./save-search/page";
+import {SaveSearchPage} from "../save-search";
 
 export default function UserPanel() {
   const router = useRouter();
