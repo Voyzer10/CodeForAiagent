@@ -6,10 +6,10 @@ import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useRouter } from "next/navigation";
+import SaveSearchPage from "./save-search/page";
 
 export default function UserPanel() {
   const router = useRouter();
-
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -18,23 +18,19 @@ export default function UserPanel() {
   const [linkedin, setLinkedin] = useState("");
   const [github, setGithub] = useState("");
   const [response, setResponse] = useState(null);
-  const [userJobs, setUserJobs] = useState([]); // ✅ jobs already fetched by the user
+  const [userJobs, setUserJobs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-
-  // To open card 
   const [isOpen, setIsOpen] = useState(false);
-
-  // Count field state and validation (client-side only)
   const [count, setCount] = useState(100);
   const [countError, setCountError] = useState("");
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
-  // ✅ Step 1: Fetch current user + user's jobs
+  // ✅ Fetch user + jobs
   useEffect(() => {
-     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     const fetchUser = async () => {
-
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
           credentials: "include",
@@ -44,9 +40,10 @@ export default function UserPanel() {
         setUser(data.user);
 
         if (data.user?.userId) {
-          const jobRes = await fetch(`${API_BASE_URL}/api/userjobs/${data.user.userId}`, {
-            credentials: "include",
-          });
+          const jobRes = await fetch(
+            `${API_BASE_URL}/api/userjobs/${data.user.userId}`,
+            { credentials: "include" }
+          );
           const jobData = await jobRes.json();
           setUserJobs(jobData.jobs || []);
         }
@@ -57,79 +54,44 @@ export default function UserPanel() {
     fetchUser();
   }, []);
 
-  // ✅ Step 2 + 3: Handle submit with payment check + prompt creation
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  if (loading) return;
+  // ✅ Handle job fetch
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (loading) return;
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // ✅ Move here
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const num = Number(count);
 
-  // Validation
-  const num = Number(count);
-  if (!Number.isFinite(num) || num < 100 || num > 1000) {
-    setCountError("Count must be between 100–1000");
-    return;
-  }
-
-  setCountError("");
-  setLoading(true);
-  setError(null);
-  console.log("📨 Submitting job request...");
-
-  try {
-    // Check active plan
-    const planRes = await fetch(`${API_BASE_URL}/api/payment/check`, {
-      credentials: "include",
-    });
-    const planData = await planRes.json();
-
-    if (!planData.hasPlan) {
-      setLoading(false);
-      router.push("/pages/price");
+    if (!Number.isFinite(num) || num < 100 || num > 1000) {
+      setCountError("Count must be between 100–1000");
       return;
     }
 
-    const prompt = `
-      Job Title: ${jobTitle}
-      Location: ${location}
-      LinkedIn: ${linkedin}
-      GitHub: ${github}
-      Count: ${num}
-    `;
+    setCountError("");
+    setLoading(true);
+    setError(null);
 
-    // Call backend
-    const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ prompt }),
-    });
-
-    if (!res.ok) throw new Error("Server error while enqueuing job");
-
-    const data = await res.json();
-    console.log("✅ Backend response:", data);
-    setResponse(data);
-
-    if (user?.userId) {
-      const jobRes = await fetch(`${API_BASE_URL}/api/userjobs/${user.userId}`, {
+    try {
+      // Check active plan
+      const planRes = await fetch(`${API_BASE_URL}/api/payment/check`, {
         credentials: "include",
       });
-      const jobData = await jobRes.json();
-      setUserJobs(jobData.jobs || []);
-    }
-  } catch (err) {
-    console.error("❌ Error submitting job:", err);
-    setError(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+      const planData = await planRes.json();
 
-  // ✅ Step 3: Continue fetching jobs (from backend)
-  const continueToFetchJobs = async (prompt) => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      if (!planData.hasPlan) {
+        setLoading(false);
+        router.push("/pages/price");
+        return;
+      }
+
+      const prompt = `
+        Job Title: ${jobTitle}
+        Location: ${location}
+        LinkedIn: ${linkedin}
+        GitHub: ${github}
+        Count: ${num}
+      `;
+
       const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -137,30 +99,28 @@ const handleSubmit = async (e) => {
         body: JSON.stringify({ prompt }),
       });
 
-      if (!res.ok) throw new Error("Server error");
+      if (!res.ok) throw new Error("Server error while enqueuing job");
+
       const data = await res.json();
       setResponse(data);
 
-      // ✅ After adding new jobs, refresh user jobs list
-      if (user && user.userId) {
+      if (user?.userId) {
         const jobRes = await fetch(
           `${API_BASE_URL}/api/userjobs/${user.userId}`,
-          {
-            method: "GET",
-            credentials: "include",
-          }
+          { credentials: "include" }
         );
         const jobData = await jobRes.json();
         setUserJobs(jobData.jobs || []);
       }
     } catch (err) {
+      console.error("❌ Error submitting job:", err);
       setError(err.message);
     } finally {
       setLoading(false);
     }
   };
 
-  // ✅ Step 4: Render everything
+  // ✅ Main UI
   return (
     <div className="relative min-h-screen bg-[#0a0f0d] text-white flex flex-col items-center px-4 pb-20">
       <UserNavbar onSidebarToggle={toggleSidebar} />
@@ -199,17 +159,12 @@ const handleSubmit = async (e) => {
               onChange={(e) => {
                 const raw = e.target.value;
                 setCount(raw === "" ? "" : Number(raw));
-                // live inline validation messages
                 const num = Number(raw);
-                if (raw === "" || !Number.isFinite(num)) {
+                if (raw === "" || !Number.isFinite(num))
                   setCountError("Please enter a number");
-                } else if (num < 100) {
-                  setCountError("Minimum allowed is 100");
-                } else if (num > 1000) {
-                  setCountError("Maximum allowed is 1000");
-                } else {
-                  setCountError("");
-                }
+                else if (num < 100) setCountError("Minimum allowed is 100");
+                else if (num > 1000) setCountError("Maximum allowed is 1000");
+                else setCountError("");
               }}
               min={100}
               max={1000}
@@ -219,32 +174,22 @@ const handleSubmit = async (e) => {
               <p className="mt-1 text-xs text-red-400">{countError}</p>
             ) : (
               typeof count === "number" && (
-                <p className="mt-1 text-xs text-gray-300">Selected: {count}</p>
+                <p className="mt-1 text-xs text-gray-300">
+                  Selected: {count}
+                </p>
               )
             )}
           </div>
 
           {/* Location */}
           <div>
-            {/* <label className="text-gray-400 text-sm mb-1 block">Location</label>
-            <input
-              type="text"
-              required
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Bangalore, India"
-              className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-            /> */}
-            <label className="text-gray-400 text-sm mb-1 block">
-              Location
-            </label>
-            <div className="[&_*]:!text-sm py-2 focus:outline-none focus:ring-2 focus:ring-green-400 " >
+            <label className="text-gray-400 text-sm mb-1 block">Location</label>
+            <div className="[&_*]:!text-sm py-2 focus:outline-none focus:ring-2 focus:ring-green-400">
               <LocationDropdown
                 value={location}
-                onChange={(val) => setLocation(val)} // ✅ Correct handler
+                onChange={(val) => setLocation(val)}
                 placeholder="Search city, area, or PIN"
               />
-
             </div>
           </div>
 
@@ -277,7 +222,7 @@ const handleSubmit = async (e) => {
             />
           </div>
 
-          {/* Button */}
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={loading || Boolean(countError) || count === ""}
@@ -310,100 +255,93 @@ const handleSubmit = async (e) => {
         </div>
       )}
 
-      {/* ✅ Display user's saved jobs */}
+      {/* Saved Jobs */}
       <div className="mt-10 w-full max-w-6xl h-[80vh] overflow-y-auto p-2">
-        <h3 className="text-green-400 font-semibold mb-3">Your Saved Jobs:</h3>
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-green-400 font-semibold">Your Saved Jobs:</h3>
+          {/* ✅ Save This Search Button */}
+          <button
+            onClick={() => setShowSaveDialog(true)}
+            className="px-3 py-2 text-sm rounded-md bg-green-700/30 border border-green-700 text-green-300 hover:bg-green-700/50 transition"
+          >
+            Save This Search
+          </button>
+        </div>
 
         {userJobs.length > 0 ? (
           <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {userJobs.map((job, idx) => {
-
-
-              return (
-                <div key={idx} className="relative">
-                  {/* Compact Card */}
-                  <div
-                    className="p-4 bg-[#0e1513] border border-[#1b2b27] rounded-md shadow-inner shadow-[#00ff9d22] cursor-pointer hover:shadow-lg transition-all"
-                    onClick={() => setIsOpen(!isOpen)}
-                  >
-                    <h4 className="text-green-300 font-semibold mb-1">{job.Title}</h4>
-                    <p className="text-sm text-gray-400">{job.Location}</p>
-                    {job.link && (
-                      <a
-                        href={job.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-green-400 underline text-sm mt-2 inline-block"
-                        onClick={(e) => e.stopPropagation()} // Prevent card toggle
-                      >
-                        View Full Job
-                      </a>
-                    )}
-                  </div>
-
-                  {/* Expanded Card */}
-                  {isOpen && (
-                    <div className="mt-2 p-4 bg-[#1f2937] border border-[#2a3a2e] rounded-md shadow-inner shadow-[#00ff9d33] z-10 relative">
-                      {Object.keys(job).map((key) => {
-                        // Skip some nested system keys
-                        if (["_id", "__v"].includes(key)) return null;
-
-                        return (
-                          <div key={key} className="mb-2">
-                            <span className="font-semibold text-green-300">{key}: </span>
-                            {key === "link" || key === "applyUrl" ? (
-                              <a
-                                href={job[key]}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-green-400 underline"
-                              >
-                                {job[key]}
-                              </a>
-                            ) : (
-                              <span className="text-gray-300">{job[key]}</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+            {userJobs.map((job, idx) => (
+              <div key={idx} className="relative">
+                <div
+                  className="p-4 bg-[#0e1513] border border-[#1b2b27] rounded-md shadow-inner shadow-[#00ff9d22] cursor-pointer hover:shadow-lg transition-all"
+                  onClick={() => setIsOpen(!isOpen)}
+                >
+                  <h4 className="text-green-300 font-semibold mb-1">
+                    {job.Title}
+                  </h4>
+                  <p className="text-sm text-gray-400">{job.Location}</p>
+                  {job.link && (
+                    <a
+                      href={job.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-400 underline text-sm mt-2 inline-block"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      View Full Job
+                    </a>
                   )}
                 </div>
-              );
-            })}
+
+                {isOpen && (
+                  <div className="mt-2 p-4 bg-[#1f2937] border border-[#2a3a2e] rounded-md shadow-inner shadow-[#00ff9d33] relative z-10">
+                    {Object.keys(job).map((key) => {
+                      if (["_id", "__v"].includes(key)) return null;
+                      return (
+                        <div key={key} className="mb-2">
+                          <span className="font-semibold text-green-300">
+                            {key}:{" "}
+                          </span>
+                          {key === "link" || key === "applyUrl" ? (
+                            <a
+                              href={job[key]}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-green-400 underline"
+                            >
+                              {job[key]}
+                            </a>
+                          ) : (
+                            <span className="text-gray-300">{job[key]}</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
         ) : (
-          <p className="text-gray-500 italic">No jobs available for the current user.</p>
+          <p className="text-gray-500 italic">
+            No jobs available for the current user.
+          </p>
         )}
       </div>
 
-
-      {/* Response from the new search */}
-      {response && Array.isArray(response) && (
-        <div className="mt-6 w-full max-w-3xl">
-          <h3 className="text-green-400 font-semibold mb-3">New Job Results:</h3>
-          <div className="grid gap-4">
-            {response.map((job, idx) => (
-              <div
-                key={idx}
-                className="p-4 bg-[#0e1513] border border-[#1b2b27] rounded-md shadow-inner shadow-[#00ff9d22]"
+      {/* ✅ Save Search Modal */}
+      {showSaveDialog && (
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+          <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg">
+            <SaveSearchPage />
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => setShowSaveDialog(false)}
+                className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
               >
-                <h4 className="text-green-300 font-semibold mb-1">
-                  {job.title}
-                </h4>
-                <p className="font-medium text-gray-300">{job.company}</p>
-                <p className="text-sm text-gray-400">{job.location}</p>
-                <p className="text-sm text-gray-500 mt-2">{job.description}</p>
-                <a
-                  href={job.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-green-400 underline text-sm mt-2 inline-block"
-                >
-                  View Job
-                </a>
-              </div>
-            ))}
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
