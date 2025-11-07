@@ -6,7 +6,6 @@ import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useRouter } from "next/navigation";
-import {SaveSearchPage} from "../save-search";
 
 export default function UserPanel() {
   const router = useRouter();
@@ -25,7 +24,6 @@ export default function UserPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [count, setCount] = useState(100);
   const [countError, setCountError] = useState("");
-  const [showSaveDialog, setShowSaveDialog] = useState(false);
 
   // ✅ Fetch user + jobs
   useEffect(() => {
@@ -259,9 +257,10 @@ export default function UserPanel() {
       <div className="mt-10 w-full max-w-6xl h-[80vh] overflow-y-auto p-2">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-green-400 font-semibold">Your Saved Jobs:</h3>
+
           {/* ✅ Save This Search Button */}
           <button
-            onClick={() => setShowSaveDialog(true)}
+            onClick={() => router.push("/pages/save-search")}
             className="px-3 py-2 text-sm rounded-md bg-green-700/30 border border-green-700 text-green-300 hover:bg-green-700/50 transition"
           >
             Save This Search
@@ -328,23 +327,6 @@ export default function UserPanel() {
           </p>
         )}
       </div>
-
-      {/* ✅ Save Search Modal */}
-      {showSaveDialog && (
-        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-          <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg">
-            <SaveSearchPage />
-            <div className="flex justify-end mt-4">
-              <button
-                onClick={() => setShowSaveDialog(false)}
-                className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
