@@ -63,8 +63,9 @@ export default function Price() {
         setPaymentStatus(null);
 
         try {
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // ✅ Move here
             // 1️⃣ Create Order
-            const res = await fetch("http://localhost:5000/api/payment/order", {
+            const res = await fetch(`${API_BASE_URL}/api/payment/order`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
