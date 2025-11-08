@@ -104,7 +104,7 @@ export default function Price() {
                             alert(`✅ Payment Successful for ${plan.name}!`);
 
                             setTimeout(() => {
-                                window.location.href = "/userpanel";
+                                window.location.href = "/pages/userpanel";
                             }, 1000);
 
                         } else {
@@ -225,7 +225,7 @@ export default function Price() {
 
             {/* Footer */}
             <footer className="mt-16 border-t border-[#1b2b27] pt-6 text-center text-gray-500 text-sm">
-                © 2024 LinkedIn Job Scraper. All rights reserved.
+                © 2025 LinkedIn Job Scraper. All rights reserved.
             </footer>
         </div>
     );
