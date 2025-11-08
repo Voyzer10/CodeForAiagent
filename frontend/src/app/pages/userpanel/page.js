@@ -5,6 +5,7 @@ import LocationDropdown from "../../components/LocationDropdown";
 import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import SaveSearchPage from "../save-search/page"; // ✅ Import your modal
 import { useRouter } from "next/navigation";
 
 export default function UserPanel() {
@@ -24,10 +25,12 @@ export default function UserPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [count, setCount] = useState(100);
   const [countError, setCountError] = useState("");
+  const [saveSearchModalOpen, setSaveSearchModalOpen] = useState(false); // ✅ Modal toggle
 
-  // ✅ Fetch user + jobs
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  // ✅ Fetch user and jobs
   useEffect(() => {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     const fetchUser = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -50,14 +53,13 @@ export default function UserPanel() {
       }
     };
     fetchUser();
-  }, []);
+  }, [API_BASE_URL]);
 
   // ✅ Handle job fetch
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     const num = Number(count);
 
     if (!Number.isFinite(num) || num < 100 || num > 1000) {
@@ -68,6 +70,7 @@ export default function UserPanel() {
     setCountError("");
     setLoading(true);
     setError(null);
+    setSaveSearchModalOpen(true); // ✅ Open save-search modal immediately
 
     try {
       // Check active plan
@@ -102,6 +105,7 @@ export default function UserPanel() {
       const data = await res.json();
       setResponse(data);
 
+      // Fetch updated jobs
       if (user?.userId) {
         const jobRes = await fetch(
           `${API_BASE_URL}/api/userjobs/${user.userId}`,
@@ -168,21 +172,15 @@ export default function UserPanel() {
               max={1000}
               className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
-            {countError ? (
+            {countError && (
               <p className="mt-1 text-xs text-red-400">{countError}</p>
-            ) : (
-              typeof count === "number" && (
-                <p className="mt-1 text-xs text-gray-300">
-                  Selected: {count}
-                </p>
-              )
             )}
           </div>
 
           {/* Location */}
           <div>
             <label className="text-gray-400 text-sm mb-1 block">Location</label>
-            <div className="[&_*]:!text-sm py-2 focus:outline-none focus:ring-2 focus:ring-green-400">
+            <div className="[&_*]:!text-sm py-2">
               <LocationDropdown
                 value={location}
                 onChange={(val) => setLocation(val)}
@@ -241,16 +239,12 @@ export default function UserPanel() {
       {/* Error */}
       {error && <p className="text-red-500 mt-2">Error: {error}</p>}
 
-      {/* User Info */}
-      {user && (
-        <div className="mt-10 p-4 bg-[#0d1512] border border-[#1b2b27] rounded-xl shadow-[0_0_10px_#00ff9d22] w-full max-w-lg text-sm text-gray-300">
-          <p>
-            <strong className="text-green-400">Name:</strong> {user.name}
-          </p>
-          <p>
-            <strong className="text-green-400">User ID:</strong> {user.userId}
-          </p>
-        </div>
+      {/* Save Search Modal (visible during loading or manual trigger) */}
+      {saveSearchModalOpen && (
+        <SaveSearchPage
+          filteredJobs={userJobs}
+          API_BASE_URL={API_BASE_URL}
+        />
       )}
 
       {/* Saved Jobs */}
@@ -258,9 +252,9 @@ export default function UserPanel() {
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-green-400 font-semibold">Your Saved Jobs:</h3>
 
-          {/* ✅ Save This Search Button */}
+          {/* Manual open */}
           <button
-            onClick={() => router.push("/pages/save-search")}
+            onClick={() => setSaveSearchModalOpen(true)}
             className="px-3 py-2 text-sm rounded-md bg-green-700/30 border border-green-700 text-green-300 hover:bg-green-700/50 transition"
           >
             Save This Search
