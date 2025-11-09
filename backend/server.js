@@ -48,6 +48,7 @@ const userjobsRoute = require("./routes/userjobs");
 const adminRoutes = require("./routes/adminRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const logRoutes = require("./routes/logRoutes");
+const apifyRoutes = require("./routes/apifyRoutes");
 
 app.use(["/api/auth", "/auth"], authRoutes);
 app.use("/api/userjobs", userjobsRoute);
@@ -55,6 +56,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", userjobsRoute);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/logs", logRoutes);
+app.use("/api/apify", apifyRoutes);
 
 // ✅ Health check
 // ✅ Health check (root and /api)
