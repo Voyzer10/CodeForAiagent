@@ -30,10 +30,12 @@ export default function Profile() {
         clientSecret: "",
     });
 
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/auth/me", {
+                const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
                     method: "GET",
                     credentials: "include",
                 });
@@ -56,12 +58,13 @@ export default function Profile() {
 
     // 🔹 Save GitHub / LinkedIn via API
     const handleSaveLink = async (platform, value) => {
+         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
         if (!value.trim()) return;
         setSavingLink(platform);
         setSaveStatus(null);
 
         try {
-            const res = await fetch("http://localhost:5000/api/auth/update-socials", {
+            const res = await fetch(`${API_BASE_URL}/api/auth/update-socials`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -85,10 +88,11 @@ export default function Profile() {
     };
 
     const handleSaveClientData = async () => {
+         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
         if (!clientData.clientId.trim() || !clientData.clientSecret.trim()) return;
         setSavingLink("client");
         try {
-            const res = await fetch("http://localhost:5000/api/auth/update-client", {
+            const res = await fetch(`${API_BASE_URL}/api/auth/update-client`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
