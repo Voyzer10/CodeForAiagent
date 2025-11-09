@@ -24,10 +24,21 @@ export default function UserPanel() {
   const [isOpen, setIsOpen] = useState(false);
   const [count, setCount] = useState(100);
   const [countError, setCountError] = useState("");
+  const [sessionId, setSessionId] = useState("");
+  const [showSaveModal, setShowSaveModal] = useState(false); // ✅ automatic modal flag
 
-  // ✅ Fetch user + jobs
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  // ✅ Generate unique session ID when page loads
   useEffect(() => {
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const newSessionId = `session_${Date.now()}_${Math.random()
+      .toString(36)
+      .substring(2, 9)}`;
+    setSessionId(newSessionId);
+  }, []);
+
+  // ✅ Fetch user and jobs
+  useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -50,14 +61,13 @@ export default function UserPanel() {
       }
     };
     fetchUser();
-  }, []);
+  }, [API_BASE_URL]);
 
   // ✅ Handle job fetch
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     const num = Number(count);
 
     if (!Number.isFinite(num) || num < 100 || num > 1000) {
@@ -66,8 +76,9 @@ export default function UserPanel() {
     }
 
     setCountError("");
-    setLoading(true);
     setError(null);
+    setLoading(true);
+    setShowSaveModal(true); // ✅ Auto-open modal when processing starts
 
     try {
       // Check active plan
@@ -94,7 +105,7 @@ export default function UserPanel() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, sessionId }), // ✅ send sessionId to backend
       });
 
       if (!res.ok) throw new Error("Server error while enqueuing job");
@@ -102,6 +113,7 @@ export default function UserPanel() {
       const data = await res.json();
       setResponse(data);
 
+      // Fetch updated jobs
       if (user?.userId) {
         const jobRes = await fetch(
           `${API_BASE_URL}/api/userjobs/${user.userId}`,
@@ -115,10 +127,10 @@ export default function UserPanel() {
       setError(err.message);
     } finally {
       setLoading(false);
+      setTimeout(() => setShowSaveModal(false), 800); // ✅ close modal after loading ends
     }
   };
 
-  // ✅ Main UI
   return (
     <div className="relative min-h-screen bg-[#0a0f0d] text-white flex flex-col items-center px-4 pb-20">
       <UserNavbar onSidebarToggle={toggleSidebar} />
@@ -168,21 +180,15 @@ export default function UserPanel() {
               max={1000}
               className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
-            {countError ? (
+            {countError && (
               <p className="mt-1 text-xs text-red-400">{countError}</p>
-            ) : (
-              typeof count === "number" && (
-                <p className="mt-1 text-xs text-gray-300">
-                  Selected: {count}
-                </p>
-              )
             )}
           </div>
 
           {/* Location */}
           <div>
             <label className="text-gray-400 text-sm mb-1 block">Location</label>
-            <div className="[&_*]:!text-sm py-2 focus:outline-none focus:ring-2 focus:ring-green-400">
+            <div className="[&_*]:!text-sm py-2">
               <LocationDropdown
                 value={location}
                 onChange={(val) => setLocation(val)}
@@ -238,8 +244,70 @@ export default function UserPanel() {
         </form>
       </div>
 
-      {/* Error */}
-      {error && <p className="text-red-500 mt-2">Error: {error}</p>}
+      {/* ✅ Automatic Save Search Modal */}
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
+          <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg">
+            <h3 className="text-lg font-bold text-green-400 mb-4">
+              Save This Search
+            </h3>
+
+            <input
+              type="text"
+              placeholder="Enter search name"
+              className="w-full px-3 py-2 mb-4 text-black rounded-md"
+              id="searchNameInput"
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  const searchName =
+                    document.getElementById("searchNameInput")?.value.trim();
+                  if (!searchName) {
+                    alert("Please enter a search name.");
+                    return;
+                  }
+
+                  try {
+                    const res = await fetch(
+                      `${API_BASE_URL}/api/userjobs/searches/save`,
+                      {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                          name: searchName,
+                          jobs: userJobs,
+                          sessionId, // ✅ save session id
+                        }),
+                      }
+                    );
+                    const data = await res.json();
+                    if (!res.ok)
+                      throw new Error(data.error || "Failed to save search");
+                    alert("Search saved successfully!");
+                    setShowSaveModal(false);
+                  } catch (err) {
+                    alert(err.message || "Error saving search");
+                  }
+                }}
+                className="px-4 py-2 bg-green-600 text-black rounded-md hover:bg-green-500"
+                disabled={loading}
+              >
+                {loading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* User Info */}
       {user && (
@@ -250,83 +318,11 @@ export default function UserPanel() {
           <p>
             <strong className="text-green-400">User ID:</strong> {user.userId}
           </p>
+          <p>
+            <strong className="text-green-400">Session ID:</strong> {sessionId}
+          </p>
         </div>
       )}
-
-      {/* Saved Jobs */}
-      <div className="mt-10 w-full max-w-6xl h-[80vh] overflow-y-auto p-2">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-green-400 font-semibold">Your Saved Jobs:</h3>
-
-          {/* ✅ Save This Search Button */}
-          <button
-            onClick={() => router.push("/pages/save-search")}
-            className="px-3 py-2 text-sm rounded-md bg-green-700/30 border border-green-700 text-green-300 hover:bg-green-700/50 transition"
-          >
-            Save This Search
-          </button>
-        </div>
-
-        {userJobs.length > 0 ? (
-          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {userJobs.map((job, idx) => (
-              <div key={idx} className="relative">
-                <div
-                  className="p-4 bg-[#0e1513] border border-[#1b2b27] rounded-md shadow-inner shadow-[#00ff9d22] cursor-pointer hover:shadow-lg transition-all"
-                  onClick={() => setIsOpen(!isOpen)}
-                >
-                  <h4 className="text-green-300 font-semibold mb-1">
-                    {job.Title}
-                  </h4>
-                  <p className="text-sm text-gray-400">{job.Location}</p>
-                  {job.link && (
-                    <a
-                      href={job.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-green-400 underline text-sm mt-2 inline-block"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      View Full Job
-                    </a>
-                  )}
-                </div>
-
-                {isOpen && (
-                  <div className="mt-2 p-4 bg-[#1f2937] border border-[#2a3a2e] rounded-md shadow-inner shadow-[#00ff9d33] relative z-10">
-                    {Object.keys(job).map((key) => {
-                      if (["_id", "__v"].includes(key)) return null;
-                      return (
-                        <div key={key} className="mb-2">
-                          <span className="font-semibold text-green-300">
-                            {key}:{" "}
-                          </span>
-                          {key === "link" || key === "applyUrl" ? (
-                            <a
-                              href={job[key]}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-green-400 underline"
-                            >
-                              {job[key]}
-                            </a>
-                          ) : (
-                            <span className="text-gray-300">{job[key]}</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 italic">
-            No jobs available for the current user.
-          </p>
-        )}
-      </div>
     </div>
   );
 }

@@ -63,8 +63,9 @@ export default function Price() {
         setPaymentStatus(null);
 
         try {
+            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // ✅ Move here
             // 1️⃣ Create Order
-            const res = await fetch("http://localhost:5000/api/payment/order", {
+            const res = await fetch(`${API_BASE_URL}/api/payment/order`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",
@@ -86,7 +87,7 @@ export default function Price() {
                 order_id: order.id,
                 handler: async function (response) {
                     try {
-                        const verifyRes = await fetch("http://localhost:5000/api/payment/verify", {
+                        const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             credentials: "include",
@@ -103,7 +104,7 @@ export default function Price() {
                             alert(`✅ Payment Successful for ${plan.name}!`);
 
                             setTimeout(() => {
-                                window.location.href = "/userpanel";
+                                window.location.href = "/pages/userpanel";
                             }, 1000);
 
                         } else {
@@ -224,7 +225,7 @@ export default function Price() {
 
             {/* Footer */}
             <footer className="mt-16 border-t border-[#1b2b27] pt-6 text-center text-gray-500 text-sm">
-                © 2024 LinkedIn Job Scraper. All rights reserved.
+                © 2025 LinkedIn Job Scraper. All rights reserved.
             </footer>
         </div>
     );
