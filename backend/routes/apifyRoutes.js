@@ -2,7 +2,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const User = require("../models/User"); // 👈 adjust the path if your User model is elsewhere
+const User = require("../model/User");
 
 router.post("/webhook", async (req, res) => {
   try {
