@@ -57,6 +57,7 @@ app.use("/api/jobs", userjobsRoute);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/apify", apifyRoutes);
+console.log("✅ Apify routes registered");
 
 // ✅ Health check
 // ✅ Health check (root and /api)
@@ -73,6 +74,9 @@ app.use((err, req, res, next) => {
   console.error("❌ Server Error:", err.stack);
   res.status(500).json({ message: "Server error", error: err.message });
 });
+
+console.log("✅ apifyRoutes file loaded:", typeof apifyRoutes);
+
 
 module.exports = app;
 
