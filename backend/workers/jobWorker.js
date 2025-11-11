@@ -2,8 +2,12 @@
 const { Worker } = require("bullmq");
 const fetch = require("node-fetch");
 const redisConnection = require("../config/redis");
-const User = require("../model/User");
 const { logToFile, logErrorToFile } = require("../logger");
+
+const BACKEND_URL = process.env.BACKEND_URL || "https://techm.work.gd/api";
+const N8N_WEBHOOK_URL =
+  process.env.N8N_WEBHOOK_URL ||
+  "https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
 
 const jobWorker = new Worker(
   "jobQueue",
@@ -12,14 +16,12 @@ const jobWorker = new Worker(
     console.log(`🧑‍💻 [Worker] Processing job: ${job.id} for user ${userId}`);
     logToFile(`[Worker] Job ${job.id} started for user ${userId}`);
 
-    // ✅ Step 1: Send job to N8N webhook
-    const n8nWebhook =
-      process.env.N8N_WEBHOOK_URL ||
-      "https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
-
-    let parsed;
+    // ✅ Step 1: Trigger N8N Workflow
+    let parsed = {};
     try {
-      const n8nResponse = await fetch(n8nWebhook, {
+      console.log(`🌐 [Worker] Calling N8N webhook: ${N8N_WEBHOOK_URL}`);
+
+      const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt, sessionId, userId }),
@@ -30,67 +32,80 @@ const jobWorker = new Worker(
       }
 
       parsed = await n8nResponse.json();
-      console.log(`🧠 [Worker] N8N completed job ${job.id}:`, parsed);
+      console.log(`🧠 [Worker] N8N completed job ${job.id}`);
       logToFile(`[Worker] N8N completed job ${job.id} successfully.`);
     } catch (err) {
-      console.error(`❌ [Worker] Failed to call N8N for job ${job.id}:`, err.message);
+      console.error(`❌ [Worker] Failed to call N8N:`, err.message);
       logErrorToFile(`[Worker] N8N failed for job ${job.id}: ${err.message}`);
       throw err;
     }
 
     // ✅ Step 2: Extract job count and dataset info
-    const jobCount = parsed?.jobCount || 0;
+    const jobCount = Number(parsed?.jobCount || 0);
     const datasetId = parsed?.datasetId || "unknown";
 
-    // =====================================================
-    // 🧠 DEBUG SECTION — ACTUAL JOB COUNT AND DEDUCTION INFO
-    // =====================================================
-    console.log("\n====================================================");
+    console.log("====================================================");
     console.log("🧠 [DEBUG] N8N Returned:");
     console.log(`👉 jobCount: ${jobCount}`);
     console.log(`👉 datasetId: ${datasetId}`);
     console.log("====================================================");
 
-    // ✅ Step 3: Deduct credits safely (DEBUG MODE)
-    const user = await User.findById(userId);
-    if (!user) throw new Error(`User not found: ${userId}`);
+    // ✅ Step 3: Deduct credits via backend API
+    try {
+      console.log(`💳 [Worker] Deducting ${jobCount} credits for user ${userId}`);
 
-    const beforeCredits = user.plan?.remainingJobs ?? 0;
-    const afterCredits = Math.max(0, beforeCredits - jobCount);
-    user.plan.remainingJobs = afterCredits;
-    await user.save();
+      const creditResponse = await fetch(`${BACKEND_URL}/credits/deduct`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.INTERNAL_API_KEY || "internal-key"}`,
+        },
+        body: JSON.stringify({ userId, jobCount, sessionId }),
+      });
 
-    // 🧾 Detailed debug info
-    console.log("----------------------------------------------------");
-    console.log(`💳 [CREDIT DEBUG] User ID: ${userId}`);
-    console.log(`💳 [CREDIT DEBUG] Credits BEFORE: ${beforeCredits}`);
-    console.log(`💳 [CREDIT DEBUG] Jobs Scraped (Deducted): ${jobCount}`);
-    console.log(`💳 [CREDIT DEBUG] Credits AFTER: ${afterCredits}`);
-    console.log("----------------------------------------------------");
+      const creditData = await creditResponse.json();
 
-    if (afterCredits < 100) {
-      console.log(
-        `⚠️  [LOW BALANCE WARNING] User ${userId} has only ${afterCredits} credits left.`
+      if (!creditResponse.ok) {
+        throw new Error(
+          `Credit API failed (${creditResponse.status}): ${creditData.message}`
+        );
+      }
+
+      console.log("----------------------------------------------------");
+      console.log(`💳 [CREDITS] Deducted: ${creditData.deducted}`);
+      console.log(`💳 [CREDITS] Remaining: ${creditData.remaining}`);
+      console.log("----------------------------------------------------");
+
+      if (creditData.lowBalance) {
+        console.log(
+          `⚠️  [LOW BALANCE] User ${userId} balance low (${creditData.remaining})`
+        );
+      }
+
+      logToFile(
+        `[Worker] Credits updated for ${userId} → Remaining: ${creditData.remaining}`
       );
-      console.log(
-        `👉  Minimum required balance is 100 credits. Ask user to upgrade plan.`
+
+      return {
+        jobCount,
+        datasetId,
+        remainingCredits: creditData.remaining,
+      };
+    } catch (err) {
+      console.error(`❌ [Worker] Credit deduction failed:`, err.message);
+      logErrorToFile(
+        `[Worker] Credit deduction failed for ${userId}: ${err.message}`
       );
+      throw err;
     }
-
-    console.log(`✅ [CREDIT DEBUG] Successfully deducted ${jobCount} credits.`);
-    console.log(`🔁 Remaining balance for user ${userId}: ${afterCredits}`);
-    console.log("====================================================\n");
-
-    // ✅ Step 4: Return for dashboard/logging (optional)
-    return { jobCount, datasetId, remainingCredits: afterCredits };
   },
   {
     connection: redisConnection,
-    concurrency: 2, // safe for local dev
+    concurrency: 2,
   }
 );
 
-// ✅ Worker Event Logs
+// Worker Event Logs
 jobWorker.on("completed", (job) => {
   console.log(`🎉 Job ${job.id} completed successfully`);
   logToFile(`[Worker] Job ${job.id} completed successfully.`);

@@ -75,7 +75,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Server error", error: err.message });
 });
 
-console.log("✅ apifyRoutes file loaded:", typeof apifyRoutes);
+// console.log("✅ apifyRoutes file loaded:", typeof apifyRoutes);
 
 
 module.exports = app;

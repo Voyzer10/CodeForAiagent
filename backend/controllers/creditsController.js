@@ -4,19 +4,43 @@ const { logToFile, logErrorToFile } = require("../logger");
 
 /**
  * Deduct credits from user based on jobs scraped.
- * Called by JobWorker or API route.
+ * Can be called from Worker or API route.
  */
 exports.deductCredits = async (userId, jobCount, sessionId = null) => {
   try {
     const user = await User.findById(userId);
     if (!user) throw new Error(`User not found: ${userId}`);
 
-    const beforeCredits = user.plan?.remainingJobs ?? 0;
+    if (!user.plan) user.plan = {};
+    if (!user.plan.remainingJobs) user.plan.remainingJobs = 0;
+    if (!user.plan.history) user.plan.history = [];
 
-    // Check if user has enough credits
-    if (beforeCredits < jobCount) {
+    const beforeCredits = user.plan.remainingJobs;
+    const numericJobCount = Number(jobCount) || 0;
+
+    // Prevent duplicate deductions for same session
+    const alreadyDeducted = user.plan.history.some(
+      (h) => h.sessionId === sessionId
+    );
+    if (alreadyDeducted) {
+      logToFile(`[CreditsController] Session ${sessionId} already processed.`);
+      return {
+        success: true,
+        message: "Session already processed",
+        deducted: 0,
+        remaining: beforeCredits,
+      };
+    }
+
+    // Ensure valid job count
+    if (numericJobCount <= 0) {
+      return { success: false, message: "Invalid job count provided." };
+    }
+
+    // Check credits
+    if (beforeCredits < numericJobCount) {
       logErrorToFile(
-        `[CreditsController] User ${userId} has insufficient credits (${beforeCredits}) for ${jobCount} jobs`
+        `[CreditsController] User ${userId} insufficient credits: ${beforeCredits}`
       );
       return {
         success: false,
@@ -26,32 +50,27 @@ exports.deductCredits = async (userId, jobCount, sessionId = null) => {
       };
     }
 
-    // Deduct
-    const afterCredits = Math.max(0, beforeCredits - jobCount);
+    // Deduct and update
+    const afterCredits = Math.max(0, beforeCredits - numericJobCount);
     user.plan.remainingJobs = afterCredits;
-
-    // Optional: add session log
-    if (!user.plan.history) user.plan.history = [];
+    user.plan.lowBalance = afterCredits < 100;
     user.plan.history.push({
       sessionId,
-      deducted: jobCount,
+      deducted: numericJobCount,
       timestamp: new Date(),
     });
-
-    // Optional: mark low balance if < 100
-    user.plan.lowBalance = afterCredits < 100;
 
     await user.save();
 
     logToFile(
-      `[CreditsController] Deducted ${jobCount} credits from ${userId}. Remaining=${afterCredits}`
+      `[CreditsController] Deducted ${numericJobCount} credits from ${userId}. Remaining=${afterCredits}`
     );
 
     return {
       success: true,
-      deducted: jobCount,
+      deducted: numericJobCount,
       remaining: afterCredits,
-      lowBalance: afterCredits < 100,
+      lowBalance: user.plan.lowBalance,
       message:
         afterCredits < 100
           ? "Balance low. Please upgrade your plan."
