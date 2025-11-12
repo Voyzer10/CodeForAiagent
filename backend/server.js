@@ -49,6 +49,7 @@ const adminRoutes = require("./routes/adminRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const logRoutes = require("./routes/logRoutes");
 const creditsRoutes = require("./routes/creditsRoutes");
+const n8nCallbackRoutes = require("./routes/n8nCallback");
 
 app.use(["/api/auth", "/auth"], authRoutes);
 app.use("/api/userjobs", userjobsRoute);
@@ -57,6 +58,7 @@ app.use("/api/jobs", userjobsRoute);
 app.use("/api/payment", paymentRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/credits", creditsRoutes);
+app.use("/api/n8n-callback", n8nCallbackRoutes);
 console.log("✅ Apify routes registered");
 
 // ✅ Health check

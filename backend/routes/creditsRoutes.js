@@ -10,9 +10,9 @@ console.log("✅ creditsRoutes.js successfully loaded");
  * POST /api/credits/deduct
  * Body: { userId, jobCount, sessionId }
  */
-router.get("/test", (req, res) => {
-  res.send("✅ Credits API route working");
-});
+// router.get("/test", (req, res) => {
+//   res.send("✅ Credits API route working");
+// });
 router.post("/deduct", async (req, res) => {
   try {
     const { userId, jobCount, sessionId } = req.body;
