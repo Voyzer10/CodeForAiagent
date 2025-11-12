@@ -7,10 +7,11 @@ export default function AdminLoginPage() {
   const [message, setMessage] = useState("");
 
   const handleLogin = async (e) => {
+       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost:5000/api/admin/login", {
+      const res = await fetch(`${API_BASE_URL}/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
