@@ -2,13 +2,9 @@
 const User = require("../model/User");
 const { logToFile, logErrorToFile } = require("../logger");
 
-/**
- * Deduct credits from user based on jobs scraped.
- * Can be called from Worker or API route.
- */
 exports.deductCredits = async (userId, jobCount, sessionId = null) => {
   try {
-    const user = await User.findById(userId);
+    const user = await User.findOne({ userId }); // ✅ find by your numeric userId
     if (!user) throw new Error(`User not found: ${userId}`);
 
     if (!user.plan) user.plan = {};

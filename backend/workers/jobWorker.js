@@ -1,13 +1,14 @@
 // workers/jobWorker.js
+require("dotenv").config();
 const { Worker } = require("bullmq");
 const fetch = require("node-fetch");
 const redisConnection = require("../config/redis");
 const { logToFile, logErrorToFile } = require("../logger");
 
-const BACKEND_URL = process.env.BACKEND_URL || "https://techm.work.gd/api";
+const BACKEND_URL = process.env.BACKEND_URL || "http://host.docker.internal:5000";
 const N8N_WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL ||
-  "https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
+  "http://localhost:5678/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
 
 const jobWorker = new Worker(
   "jobQueue",
@@ -40,9 +41,32 @@ const jobWorker = new Worker(
       throw err;
     }
 
-    // ✅ Step 2: Extract job count and dataset info
-    const jobCount = Number(parsed?.jobCount || 0);
-    const datasetId = parsed?.datasetId || "unknown";
+    // ✅ Step 2: Extract job count and dataset info correctly from N8N
+    let jobCount = 0;
+    let datasetId = "unknown";
+
+    try {
+      if (Array.isArray(parsed)) {
+        // n8n might return an array like [{ json: { jobCount: 109, datasetId: "xyz" } }]
+        const jobInfo = parsed.find(
+          (item) => item.json && typeof item.json.jobCount !== "undefined"
+        );
+        jobCount = Number(jobInfo?.json?.jobCount || 0);
+        datasetId = jobInfo?.json?.datasetId || "unknown";
+      } else if (parsed?.jobCount) {
+        // or a simple object like { jobCount: 109 }
+        jobCount = Number(parsed.jobCount);
+        datasetId = parsed.datasetId || "unknown";
+      }
+
+      // 👇 This is new — log what we parsed from N8N
+      console.log("====================================================");
+      console.log("🧠 [DEBUG] Parsed N8N Response:");
+      console.log(JSON.stringify(parsed, null, 2));
+      console.log("====================================================");
+    } catch (e) {
+      console.error("⚠️ [Worker] Error parsing N8N response:", e.message);
+    }
 
     console.log("====================================================");
     console.log("🧠 [DEBUG] N8N Returned:");
@@ -50,16 +74,28 @@ const jobWorker = new Worker(
     console.log(`👉 datasetId: ${datasetId}`);
     console.log("====================================================");
 
-    // ✅ Step 3: Deduct credits via backend API
+    // ✅ Step 3: Validate jobCount before deduction
+    if (!jobCount || jobCount <= 0) {
+      const msg = `⚠️ [Worker] jobCount=0 → No jobs returned from N8N for user ${userId}.`;
+      console.warn(msg);
+      logErrorToFile(msg);
+      // ✅ Instead of throwing, we'll skip the credit deduction but mark as completed
+      return {
+        success: false,
+        message: "No jobs to deduct credits for.",
+        jobCount,
+        datasetId,
+      };
+    }
+
+    // ✅ Step 4: Deduct credits via backend API
     try {
       console.log(`💳 [Worker] Deducting ${jobCount} credits for user ${userId}`);
+      console.log(`🔗 Calling: ${BACKEND_URL}/api/credits/deduct`);
 
-      const creditResponse = await fetch(`${BACKEND_URL}/credits/deduct`, {
+      const creditResponse = await fetch(`${BACKEND_URL}/api/credits/deduct`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.INTERNAL_API_KEY || "internal-key"}`,
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, jobCount, sessionId }),
       });
 
@@ -87,6 +123,7 @@ const jobWorker = new Worker(
       );
 
       return {
+        success: true,
         jobCount,
         datasetId,
         remainingCredits: creditData.remaining,
