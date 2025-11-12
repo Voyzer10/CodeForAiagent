@@ -6,9 +6,7 @@ const redisConnection = require("../config/redis");
 const { logToFile, logErrorToFile } = require("../logger");
 
 const BACKEND_URL = process.env.BACKEND_URL || "https://techm.work.gd/api/";
-const N8N_WEBHOOK_URL =
-  process.env.N8N_WEBHOOK_URL ||
-  "https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
+const N8N_WEBHOOK_URL ="https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
 
 const jobWorker = new Worker(
   "jobQueue",
