@@ -76,7 +76,7 @@ export default function UserNavbar({ onSidebarToggle }) {
                         )}
 
                         <button
-                            onClick={() => router.push("/profile")}
+                            onClick={() => router.push("/pages/profile")}
                             className="block w-full text-left px-4 py-3 hover:bg-[#2e3b34]"
                         >
                             Profile
