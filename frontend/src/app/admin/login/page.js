@@ -7,10 +7,15 @@ export default function AdminLoginPage() {
   const [message, setMessage] = useState("");
 
   const handleLogin = async (e) => {
+       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     e.preventDefault();
 
     try {
+<<<<<<< HEAD
       const res = await fetch("https://techm.work.gd/api/admin/login", {
+=======
+      const res = await fetch(`${API_BASE_URL}/admin/login`, {
+>>>>>>> 11eb57ce0daa80db53f317fab30f33934d64de0f
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
