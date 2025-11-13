@@ -1,83 +1,69 @@
 "use client";
+
 import { useState, useEffect } from "react";
 
 export default function Price() {
     const [selectedPlan, setSelectedPlan] = useState(null);
-    const [paymentStatus, setPaymentStatus] = useState(null); // ✅ new: success or failure
+    const [paymentStatus, setPaymentStatus] = useState(null);
+    const [usdRate, setUsdRate] = useState(1); // LIVE USD rate
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     const plans = [
-        {
-            name: "STARTER",
-            price: 11,
-            cards: 500,
-            description: "Perfect for beginners",
-            features: [
-                "100 AI-powered job applications",
-                "LinkedIn profile optimization",
-                "Basic analytics dashboard",
-                "Email support",
-            ],
-        },
-        {
-            name: "PROFESSIONAL",
-            price: 19,
-            cards: 1000,
-            description: "Most popular choice",
-            features: [
-                "1000 AI-powered job applications",
-                "Advanced profile optimization",
-                "Detailed analytics & insights",
-                "Access to cover letter templates",
-            ],
-        },
-        {
-            name: "PREMIUM",
-            price: 25,
-            cards: 1500,
-            description: "Maximum power & features",
-            features: [
-                "1500 AI-powered job applications",
-                "Premium optimization & reports",
-                "Advanced analytics & targeting",
-                "Personalized career support",
-            ],
-        },
+        { name: "STARTER", price: 11, cards: 500, description: "Perfect for beginners" },
+        { name: "PROFESSIONAL", price: 19, cards: 1000, description: "Most popular choice" },
+        { name: "PREMIUM", price: 25, cards: 1500, description: "Maximum power & features" },
     ];
 
-    // ✅ Ensure Razorpay script loaded
-    const loadRazorpay = () => {
+    // -----------------------------
+    // 🌍 Fetch LIVE USD → INR rate
+    // -----------------------------
+    useEffect(() => {
+        fetch("https://open.er-api.com/v6/latest/USD")
+            .then((res) => res.json())
+            .then((data) => setUsdRate(data.rates.INR || 83)) // fallback INR rate
+            .catch(() => setUsdRate(83));
+    }, []);
+
+    // -----------------------------
+    // 🧩 Load Razorpay Script
+    // -----------------------------
+    useEffect(() => {
         if (!window.Razorpay) {
             const script = document.createElement("script");
             script.src = "https://checkout.razorpay.com/v1/checkout.js";
             script.onload = () => console.log("Razorpay script loaded");
             document.body.appendChild(script);
         }
-    };
-    useEffect(() => {
-        loadRazorpay();
     }, []);
 
-    // ✅ Handle Payment Flow
+    // -----------------------------
+    // 💳 Payment Handler
+    // -----------------------------
     const handlePayment = async (plan) => {
         setSelectedPlan(plan.name);
         setPaymentStatus(null);
 
         try {
-            const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL; // ✅ Move here
-            // 1️⃣ Create Order
-            const res = await fetch(`${API_BASE_URL}/api/payment/order`, {
+            // Convert USD → INR and to paise
+            const convertedAmount = Math.round(plan.price * usdRate * 100);
+
+            // 1️⃣ Create Razorpay Order
+            const res = await fetch(`${API_BASE_URL}/payment/order`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 credentials: "include",
-                body: JSON.stringify({ planType: plan.name.toLowerCase() }),
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    planType: plan.name.toLowerCase(),
+                    amount: convertedAmount,
+                }),
             });
 
             if (!res.ok) throw new Error("Order creation failed");
 
             const order = await res.json();
-            if (!order.id) throw new Error("Order ID missing");
 
-            // 2️⃣ Configure Razorpay
+            // 2️⃣ Razorpay config
             const options = {
                 key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
                 amount: order.amount,
@@ -85,12 +71,13 @@ export default function Price() {
                 name: "LinkedIn Job Scraper",
                 description: `${plan.name} Plan`,
                 order_id: order.id,
+
                 handler: async function (response) {
                     try {
-                        const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+                        const verifyRes = await fetch(`${API_BASE_URL}/payment/verify`, {
                             method: "POST",
-                            headers: { "Content-Type": "application/json" },
                             credentials: "include",
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
@@ -98,135 +85,105 @@ export default function Price() {
                                 planType: plan.name.toLowerCase(),
                             }),
                         });
+
                         const data = await verifyRes.json();
+
                         if (verifyRes.ok && data.success) {
                             setPaymentStatus("success");
-                            alert(`✅ Payment Successful for ${plan.name}!`);
+                            alert(`🎉 Payment Successful for ${plan.name}!`);
 
                             setTimeout(() => {
                                 window.location.href = "/pages/userpanel";
                             }, 1000);
-
                         } else {
-                            setPaymentStatus("failed");
-                            alert("⚠️ Payment verification failed. Please contact support.");
+                            throw new Error("Verification failed");
                         }
                     } catch (err) {
-                        console.error("Error verifying payment:", err);
+                        console.error("Verification error:", err);
                         setPaymentStatus("failed");
                         alert("❌ Payment verification failed.");
                     }
                 },
-                prefill: { name: "Your Name", email: "user@example.com" },
+
                 theme: { color: "#00ff9d" },
             };
 
-            const razor = new window.Razorpay(options);
-            razor.open();
+            const razorpay = new window.Razorpay(options);
+            razorpay.open();
+
         } catch (err) {
             console.error("Payment error:", err);
-            setPaymentStatus("not_initiated"); // ✅ new state
+            setPaymentStatus("failed");
             alert("❌ Payment not initiated. Please try again.");
-
-            // Reset button back to default after 3s
-            setTimeout(() => {
-                setSelectedPlan(null);
-                setPaymentStatus(null);
-            }, 3000);
         }
     };
 
-
+    // -----------------------------
+    // UI
+    // -----------------------------
     return (
         <div className="min-h-screen bg-[#0b0e11] text-white flex flex-col items-center px-6 py-14">
-            {/* Header */}
+
             <h1 className="text-4xl md:text-5xl font-extrabold text-center mb-4">
                 Choose Your <span className="text-[#00ff9d]">Plan</span>
             </h1>
+
             <p className="text-gray-400 text-center max-w-2xl mb-12">
                 Select a plan and securely pay with Razorpay.
             </p>
 
-            {/* ✅ Payment Status Display */}
+            {/* Payment Status */}
             {paymentStatus === "success" && (
-                <div className="bg-green-900/30 border border-green-500 text-green-400 px-6 py-4 rounded-xl mb-6 text-center">
-                    🎉 Payment Successful! You’ve unlocked the {selectedPlan} Plan.
+                <div className="bg-green-900/30 border border-green-500 text-green-400 px-6 py-4 rounded-xl mb-6">
+                    🎉 Payment Successful! You purchased the {selectedPlan} Plan.
                 </div>
             )}
+
             {paymentStatus === "failed" && (
-                <div className="bg-red-900/30 border border-red-500 text-red-400 px-6 py-4 rounded-xl mb-6 text-center">
+                <div className="bg-red-900/30 border border-red-500 text-red-400 px-6 py-4 rounded-xl mb-6">
                     ❌ Payment Failed! Please try again.
-                </div>
-            )}
-            {selectedPlan && !paymentStatus && (
-                <div className="bg-[#111827] border border-[#1b2b27] text-gray-300 px-6 py-4 rounded-xl mb-6 text-center">
-                    🛒 Selected Plan: <span className="text-[#00ff9d]">{selectedPlan}</span>
                 </div>
             )}
 
             {/* Pricing Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-6xl">
-                {plans.map((plan) => (
-                    <div
-                        key={plan.name}
-                        className={`bg-[#111827] border ${selectedPlan === plan.name
-                            ? "border-[#00ff9d]"
-                            : "border-[#1b2b27]"
+
+                {plans.map((plan) => {
+                    const convertedPrice = Math.round(plan.price * usdRate);
+
+                    return (
+                        <div
+                            key={plan.name}
+                            className={`bg-[#111827] border ${
+                                selectedPlan === plan.name ? "border-[#00ff9d]" : "border-[#1b2b27]"
                             } rounded-2xl p-8 shadow-[0_0_20px_#00ff9d22] hover:scale-105 transition`}
-                    >
-                        <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
-                        <p className="text-gray-400 mb-6">{plan.description}</p>
-                        <p className="text-4xl font-bold mb-2">${plan.price}</p>
-                        <p className="text-gray-400 mb-6">/ month</p>
-                        <p className="text-[#00ff9d] font-medium mb-4">
-                            {plan.cards} Career Cards
-                        </p>
-                        <ul className="text-gray-400 space-y-2 mb-8">
-                            {plan.features.map((feature) => (
-                                <li key={feature}>✓ {feature}</li>
-                            ))}
-                        </ul>
-                        <button
-                            onClick={() => handlePayment(plan)}
-                            className="w-full py-3 bg-[#00ff9d] text-black font-semibold rounded-xl hover:bg-[#00e68a] transition"
                         >
-                            {selectedPlan === plan.name && paymentStatus === null && "Processing..."}
-                            {selectedPlan === plan.name && paymentStatus === "not_initiated" && "Payment Not Initiated"}
-                            {(!selectedPlan || selectedPlan !== plan.name || paymentStatus) && "Get Started"}
-                        </button>
+                            <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
 
-                    </div>
-                ))}
+                            <p className="text-gray-400 mb-6">{plan.description}</p>
+
+                            {/* USD → Local Currency */}
+                            <p className="text-4xl font-bold mb-2">
+                                ₹{convertedPrice}
+                            </p>
+
+                            <p className="text-gray-400 mb-6">/ month</p>
+
+                            <p className="text-[#00ff9d] font-medium mb-4">
+                                {plan.cards} Career Cards
+                            </p>
+
+                            <button
+                                onClick={() => handlePayment(plan)}
+                                className="w-full py-3 bg-[#00ff9d] text-black font-semibold rounded-xl hover:bg-[#00e68a] transition"
+                            >
+                                {selectedPlan === plan.name ? "Processing..." : "Get Started"}
+                            </button>
+                        </div>
+                    );
+                })}
+
             </div>
-
-            {/* Info Box */}
-            <div className="bg-[#111827] border border-[#1b2b27] rounded-xl p-6 mt-16 max-w-3xl text-center shadow-[0_0_15px_#00ff9d33]">
-                <h4 className="text-[#00ff9d] font-medium mb-2">
-                    💡 What are Career Cards?
-                </h4>
-                <p className="text-gray-400 text-sm">
-                    1 Career Card = 1 Job Application using our AI-powered LinkedIn Job
-                    Scraper. Each represents a fully automated job application with
-                    personalized content and optimization to increase your success rate.
-                </p>
-            </div>
-
-            {/* CTA */}
-            <div className="mt-20 text-center">
-                <h2 className="text-2xl md:text-3xl font-semibold mb-4">
-                    Start automating your LinkedIn job applications{" "}
-                    <span className="text-[#00ff9d]">today</span>
-                </h2>
-                <p className="text-gray-400 mb-8">
-                    Join thousands of professionals who have accelerated their careers
-                    with our AI-powered platform.
-                </p>
-            </div>
-
-            {/* Footer */}
-            <footer className="mt-16 border-t border-[#1b2b27] pt-6 text-center text-gray-500 text-sm">
-                © 2025 LinkedIn Job Scraper. All rights reserved.
-            </footer>
         </div>
     );
 }
