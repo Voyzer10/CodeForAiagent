@@ -1,7 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Info, Pencil, X, Github, Linkedin, CheckCircle2, FileText } from "lucide-react";
+import {
+    Loader2,
+    Info,
+    Pencil,
+    X,
+    Github,
+    Linkedin,
+    CheckCircle2,
+    FileText,
+} from "lucide-react";
 import Link from "next/link";
 
 export default function Profile() {
@@ -26,17 +35,18 @@ export default function Profile() {
 
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    // Fetch user
+    // --------------------------------
+    // 🚀 Fetch Logged-In User
+    // --------------------------------
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch(`https://techm.work.gd/api/auth/me`, {
+                const res = await fetch(`${API_BASE_URL}/auth/me`, {
                     method: "GET",
                     credentials: "include",
                 });
 
                 const data = await res.json();
-
                 if (!res.ok) throw new Error(data.message || "Failed to fetch user");
 
                 setUser(data.user);
@@ -46,6 +56,7 @@ export default function Profile() {
                     github: data.user.github || "",
                     linkedin: data.user.linkedin || "",
                 });
+
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -56,7 +67,9 @@ export default function Profile() {
         fetchUser();
     }, []);
 
-    // SAVE social links
+    // --------------------------------
+    // 🚀 Save Social Links
+    // --------------------------------
     const handleSaveLink = async (platform, value) => {
         if (!value.trim()) return;
 
@@ -75,6 +88,7 @@ export default function Profile() {
 
             setUser((prev) => ({ ...prev, [platform]: value }));
             setSaveStatus({ platform, success: true });
+
         } catch {
             setSaveStatus({ platform, success: false });
         } finally {
@@ -82,7 +96,9 @@ export default function Profile() {
         }
     };
 
-    // SAVE API keys
+    // --------------------------------
+    // 🚀 Save API Credentials
+    // --------------------------------
     const handleSaveClientData = async () => {
         setSavingLink("client");
 
@@ -98,12 +114,17 @@ export default function Profile() {
             if (!res.ok) throw new Error(data.message);
 
             setSaveStatus({ platform: "client", success: true });
+
         } catch {
             setSaveStatus({ platform: "client", success: false });
         } finally {
             setSavingLink("");
         }
     };
+
+    // --------------------------------
+    // UI HANDLING
+    // --------------------------------
 
     if (loading)
         return (
@@ -113,19 +134,25 @@ export default function Profile() {
             </div>
         );
 
-    if (error) return <div className="text-center text-red-500 mt-10">{error}</div>;
+    if (error)
+        return <div className="text-center text-red-500 mt-10">{error}</div>;
 
-    if (!user) return <div className="text-center text-gray-400 mt-10">No user found.</div>;
+    if (!user)
+        return <div className="text-center text-gray-400 mt-10">No user found.</div>;
 
     const { email, role, plan } = user;
 
     return (
-        <div className="flex flex-col items-center min-h-screen w-full bg-[#09110f] text-white p-6 font-[Inter]">
+        <div className="flex flex-col items-center min-h-screen w-full bg-[#09110f] text-white p-6">
+
             <div className="w-full max-w-4xl bg-[#0e1513] border border-[#1b2b27] rounded-2xl p-8 shadow-xl">
 
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-3xl font-semibold text-green-400">👤 Profile Dashboard</h2>
+                    <h2 className="text-3xl font-semibold text-green-400">
+                        👤 Profile Dashboard
+                    </h2>
+
                     <Info
                         size={22}
                         className="text-green-400 cursor-pointer hover:text-green-300"
@@ -133,32 +160,45 @@ export default function Profile() {
                     />
                 </div>
 
-                {/* NAME */}
+                {/* Editable Name */}
                 <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
                     <span className="text-gray-400 text-sm">Name:</span>
 
                     {editingName ? (
-                        <div className="flex gap-2 items-center">
+                        <div className="flex items-center gap-2">
                             <input
-                                className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-green-300"
                                 value={newName}
                                 onChange={(e) => setNewName(e.target.value)}
+                                className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-green-300"
                             />
-                            <button onClick={() => { setUser({ ...user, name: newName }); setEditingName(false); }}>
+                            <button
+                                onClick={() => {
+                                    setUser((prev) => ({ ...prev, name: newName }));
+                                    setEditingName(false);
+                                }}
+                            >
                                 <CheckCircle2 size={18} className="text-green-400" />
                             </button>
-                            <button onClick={() => setEditingName(false)}>
-                                <X size={18} className="text-red-400" />
+                            <button
+                                onClick={() => setEditingName(false)}
+                                className="text-red-400"
+                            >
+                                <X size={18} />
                             </button>
                         </div>
                     ) : (
-                        <div className="flex gap-2 items-center">
+                        <div className="flex items-center gap-2">
                             <span className="text-green-300">{user.name}</span>
-                            <Pencil size={18} className="cursor-pointer text-gray-400" onClick={() => setEditingName(true)} />
+                            <Pencil
+                                size={18}
+                                className="text-gray-400 cursor-pointer hover:text-green-300"
+                                onClick={() => setEditingName(true)}
+                            />
                         </div>
                     )}
                 </div>
 
+                {/* Basic Info */}
                 <ProfileItem label="Email" value={email} />
                 <ProfileItem label="Role" value={role} />
 
@@ -166,14 +206,19 @@ export default function Profile() {
 
                 {/* SOCIAL LINKS */}
                 <h3 className="text-xl font-semibold text-green-300 mb-3">🌐 Social Profiles</h3>
+
                 <div className="space-y-3">
                     {[
                         { platform: "github", icon: <Github size={20} /> },
                         { platform: "linkedin", icon: <Linkedin size={20} /> },
                     ].map(({ platform, icon }) => (
-                        <div key={platform} className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
-                            <div className="flex gap-2 items-center text-gray-300">
-                                {icon} {platform}
+                        <div
+                            key={platform}
+                            className="flex items-center justify-between bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]"
+                        >
+                            <div className="flex items-center gap-2 text-gray-400">
+                                {icon}
+                                {platform}
                             </div>
 
                             <input
@@ -189,11 +234,15 @@ export default function Profile() {
     );
 }
 
+// ------------------------------
+// 🔹 Reusable Field Component
+// ------------------------------
+
 function ProfileItem({ label, value }) {
     return (
-        <div className="flex justify-between items-center bg-[#131d1a] px-4 py-2 rounded-lg border border-[#1b2b27]">
+        <div className="flex justify-between items-center bg-[#131d1a] px-4 py-2 rounded-lg border border-[#1b2b27] mt-3">
             <span className="text-gray-400 text-sm">{label}</span>
-            <span className="font-medium text-green-300 text-sm">{value || "—"}</span>
+            <span className="text-green-300 text-sm">{value || "—"}</span>
         </div>
     );
 }
