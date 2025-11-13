@@ -33,7 +33,7 @@ export default function JobFound() {
         setError("");
 
         // 1️⃣ Get user
-        const userRes = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        const userRes = await fetch(`${API_BASE_URL}/auth/me`, {
           method: "GET",
           credentials: "include",
         });
@@ -44,7 +44,7 @@ export default function JobFound() {
         if (!userId) throw new Error("User info missing");
 
         // 2️⃣ Get user jobs (All jobs)
-        const jobsRes = await fetch(`${API_BASE_URL}/api/userjobs/${userId}`, {
+        const jobsRes = await fetch(`${API_BASE_URL}/userjobs/${userId}`, {
           method: "GET",
           credentials: "include",
         });
@@ -93,7 +93,7 @@ export default function JobFound() {
     }));
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/userjobs/searches/save`, {
+      const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

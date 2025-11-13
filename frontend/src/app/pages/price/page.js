@@ -77,7 +77,7 @@ export default function Price() {
             const convertedAmount = Math.round(plan.price * usdRate * 100);
 
             // Create Razorpay order
-            const res = await fetch(`${API_BASE_URL}/api/payment/order`, {
+            const res = await fetch(`${API_BASE_URL}/payment/order`, {
                 method: "POST",
                 credentials: "include",
                 headers: { "Content-Type": "application/json" },
@@ -99,7 +99,7 @@ export default function Price() {
 
                 handler: async function (response) {
                     try {
-                        const verifyRes = await fetch(`${API_BASE_URL}/api/payment/verify`, {
+                        const verifyRes = await fetch(`${API_BASE_URL}/payment/verify`, {
                             method: "POST",
                             credentials: "include",
                             headers: { "Content-Type": "application/json" },
