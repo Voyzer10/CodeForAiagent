@@ -116,7 +116,7 @@ export default function UserPanel() {
       // Fetch updated jobs
       if (user?.userId) {
         const jobRes = await fetch(
-          `${API_BASE_URL}/api/userjobs/${user.userId}`,
+          `${API_BASE_URL}/userjobs/${user.userId}`,
           { credentials: "include" }
         );
         const jobData = await jobRes.json();
