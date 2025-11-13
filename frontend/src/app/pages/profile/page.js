@@ -30,7 +30,7 @@ export default function Profile() {
     useEffect(() => {
         const fetchUser = async () => {
             try {
-                const res = await fetch(`${API_BASE_URL}/auth/me`, {
+                const res = await fetch(`https://techm.work.gd/api/auth/me`, {
                     method: "GET",
                     credentials: "include",
                 });
