@@ -1,31 +1,39 @@
 "use client";
+
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
-  const [email, setEmail] = useState("");   // ✅ change username -> email
+  const router = useRouter();
+  
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
 
   const handleLogin = async (e) => {
-       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     e.preventDefault();
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     try {
       const res = await fetch(`${API_BASE_URL}/admin/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, password }), // ✅ send email, not username
+        body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
+
       if (res.ok) {
-        localStorage.setItem("adminToken", data.token);
-        window.location.href = "/admin/dashboard"; // ✅ redirect after login
+        // ❌ remove localStorage
+        // localStorage.setItem("adminToken", data.token);
+
+        router.push("/admin/dashboard"); // ✅ Use Router instead of window.location
       } else {
         setMessage(data.message);
       }
     } catch (err) {
+      console.log(err);
       setMessage("⚠️ Something went wrong");
     }
   };
@@ -40,7 +48,7 @@ export default function AdminLoginPage() {
 
         <input
           type="email"
-          placeholder="Email"       // ✅ updated label
+          placeholder="Email"
           className="border p-2"
           value={email}
           onChange={(e) => setEmail(e.target.value)}

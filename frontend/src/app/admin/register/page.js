@@ -2,13 +2,17 @@
 
 import React, { useState } from "react";
 import axios from "axios";
+import { useRouter } from "next/navigation";
 
 export default function AdminRegister() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
   });
+
   const [message, setMessage] = useState("");
 
   const handleChange = (e) => {
@@ -17,15 +21,25 @@ export default function AdminRegister() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/admin/register",
+        `${API_BASE_URL}/admin/register`,
         formData,
-        { withCredentials: true } // ✅ include cookies if needed
+        { withCredentials: true } // cookies allowed
       );
+
       setMessage(res.data.message);
-      setFormData({ name: "", email: "", password: "" }); // reset
+
+      // clear form
+      setFormData({ name: "", email: "", password: "" });
+
+      // Optional: Redirect to login after successful registration
+      setTimeout(() => {
+        router.push("/admin/login");
+      }, 800);
+
     } catch (err) {
       setMessage(err.response?.data?.message || "Error registering admin");
     }
