@@ -60,7 +60,7 @@ export default function JobFound() {
 
         // 3️⃣ Get saved searches
         const searchesRes = await fetch(
-          `${API_BASE_URL}/api/userjobs/searches/${userId}`,
+          `${API_BASE_URL}/userjobs/searches/${userId}`,
           { method: "GET", credentials: "include" }
         );
         const searchesData = await searchesRes.json();
