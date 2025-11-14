@@ -15,8 +15,8 @@ const fetchLogs = useCallback(async () => {
       setLoading(true);
       const logUrl =
         view === "normal"
-          ? "http://localhost:5000/api/admin/logs"
-          : "http://localhost:5000/api/admin/error-logs";
+          ? `${API_BASE_URL}/admin/logs`
+          : `${API_BASE_URL}/admin/error-logs`;
 
       const res = await fetch(logUrl);
       const data = await res.json();
@@ -33,7 +33,7 @@ const fetchLogs = useCallback(async () => {
 
   useEffect(() => {
     fetchLogs();
-    const interval = setInterval(fetchLogs, 5000);
+    const interval = setInterval(fetchLogs, 2000);
     return () => clearInterval(interval);
   }, [fetchLogs]); // ✅ safe to include fetchLogs now
 
