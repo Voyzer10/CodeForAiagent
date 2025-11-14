@@ -16,8 +16,8 @@ const fetchLogs = useCallback(async () => {
       setLoading(true);
       const logUrl =
         view === "normal"
-          ? `${API_BASE_URL}/admin/logs`
-          : `${API_BASE_URL}/admin/error-logs`;
+          ? `${API_BASE_URL}/logs/logs`
+          : `${API_BASE_URL}/logs/error-logs`;;
 
       const res = await fetch(logUrl);
       const data = await res.json();
