@@ -2,36 +2,62 @@
 const fs = require("fs");
 const path = require("path");
 
+// ========== LOG DIRECTORY ==========
 const logsDir = path.join(__dirname, "logs");
 if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
 
-// Normal + Error log files
+// ========== LOG FILES ==========
 const logFile = path.join(logsDir, "logs.txt");
 const errorFile = path.join(logsDir, "errorLogs.txt");
-
-// NEW: queue log file
 const queueLogFile = path.join(logsDir, "queueLogs.txt");
 
-// Generic file writer
-function writeLog(file, message) {
-  const time = new Date().toISOString();
-  fs.appendFile(file, `[${time}] ${message}\n`, (err) => {
-    if (err) console.error("Log write failed:", err);
+// ========== PRETTY DATE FORMAT ==========
+function timestamp() {
+  const d = new Date();
+  return d.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
   });
 }
 
-// Writers
+// ========== FILE APPEND ==========
+function write(file, msg) {
+  const line = `[${timestamp()}] ${msg}\n`;
+  fs.appendFile(file, line, () => {});
+}
+
+// ========== CUSTOM LOG FUNCTIONS ==========
 function logToFile(msg) {
-  writeLog(logFile, msg);
+  write(logFile, msg);
 }
 
 function logErrorToFile(msg) {
-  writeLog(errorFile, msg);
+  write(errorFile, msg);
 }
 
 function logQueueToFile(msg) {
-  writeLog(queueLogFile, msg);
+  write(queueLogFile, msg);
 }
+
+// ========== OVERRIDE console.log + console.error ==========
+const originalLog = console.log;
+const originalError = console.error;
+
+console.log = (...args) => {
+  const msg = args.join(" ");
+  write(logFile, msg);
+  originalLog.apply(console, args);
+};
+
+console.error = (...args) => {
+  const msg = args.join(" ");
+  write(errorFile, msg);
+  originalError.apply(console, args);
+};
 
 module.exports = {
   logToFile,

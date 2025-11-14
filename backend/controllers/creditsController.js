@@ -77,3 +77,26 @@ exports.deductCredits = async (userId, jobCount, sessionId = null) => {
     return { success: false, message: err.message };
   }
 };
+
+// --- ADD THIS BELOW exports.deductCredits ---
+
+exports.getCredits = async (userId) => {
+  try {
+    const user = await User.findOne({ userId });
+
+    if (!user) {
+      return { success: false, message: "User not found", credits: 0 };
+    }
+
+    const remaining = user?.plan?.remainingJobs || 0;
+
+    return {
+      success: true,
+      credits: remaining,
+      lowBalance: remaining < 100,
+    };
+  } catch (err) {
+    logErrorToFile(`[CreditsController:getCredits] ${err.message}`);
+    return { success: false, message: err.message, credits: 0 };
+  }
+};

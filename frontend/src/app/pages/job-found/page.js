@@ -26,7 +26,7 @@ export default function JobFound() {
  
 
   useEffect(() => {
-     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
     const fetchUserAndJobs = async () => {
       try {
         setLoading(true);
