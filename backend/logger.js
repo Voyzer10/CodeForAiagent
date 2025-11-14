@@ -2,38 +2,42 @@
 const fs = require("fs");
 const path = require("path");
 
-// Detect if running on Vercel (read-only file system)
-const IS_VERCEL = !!process.env.VERCEL;
+const logsDir = path.join(__dirname, "logs");
+if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
 
-let logsDir, logFile, errorFile;
+// Normal + Error log files
+const logFile = path.join(logsDir, "logs.txt");
+const errorFile = path.join(logsDir, "errorLogs.txt");
 
-if (!IS_VERCEL) {
-  // ✅ Local/dev environment — allow file logging
-  logsDir = path.join(__dirname, "logs");
-  if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+// NEW: queue log file
+const queueLogFile = path.join(logsDir, "queueLogs.txt");
 
-  logFile = path.join(logsDir, "logs.txt");
-  errorFile = path.join(logsDir, "errorLogs.txt");
-}
-
-// Write to file (only locally)
+// Generic file writer
 function writeLog(file, message) {
   const time = new Date().toISOString();
-  const line = `[${time}] ${message}\n`;
-  if (!IS_VERCEL) {
-    fs.appendFileSync(file, line);
-  } else {
-    // ✅ On Vercel, just console.log (shows up in dashboard)
-    console.log(line);
-  }
+  fs.appendFile(file, `[${time}] ${message}\n`, (err) => {
+    if (err) console.error("Log write failed:", err);
+  });
 }
 
-function logToFile(message) {
-  writeLog(logFile, message);
+// Writers
+function logToFile(msg) {
+  writeLog(logFile, msg);
 }
 
-function logErrorToFile(message) {
-  writeLog(errorFile, message);
+function logErrorToFile(msg) {
+  writeLog(errorFile, msg);
 }
 
-module.exports = { logToFile, logErrorToFile };
+function logQueueToFile(msg) {
+  writeLog(queueLogFile, msg);
+}
+
+module.exports = {
+  logToFile,
+  logErrorToFile,
+  logQueueToFile,
+  logFile,
+  errorFile,
+  queueLogFile,
+};
