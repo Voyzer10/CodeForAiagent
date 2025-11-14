@@ -24,7 +24,7 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
-      const data = await apiFetch("/api/auth/users");
+      const data = await apiFetch("/auth/users");
       setUsers(data);
     } catch (err) {
       console.error("Error fetching users:", err);
@@ -38,7 +38,7 @@ export default function UsersPage() {
     if (!confirm("Are you sure you want to delete this user?")) return;
 
     try {
-      await apiFetch(`/api/auth/users/${userId}`, { method: "DELETE" });
+      await apiFetch(`/auth/users/${userId}`, { method: "DELETE" });
       alert("User deleted successfully");
       fetchUsers(); // refresh list
     } catch (err) {

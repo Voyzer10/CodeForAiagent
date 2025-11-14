@@ -11,6 +11,7 @@ export default function LogsPage() {
   const scrollRef = useRef(null);
 
 const fetchLogs = useCallback(async () => {
+       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
     try {
       setLoading(true);
       const logUrl =
