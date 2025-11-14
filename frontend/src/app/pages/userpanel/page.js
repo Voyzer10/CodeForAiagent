@@ -27,7 +27,7 @@ export default function UserPanel() {
   const [sessionId, setSessionId] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false); // ✅ automatic modal flag
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
 
   // ✅ Generate unique session ID when page loads
   useEffect(() => {

@@ -10,7 +10,7 @@ export default function UserNavbar({ onSidebarToggle }) {
     const [error, setError] = useState("");
     const router = useRouter();
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
 
     const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
