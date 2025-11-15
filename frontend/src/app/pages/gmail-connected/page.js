@@ -1,8 +1,10 @@
-import { useRouter } from "next/router";
+"use client";
+
+import { useSearchParams } from "next/navigation";
 
 export default function GmailConnected() {
-  const router = useRouter();
-  const { success } = router.query;
+  const searchParams = useSearchParams();
+  const success = searchParams.get("success");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white p-6">
