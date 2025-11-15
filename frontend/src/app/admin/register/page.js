@@ -21,7 +21,7 @@ export default function AdminRegister() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
     try {
       const res = await axios.post(

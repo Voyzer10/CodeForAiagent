@@ -78,8 +78,6 @@ exports.deductCredits = async (userId, jobCount, sessionId = null) => {
   }
 };
 
-// --- ADD THIS BELOW exports.deductCredits ---
-
 exports.getCredits = async (userId) => {
   try {
     const user = await User.findOne({ userId });

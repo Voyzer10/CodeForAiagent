@@ -1,7 +1,7 @@
 // routes/creditsRoutes.js
 const express = require("express");
 const router = express.Router();
-const { deductCredits } = require("../controllers/creditsController");
+const { deductCredits, getCredits } = require("../controllers/creditsController");
 const { logToFile, logErrorToFile } = require("../logger");
 console.log("✅ creditsRoutes.js successfully loaded");
 
@@ -38,6 +38,27 @@ router.post("/deduct", async (req, res) => {
     console.error("🔥 Error in credits route:", err.message);
     logErrorToFile(`[CreditsRoutes:ERROR] ${err.message}`);
     res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.get("/check", async (req, res) => {
+  try {
+    const userId = Number(req.query.userId);
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "Missing userId" });
+    }
+
+    const result = await getCredits(userId);
+
+    if (!result.success) {
+      return res.status(404).json(result);
+    }
+
+    res.json(result);
+  } catch (err) {
+    console.error("🔥 Credits Check Error:", err.message);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

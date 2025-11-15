@@ -105,7 +105,7 @@ export default function UserPanel() {
 
       // NEW: Check actual credit balance
       const creditRes = await fetch(
-        `${API_BASE_URL}/credits/check`,
+       `${API_BASE_URL}/credits/check?userId=${user.userId}`,
         {
           credentials: "include",
         }
@@ -323,7 +323,7 @@ export default function UserPanel() {
 
                   try {
                     const res = await fetch(
-                      `${API_BASE_URL}/api/userjobs/searches/save`,
+                      `${API_BASE_URL}/userjobs/searches/save`,
                       {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
