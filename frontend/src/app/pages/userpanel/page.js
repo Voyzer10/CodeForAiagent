@@ -60,7 +60,7 @@ export default function UserPanel() {
 
         if (data.user?.userId) {
           const jobRes = await fetch(
-            `${API_BASE_URL}/api/userjobs/${data.user.userId}`,
+            `${API_BASE_URL}/userjobs/${data.user.userId}`,
             { credentials: "include" }
           );
           const jobData = await jobRes.json();
@@ -104,7 +104,7 @@ export default function UserPanel() {
       }
 
       // NEW: Check actual credit balance
-      const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${user.userId}`, {
+      const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${data.user.userId}}`, {
         credentials: "include",
       });
       const creditData = await creditRes.json();
@@ -120,7 +120,7 @@ export default function UserPanel() {
         alert(
           `Not enough credits! You have ${creditData.credits}. Buy credits first.`
         );
-        router.push("/pages/pages/price"); // update route
+        router.push("/pages/price"); // update route
         return;
       }
 
