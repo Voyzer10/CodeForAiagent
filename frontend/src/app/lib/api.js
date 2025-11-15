@@ -1,6 +1,9 @@
 "use client";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+const RAW_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+
+// Remove trailing slash
+const API_BASE = RAW_BASE.replace(/\/+$/, "");
 
 class ApiError extends Error {
   constructor(message, { status, code, details, url, method, requestId, response, cause } = {}) {
@@ -23,18 +26,20 @@ async function safeParseJson(response) {
     if (!text) return null;
     try {
       return JSON.parse(text);
-    } catch (_e) {
+    } catch {
       return { raw: text };
     }
-  } catch (_e) {
+  } catch {
     return null;
   }
 }
 
 export async function apiFetch(path, options = {}) {
-  const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
-  const { timeoutMs = 15000, ...restOptions } = options || {};
+  // Always join paths correctly
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${API_BASE}${cleanPath}`;
 
+  const { timeoutMs = 15000, ...restOptions } = options || {};
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -53,38 +58,26 @@ export async function apiFetch(path, options = {}) {
   try {
     res = await fetch(url, init);
   } catch (err) {
-    const isAbort = err && (err.name === "AbortError" || err.code === 20);
-    const message = isAbort ? "Request timed out" : "Network request failed";
-    throw new ApiError(message, {
+    clearTimeout(timeoutId);
+    throw new ApiError("Network request failed", {
       url,
       method: init.method || "GET",
       cause: err,
     });
-  } finally {
-    clearTimeout(timeoutId);
   }
+
+  clearTimeout(timeoutId);
 
   if (!res.ok) {
     const data = await safeParseJson(res);
-    const requestId = res.headers.get("x-request-id") || res.headers.get("x-correlation-id") || undefined;
-    const baseMessage = `Request failed with ${res.status}`;
-    const message = (data && (data.message || data.error)) || baseMessage;
-
-    throw new ApiError(message, {
+    throw new ApiError(data?.message || `Request failed with ${res.status}`, {
       status: res.status,
-      code: data && (data.code || data.errorCode),
-      details: data && (data.details || data.errors || data.raw || data),
       url,
-      method: init.method || "GET",
-      requestId,
       response: data,
     });
   }
 
-  const okData = await safeParseJson(res);
-  return okData;
+  return safeParseJson(res);
 }
 
 export { API_BASE, ApiError };
-
-

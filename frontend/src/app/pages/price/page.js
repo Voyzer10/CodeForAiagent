@@ -8,7 +8,7 @@ export default function Price() {
   const [loadingOrder, setLoadingOrder] = useState(false);
 
   // your API base (keep as you currently have it)
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
 
   const plans = [
     {

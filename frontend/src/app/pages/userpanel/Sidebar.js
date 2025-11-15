@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
 export default function Sidebar({ isOpen, onSelectSearch }) {
   const [recentSearches, setRecentSearches] = useState([]);
   useEffect(() => {
     const fetchSearches = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/userjobs/searches/me", {
+        const res = await fetch(`${API_BASE_URL}/userjobs/searches/me`, {
           method: "GET",
           credentials: "include", // Include JWT cookie
         });

@@ -30,7 +30,7 @@ export default function Profile() {
         clientSecret: "",
     });
 
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -58,7 +58,7 @@ export default function Profile() {
 
     // 🔹 Save GitHub / LinkedIn via API
     const handleSaveLink = async (platform, value) => {
-         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
         if (!value.trim()) return;
         setSavingLink(platform);
         setSaveStatus(null);
@@ -88,7 +88,7 @@ export default function Profile() {
     };
 
     const handleSaveClientData = async () => {
-         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
         if (!clientData.clientId.trim() || !clientData.clientSecret.trim()) return;
         setSavingLink("client");
         try {

@@ -25,11 +25,11 @@ export default function UserPanel() {
   const [count, setCount] = useState(100);
   const [countError, setCountError] = useState("");
   const [sessionId, setSessionId] = useState("");
-  const [showSaveModal, setShowSaveModal] = useState(false); // ✅ automatic modal flag
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
-  // ✅ Generate unique session ID when page loads
+  // Generate unique session ID when page loads
   useEffect(() => {
     const newSessionId = `session_${Date.now()}_${Math.random()
       .toString(36)
@@ -37,7 +37,17 @@ export default function UserPanel() {
     setSessionId(newSessionId);
   }, []);
 
-  // ✅ Fetch user and jobs
+  // Auto-close Save Search Modal after 2 minutes
+  useEffect(() => {
+    if (showSaveModal) {
+      const timer = setTimeout(() => {
+        setShowSaveModal(false);
+      }, 2 * 60 * 1000); // 2 minutes
+      return () => clearTimeout(timer);
+    }
+  }, [showSaveModal]);
+
+  // Fetch user and jobs
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -50,7 +60,7 @@ export default function UserPanel() {
 
         if (data.user?.userId) {
           const jobRes = await fetch(
-            `${API_BASE_URL}/api/userjobs/${data.user.userId}`,
+            `${API_BASE_URL}/userjobs/${data.user.userId}`,
             { credentials: "include" }
           );
           const jobData = await jobRes.json();
@@ -63,7 +73,7 @@ export default function UserPanel() {
     fetchUser();
   }, [API_BASE_URL]);
 
-  // ✅ Handle job fetch
+  // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
@@ -78,11 +88,11 @@ export default function UserPanel() {
     setCountError("");
     setError(null);
     setLoading(true);
-    setShowSaveModal(true); // ✅ Auto-open modal when processing starts
+    setShowSaveModal(true);
 
     try {
       // Check active plan
-      const planRes = await fetch(`${API_BASE_URL}/api/payment/check`, {
+      const planRes = await fetch(`${API_BASE_URL}/payment/check`, {
         credentials: "include",
       });
       const planData = await planRes.json();
@@ -93,6 +103,32 @@ export default function UserPanel() {
         return;
       }
 
+      // NEW: Check actual credit balance
+      const creditRes = await fetch(
+        `${API_BASE_URL}/credits/check?userId=${user.userId}`,
+        {
+          credentials: "include",
+        }
+      );
+
+      const creditData = await creditRes.json();
+
+      if (!creditRes.ok) {
+        setLoading(false);
+        setError(creditData.message || "Failed to check credits");
+        return;
+      }
+
+      if (creditData.credits < 100) {
+        setLoading(false);
+        alert(
+          `Not enough credits! You have ${creditData.credits}. Buy credits first.`
+        );
+        router.push("/pages/price");
+        return;
+      }
+
+
       const prompt = `
         Job Title: ${jobTitle}
         Location: ${location}
@@ -101,11 +137,11 @@ export default function UserPanel() {
         Count: ${num}
       `;
 
-      const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
+      const res = await fetch(`${API_BASE_URL}/userjobs/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ prompt, sessionId }), // ✅ send sessionId to backend
+        body: JSON.stringify({ prompt, sessionId }),
       });
 
       if (!res.ok) throw new Error("Server error while enqueuing job");
@@ -113,7 +149,6 @@ export default function UserPanel() {
       const data = await res.json();
       setResponse(data);
 
-      // Fetch updated jobs
       if (user?.userId) {
         const jobRes = await fetch(
           `${API_BASE_URL}/userjobs/${user.userId}`,
@@ -127,7 +162,7 @@ export default function UserPanel() {
       setError(err.message);
     } finally {
       setLoading(false);
-      setTimeout(() => setShowSaveModal(false), 800); // ✅ close modal after loading ends
+      // ❌ removed auto-close timeout — modal stays open until user closes
     }
   };
 
@@ -244,10 +279,20 @@ export default function UserPanel() {
         </form>
       </div>
 
-      {/* ✅ Automatic Save Search Modal */}
+      {/* Save Search Modal */}
       {showSaveModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-          <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg">
+          <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg relative">
+
+            {/* Close (X) Button */}
+            <button
+              className="absolute top-3 right-3 text-gray-400 hover:text-white text-xl"
+              onClick={() => setShowSaveModal(false)}
+              disabled={loading}
+            >
+              ✕
+            </button>
+
             <h3 className="text-lg font-bold text-green-400 mb-4">
               Save This Search
             </h3>
@@ -278,7 +323,7 @@ export default function UserPanel() {
 
                   try {
                     const res = await fetch(
-                      `${API_BASE_URL}/api/userjobs/searches/save`,
+                      `${API_BASE_URL}/userjobs/searches/save`,
                       {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
@@ -286,7 +331,7 @@ export default function UserPanel() {
                         body: JSON.stringify({
                           name: searchName,
                           jobs: userJobs,
-                          sessionId, // ✅ save session id
+                          sessionId,
                         }),
                       }
                     );
