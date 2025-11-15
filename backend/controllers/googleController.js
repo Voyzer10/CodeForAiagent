@@ -104,31 +104,20 @@ exports.googleLoginRedirect = async (req, res) => {
 exports.googleLoginCallback = async (req, res) => {
   try {
     console.log("⬅️ Google Login Callback HIT");
-    console.log("📩 Query Params:", req.query);
 
     const code = req.query.code;
-
-    if (!code) return res.status(400).send("Invalid Google Login Callback");
+    if (!code) return res.status(400).send("Invalid Google Login");
 
     const { tokens } = await loginClient.getToken(code);
-
-    console.log("🔑 Token Received? access_token =", tokens.access_token ? "YES" : "NO");
-
     loginClient.setCredentials(tokens);
 
     const oauth2 = google.oauth2({ auth: loginClient, version: "v2" });
     const googleUser = await oauth2.userinfo.get();
 
-    console.log("👤 Google User:", googleUser.data);
-
     const email = googleUser.data.email;
     const name = googleUser.data.name || "New User";
 
-    // SAFETY CHECK
-    if (!email) {
-      console.log("❌ Google account returned NO email.");
-      return res.status(400).send("Google account has no email associated.");
-    }
+    if (!email) return res.status(400).send("Google account has no email");
 
     let user = await User.findOne({ email });
 
@@ -137,33 +126,31 @@ exports.googleLoginCallback = async (req, res) => {
         name,
         email,
         role: "user",
-        password: crypto.randomBytes(32).toString("hex"), // SAFE
+        password: crypto.randomBytes(32).toString("hex"),
       });
-      console.log("🆕 New user created:", user.userId);
     }
 
-    console.log("user.userId =", user.userId, "type =", typeof user.userId);
-
     const token = jwt.sign(
-      {
-        id: user.userId,       // FIXED (no Number)
-        email: user.email,
-        role: user.role
-      },
+      { id: user.userId, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
 
-    console.log("🎫 JWT issued for userId =", user.userId);
+    // 🛠 FIX: remove trailing slash from FRONTEND_URL
+    const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
 
-    const frontend = process.env.FRONTEND_URL;
-    return res.redirect(`${frontend}/auth/google?token=${token}`);
+    const finalUrl = `${frontend}/auth/google?token=${encodeURIComponent(token)}`;
+
+    console.log("➡️ Redirecting to:", finalUrl);
+
+    return res.redirect(finalUrl);
 
   } catch (err) {
-    console.error("❌ Google Login Callback Error:", err.message);
+    console.error("❌ Google Login Callback Error:", err);
     return res.status(500).send("Login Failed");
   }
 };
+
 
 
 /* ===================================================
