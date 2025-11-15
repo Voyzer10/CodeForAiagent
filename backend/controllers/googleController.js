@@ -124,6 +124,12 @@ exports.googleLoginCallback = async (req, res) => {
     const email = googleUser.data.email;
     const name = googleUser.data.name || "New User";
 
+    // SAFETY CHECK
+    if (!email) {
+      console.log("❌ Google account returned NO email.");
+      return res.status(400).send("Google account has no email associated.");
+    }
+
     let user = await User.findOne({ email });
 
     if (!user) {
@@ -133,13 +139,22 @@ exports.googleLoginCallback = async (req, res) => {
         role: "user",
         password: crypto.randomBytes(32).toString("hex"), // SAFE
       });
+      console.log("🆕 New user created:", user.userId);
     }
 
+    console.log("user.userId =", user.userId, "type =", typeof user.userId);
+
     const token = jwt.sign(
-      { id: Number(user.userId), email: user.email, role: user.role },
+      {
+        id: user.userId,       // FIXED (no Number)
+        email: user.email,
+        role: user.role
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    console.log("🎫 JWT issued for userId =", user.userId);
 
     const frontend = process.env.FRONTEND_URL;
     return res.redirect(`${frontend}/auth/google?token=${token}`);
