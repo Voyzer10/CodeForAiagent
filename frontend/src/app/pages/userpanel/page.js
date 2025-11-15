@@ -92,7 +92,7 @@ export default function UserPanel() {
 
     try {
       // Check active plan
-      const planRes = await fetch(`${API_BASE_URL}/api/payment/check`, {
+      const planRes = await fetch(`${API_BASE_URL}/payment/check`, {
         credentials: "include",
       });
       const planData = await planRes.json();
@@ -104,7 +104,7 @@ export default function UserPanel() {
       }
 
       // NEW: Check actual credit balance
-      const creditRes = await fetch(`${API_BASE_URL}/api/credits/check?userId=${user.userId}`, {
+      const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${user.userId}`, {
         credentials: "include",
       });
       const creditData = await creditRes.json();
@@ -120,7 +120,7 @@ export default function UserPanel() {
         alert(
           `Not enough credits! You have ${creditData.credits}. Buy credits first.`
         );
-        router.push("/pages/buy-credits"); // update route
+        router.push("/pages/pages/price"); // update route
         return;
       }
 
@@ -132,7 +132,7 @@ export default function UserPanel() {
         Count: ${num}
       `;
 
-      const res = await fetch(`${API_BASE_URL}/api/userjobs/`, {
+      const res = await fetch(`${API_BASE_URL}/userjobs/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -318,7 +318,7 @@ export default function UserPanel() {
 
                   try {
                     const res = await fetch(
-                      `${API_BASE_URL}/api/userjobs/searches/save`,
+                      `${API_BASE_URL}/userjobs/searches/save`,
                       {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
