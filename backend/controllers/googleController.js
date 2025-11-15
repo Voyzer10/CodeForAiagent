@@ -127,8 +127,6 @@ exports.googleLoginCallback = async (req, res) => {
         name,
         email,
         role: "user",
-        authProvider: "google",
-        password: crypto.randomBytes(20).toString("hex"),  // FIX
       });
     }
 
