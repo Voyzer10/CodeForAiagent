@@ -140,12 +140,14 @@ exports.googleLoginCallback = async (req, res) => {
       });
       console.log("✔ New User Created:", user);
     }
+    console.log("user.userId typeof =", typeof user.userId, "value =", user.userId);
 
     const token = jwt.sign(
-      { id: user.userId, email: user.email, role: user.role },
+      { id: Number(user.userId), email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
 
     console.log("🎫 JWT Issued:", token);
 
