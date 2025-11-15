@@ -2,6 +2,8 @@
 
 import { useSearchParams } from "next/navigation";
 
+export const dynamic = "force-dynamic";  // 🔥 FIX HERE
+
 export default function GmailConnected() {
   const searchParams = useSearchParams();
   const success = searchParams.get("success");
