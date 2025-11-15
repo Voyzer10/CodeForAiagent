@@ -108,28 +108,18 @@ exports.googleLoginCallback = async (req, res) => {
 
     const code = req.query.code;
 
-    if (!code) {
-      console.error("❌ Missing OAuth CODE");
-      return res.status(400).send("Invalid Google Login Callback");
-    }
-
-    console.log("🔑 OAuth CODE:", code);
+    if (!code) return res.status(400).send("Invalid Google Login Callback");
 
     const { tokens } = await loginClient.getToken(code);
-    console.log("🔑 Tokens Received:", tokens);
-
     loginClient.setCredentials(tokens);
 
     const oauth2 = google.oauth2({ auth: loginClient, version: "v2" });
     const googleUser = await oauth2.userinfo.get();
 
-    console.log("👤 Google User:", googleUser.data);
-
     const email = googleUser.data.email;
     const name = googleUser.data.name || "New User";
 
     let user = await User.findOne({ email });
-    console.log("🔍 Existing User Found:", !!user);
 
     if (!user) {
       console.log("🆕 Creating New User...");
@@ -138,9 +128,10 @@ exports.googleLoginCallback = async (req, res) => {
         email,
         role: "user",
         authProvider: "google",
+        password: crypto.randomBytes(20).toString("hex"),  // FIX
       });
-      console.log("✔ New User Created:", user);
     }
+
     console.log("user.userId typeof =", typeof user.userId, "value =", user.userId);
 
     const token = jwt.sign(
@@ -149,18 +140,15 @@ exports.googleLoginCallback = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-
-    console.log("🎫 JWT Issued:", token);
-
     const frontend = process.env.FRONTEND_URL;
-    console.log("🔁 Redirecting to FE:", `${frontend}/auth/google?token=${token}`);
-
     return res.redirect(`${frontend}/auth/google?token=${token}`);
+
   } catch (err) {
     console.error("❌ Google Login Callback Error:", err);
     return res.status(500).send("Login Failed");
   }
 };
+
 
 /* ===================================================
    FLOW B → GMAIL CONNECT (OFFLINE TOKENS)
