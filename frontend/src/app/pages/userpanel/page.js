@@ -104,9 +104,13 @@ export default function UserPanel() {
       }
 
       // NEW: Check actual credit balance
-      const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${user.userId}`, {
-        credentials: "include",
-      });
+      const creditRes = await fetch(
+        `${API_BASE_URL}/credits/check?userId=${user.userId}`,
+        {
+          credentials: "include",
+        }
+      );
+
       const creditData = await creditRes.json();
 
       if (!creditRes.ok) {
@@ -120,9 +124,10 @@ export default function UserPanel() {
         alert(
           `Not enough credits! You have ${creditData.credits}. Buy credits first.`
         );
-        router.push("/pages/price"); // update route
+        router.push("/pages/price");
         return;
       }
+
 
       const prompt = `
         Job Title: ${jobTitle}
