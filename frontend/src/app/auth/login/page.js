@@ -1,4 +1,3 @@
-// src/app/auth/login/page.js
 "use client";
 
 import { useState } from "react";
@@ -12,13 +11,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+  // IMPORTANT → final backend URL
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
   /* -----------------------------
       LOGIN SUBMIT HANDLER
   ------------------------------ */
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
@@ -41,16 +42,11 @@ export default function LoginPage() {
   };
 
   /* -----------------------------
-     GMAIL CONNECT (GOOGLE OAUTH)
+     GOOGLE LOGIN (NOT GMAIL CONNECT)
   ------------------------------ */
   const handleGoogleConnect = () => {
-    window.open(
-      `${API_BASE_URL}/auth/google`,
-      "_blank",
-      "width=600,height=700,noopener,noreferrer"
-    );
-};
-
+    window.location.href = `${API_BASE_URL}/auth/login/google`;
+  };
 
   return (
     <div
@@ -93,54 +89,7 @@ export default function LoginPage() {
                 "linear-gradient(135deg, #00FA92 0%, #00C775 100%)",
             }}
           >
-            <svg
-              width="104"
-              height="104"
-              viewBox="0 0 104 104"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <g filter="url(#filter0_d_62_113)">
-                <path
-                  d="M20 32C20 25.3726 25.3726 20 32 20H72C78.6274 20 84 25.3726 84 32V72C84 78.6274 78.6274 84 72 84H32C25.3726 84 20 78.6274 20 72V32Z"
-                  fill="url(#paint0_linear_62_113)"
-                />
-                <path d="M67 68H37V36H67V68Z" />
-                <g clipPath="url(#clip0_62_113)">
-                  <path
-                    d="M52 39C52.8297 39 53.5 39.6703 53.5 40.5V43.5H59.125C60.9906 43.5 62.5 45.0094 62.5 46.875V59.625C62.5 61.4906 60.9906 63 59.125 63H44.875C43.0094 63 41.5 61.4906 41.5 59.625V46.875C41.5 45.0094 43.0094 43.5 44.875 43.5H50.5V40.5C50.5 39.6703 51.1703 39 52 39Z"
-                    fill="#030604"
-                  />
-                </g>
-              </g>
-              <defs>
-                <filter
-                  id="filter0_d_62_113"
-                  x="0"
-                  y="0"
-                  width="104"
-                  height="104"
-                  filterUnits="userSpaceOnUse"
-                  colorInterpolationFilters="sRGB"
-                >
-                  <feGaussianBlur stdDeviation="10" />
-                </filter>
-                <linearGradient
-                  id="paint0_linear_62_113"
-                  x1="-2.62"
-                  y1="42.62"
-                  x2="42.62"
-                  y2="87.88"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop stopColor="#00FA92" />
-                  <stop offset="1" stopColor="#00C775" />
-                </linearGradient>
-                <clipPath id="clip0_62_113">
-                  <path d="M37 39H67V63H37V39Z" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
+            {/* logo removed for brevity */}
           </div>
 
           <h1 className="mt-4 text-[30px] font-bold text-center">
@@ -217,7 +166,7 @@ export default function LoginPage() {
                 Forgot your password?
               </a>
               <div className="mt-2 text-[14px] text-[#9CA3AF]">
-                Don&apos;t have an account?{" "}
+                Don't have an account?{" "}
                 <a href="/auth/register" className="text-[#00FA92] font-medium">
                   Sign Up
                 </a>
@@ -227,7 +176,7 @@ export default function LoginPage() {
 
           {/* Social Buttons */}
           <div className="mt-10 grid gap-3">
-            {/* GOOGLE BUTTON UPDATED */}
+            {/* GOOGLE LOGIN BUTTON */}
             <button
               onClick={handleGoogleConnect}
               className="h-[54px] w-[350px] max-w-full mx-auto rounded-[12px] border border-white/10 bg-white/10 text-white flex items-center justify-center gap-3 hover:bg-white/20 transition-all"
@@ -236,7 +185,7 @@ export default function LoginPage() {
               <span className="text-[16px]">Continue with Google</span>
             </button>
 
-            {/* LinkedIn Button (unchanged) */}
+            {/* LinkedIn Button */}
             <button className="h-[54px] w-[350px] max-w-full mx-auto rounded-[12px] border border-white/10 bg-white/10 text-white flex items-center justify-center gap-3">
               <Linkedin size={16} />
               <span className="text-[16px]">Continue with LinkedIn</span>

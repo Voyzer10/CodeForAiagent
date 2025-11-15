@@ -15,8 +15,10 @@ const {
 } = require("../controllers/userController.js");
 
 const {
-  googleRedirect,
-  googleCallback,
+  googleLoginRedirect,
+  googleLoginCallback,
+  gmailRedirect,
+  gmailCallback,
   getGmailTokens,
 } = require("../controllers/googleController.js");
 
@@ -41,14 +43,24 @@ router.post("/update-socials", auth, updateSocialLinks);
 router.post("/update-client", auth, updateClientData);
 
 /* ======================================================
-   GOOGLE OAUTH ROUTES
+   GOOGLE LOGIN (Website Sign-in)
 ====================================================== */
 
-// STEP-1: User clicks "Continue with Google"
-router.get("/google", auth, googleRedirect);
+// Step 1 → Redirect to Google Login
+router.get("/login/google", googleLoginRedirect);
 
-// STEP-2: Google redirects here after consent
-router.get("/google/callback", googleCallback);
+// Step 2 → Google → Callback → Generate JWT
+router.get("/login/google/callback", googleLoginCallback);
+
+/* ======================================================
+   GMAIL CONNECT (OAuth for sending emails)
+====================================================== */
+
+// Step 1 → User clicks "Connect Gmail"
+router.get("/gmail/connect", auth, gmailRedirect);
+
+// Step 2 → Google sends tokens
+router.get("/gmail/callback", gmailCallback);
 
 /* ======================================================
    n8n → Secure Gmail Token Fetch Route
