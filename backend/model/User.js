@@ -9,8 +9,7 @@ const userSchema = new mongoose.Schema(
     // Basic Info
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: false },
-    // authProvider: { type: String, default: "email" },
+    password: { type: String, required: false, default: "" },
 
 
     // Custom numeric userId
