@@ -66,13 +66,30 @@ const SCOPES = [
 =================================================== */
 exports.googleRedirect = async (req, res) => {
   try {
-    const userId = req.user._id.toString();
+    // User can come from:
+    // 1. Logged-in request (req.user)
+    // 2. Frontend query param (?id=USER_ID)
+    // 3. If neither, reject
+
+    let userId = null;
+
+    if (req.user && req.user._id) {
+      userId = req.user._id.toString(); // logged-in user
+    }
+
+    if (!userId && req.query.id) {
+      userId = req.query.id; // user id passed manually
+    }
+
+    if (!userId) {
+      return res.status(400).send("Missing userId for OAuth");
+    }
 
     const url = oauthClient.generateAuthUrl({
       access_type: "offline",
       prompt: "consent",
       scope: SCOPES,
-      state: userId, // attaches logged-in user ID
+      state: userId,
     });
 
     return res.redirect(url);
@@ -81,6 +98,7 @@ exports.googleRedirect = async (req, res) => {
     return res.status(500).send("Google OAuth Redirect Failed");
   }
 };
+
 
 /* ===================================================
    STEP 2 — Google → callback → Save tokens
