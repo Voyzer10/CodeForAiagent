@@ -45,7 +45,9 @@ export default function LoginPage() {
      GOOGLE LOGIN (NOT GMAIL CONNECT)
   ------------------------------ */
   const handleGoogleConnect = () => {
-    window.location.href = `${API_BASE_URL}/auth/login/google`;
+    window.location.href = `${API_BASE_URL}/auth/login/google`,
+     "_blank",
+    "width=600,height=700,noopener,noreferrer";
   };
 
   return (
