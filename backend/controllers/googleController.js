@@ -78,6 +78,10 @@ exports.googleLoginRedirect = async (req, res) => {
   try {
     console.log("➡️ Google Login Redirect HIT");
 
+    // DEBUGGING LOGS – MUST BE BEFORE ANY RETURN
+    console.log(">>> GOOGLE_LOGIN_REDIRECT =", JSON.stringify(process.env.GOOGLE_LOGIN_REDIRECT));
+    console.log(">>> GMAIL_REDIRECT_URI =", JSON.stringify(process.env.GMAIL_REDIRECT_URI));
+
     const url = loginClient.generateAuthUrl({
       access_type: "online",
       prompt: "select_account",
@@ -91,10 +95,8 @@ exports.googleLoginRedirect = async (req, res) => {
     console.error("❌ Google Login Redirect Error:", err);
     return res.status(500).send("Google Login Failed");
   }
-  console.log(">>> GOOGLE_LOGIN_REDIRECT =", JSON.stringify(process.env.GOOGLE_LOGIN_REDIRECT));
-  console.log(">>> GMAIL_REDIRECT_URI =", JSON.stringify(process.env.GMAIL_REDIRECT_URI));
-
 };
+
 
 /* ------------------------------------------
    2️⃣ GOOGLE LOGIN CALLBACK
