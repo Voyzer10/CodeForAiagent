@@ -104,7 +104,7 @@ export default function UserPanel() {
       }
 
       // NEW: Check actual credit balance
-      const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${data.user.userId}}`, {
+      const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${user.userId}`, {
         credentials: "include",
       });
       const creditData = await creditRes.json();
