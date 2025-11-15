@@ -58,13 +58,9 @@ const userSchema = new mongoose.Schema(
     // Client Keys
     clientId: {
       type: String,
-      default: "",
-      trim: true,
     },
     clientSecret: {
       type: String,
-      default: "",
-      trim: true,
     },
 
     /* -----------------------------------------

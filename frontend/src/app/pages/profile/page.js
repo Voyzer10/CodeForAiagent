@@ -25,12 +25,13 @@ export default function Profile() {
     const [saveStatus, setSaveStatus] = useState(null);
 
     // 🌐 Social & API credentials
-    const [clientData, setClientData] = useState({
-        clientId: "",
-        clientSecret: "",
+    setClientData({
+        clientId: data.user.clientId || "",
+        clientSecret: data.user.clientSecret || "",
     });
 
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -58,7 +59,7 @@ export default function Profile() {
 
     // 🔹 Save GitHub / LinkedIn via API
     const handleSaveLink = async (platform, value) => {
-         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
         if (!value.trim()) return;
         setSavingLink(platform);
         setSaveStatus(null);
@@ -88,7 +89,7 @@ export default function Profile() {
     };
 
     const handleSaveClientData = async () => {
-         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
         if (!clientData.clientId.trim() || !clientData.clientSecret.trim()) return;
         setSavingLink("client");
         try {
@@ -254,29 +255,27 @@ export default function Profile() {
                 <div className="space-y-3">
                     <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
                         <span className="text-gray-400 text-sm">Client ID:</span>
-                        <input
-                            type="text"
-                            value={clientData.clientId}
-                            onChange={(e) =>
-                                setClientData({ ...clientData, clientId: e.target.value })
-                            }
-                            placeholder="Enter Client ID"
-                            className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-gray-200 w-2/3"
-                        />
+                        <button
+                            onClick={() => window.location.href = `${API_BASE_URL}/auth/gmail/connect`}
+                            className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2"
+                        >
+                            Continue with Google (Gmail Access)
+                        </button>
+
+                        {user.gmailEmail ? (
+                            <div className="mt-4 p-4 bg-[#131d1a] border border-[#1b2b27] rounded-lg">
+                                <p className="text-green-300 text-sm">Connected Gmail: {user.gmailEmail}</p>
+                                <p className="text-gray-400 text-xs mt-2">Client ID (Google):</p>
+                                <p className="text-green-300 break-all">{user.clientId || "—"}</p>
+
+                                <p className="text-gray-400 text-xs mt-2">Client Secret (Google):</p>
+                                <p className="text-green-300 break-all">{user.clientSecret || "—"}</p>
+                            </div>
+                        ) : null}
+
                     </div>
 
-                    <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
-                        <span className="text-gray-400 text-sm">Client Secret:</span>
-                        <input
-                            type="password"
-                            value={clientData.clientSecret}
-                            onChange={(e) =>
-                                setClientData({ ...clientData, clientSecret: e.target.value })
-                            }
-                            placeholder="Enter Client Secret"
-                            className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-gray-200 w-2/3"
-                        />
-                    </div>
+
 
                     <button
                         onClick={handleSaveClientData}

@@ -207,59 +207,49 @@ exports.gmailRedirect = async (req, res) => {
 exports.gmailCallback = async (req, res) => {
   try {
     console.log("⬅️ Gmail OAuth Callback HIT");
-    console.log("📩 Query Params:", req.query);
 
     const code = req.query.code;
     const userId = req.query.state;
 
     if (!code || !userId) {
-      console.error("❌ Missing code/userId:", { code, userId });
       return res.status(400).send("Invalid Gmail Callback");
     }
 
-    console.log("🔑 OAuth Code:", code);
-    console.log("👤 State UserID:", userId);
-
     const { tokens } = await gmailClient.getToken(code);
-    console.log("🔑 Gmail Tokens:", tokens);
-
     gmailClient.setCredentials(tokens);
 
     const oauth2 = google.oauth2({ auth: gmailClient, version: "v2" });
     const profile = await oauth2.userinfo.get();
 
-    console.log("📩 Gmail Profile:", profile.data);
-
     const gmailEmail = profile.data.email;
 
     const user = await User.findById(userId);
-    console.log("🔍 Found User:", !!user);
+    if (!user) return res.status(404).send("User not found");
 
+    // 🔐 Save Gmail OAuth Credentials
     user.gmailEmail = gmailEmail;
-    user.gmailAccessToken = encrypt(tokens.access_token);
-
-    if (tokens.refresh_token) {
-      console.log("🔁 Refresh Token Received");
-      user.gmailRefreshToken = encrypt(tokens.refresh_token);
-    }
-
-    if (tokens.expiry_date) {
-      user.gmailTokenExpiry = new Date(tokens.expiry_date);
-    }
-
+    user.gmailAccessToken = encrypt(tokens.access_token || "");
+    user.gmailRefreshToken = encrypt(tokens.refresh_token || "");
+    user.gmailTokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
     user.gmailConnectedAt = new Date();
 
-    await user.save();
-    console.log("💾 Gmail OAuth Saved for User:", userId);
+    // 🔥 AUTO-GENERATE CLIENT ID & CLIENT SECRET
+    user.clientId = encrypt(gmailEmail);  // unique per-user
+    user.clientSecret = encrypt(tokens.refresh_token || crypto.randomBytes(32).toString("hex"));
 
-    const frontend = process.env.FRONTEND_URL;
+    await user.save();
+    console.log("💾 Gmail OAuth + Client Keys Saved!");
+
+    const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
     return res.redirect(`${frontend}/gmail-connected?success=1`);
+
   } catch (err) {
     console.error("❌ Gmail Callback Error:", err);
-    const frontend = process.env.FRONTEND_URL;
+    const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
     return res.redirect(`${frontend}/gmail-connected?success=0`);
   }
 };
+
 
 /* ===================================================
    SECURE n8n TOKEN FETCH
