@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState} from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Linkedin } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
@@ -42,18 +42,6 @@ export default function LoginPage() {
   const handleGoogleConnect = () => {
     window.location.href = `${API_BASE_URL}/auth/login/google`;
   };
-
-  // GOOGLE CALLBACK HANDLER (token comes in URL)
-  useEffect(() => {
-    const url = new URL(window.location.href);
-    const token = url.searchParams.get("token");
-
-    if (token) {
-      document.cookie = `token=${token}; path=/; SameSite=Lax`;
-      router.push("/pages/userpanel");
-    }
-    
-  }, []);
 
   return (
     <div
