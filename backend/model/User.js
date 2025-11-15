@@ -9,7 +9,13 @@ const userSchema = new mongoose.Schema(
     // Basic Info
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+    password: {
+      type: String,
+      required: function () {
+        return this.authProvider === "email";
+      }
+    },
+
     authProvider: { type: String, default: "email" },
 
 
