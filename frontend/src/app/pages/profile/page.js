@@ -24,14 +24,7 @@ export default function Profile() {
     const [savingLink, setSavingLink] = useState("");
     const [saveStatus, setSaveStatus] = useState(null);
 
-    // 🌐 Social & API credentials
-    setClientData({
-        clientId: data.user.clientId || "",
-        clientSecret: data.user.clientSecret || "",
-    });
-
-
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -40,10 +33,13 @@ export default function Profile() {
                     method: "GET",
                     credentials: "include",
                 });
+
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || "Failed to fetch user");
+
                 setUser(data.user);
                 setNewName(data.user.name);
+
                 setSocialLinks({
                     github: data.user.github || "",
                     linkedin: data.user.linkedin || "",
@@ -59,7 +55,6 @@ export default function Profile() {
 
     // 🔹 Save GitHub / LinkedIn via API
     const handleSaveLink = async (platform, value) => {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
         if (!value.trim()) return;
         setSavingLink(platform);
         setSaveStatus(null);
@@ -75,10 +70,8 @@ export default function Profile() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Failed to update");
 
-            // ✅ Update local user state so link persists
+            // Update UI immediately
             setUser((prev) => ({ ...prev, [platform]: value }));
-
-            // ✅ Mark as saved successfully
             setSaveStatus({ platform, success: true });
         } catch (err) {
             console.error("Save error:", err);
@@ -88,29 +81,7 @@ export default function Profile() {
         }
     };
 
-    const handleSaveClientData = async () => {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
-        if (!clientData.clientId.trim() || !clientData.clientSecret.trim()) return;
-        setSavingLink("client");
-        try {
-            const res = await fetch(`${API_BASE_URL}/api/auth/update-client`, {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(clientData),
-            });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Failed to save credentials");
-            setUser((prev) => ({ ...prev, ...clientData }));
-            setSaveStatus({ platform: "client", success: true });
-        } catch (err) {
-            console.error(err);
-            setSaveStatus({ platform: "client", success: false });
-        } finally {
-            setSavingLink("");
-        }
-    };
-    // 🔹 Save Edited Name
+    // 🔹 Save Edited Name (local only)
     const handleNameSave = () => {
         if (newName.trim()) {
             setUser((prev) => ({ ...prev, name: newName.trim() }));
@@ -242,53 +213,32 @@ export default function Profile() {
                 </div>
 
                 <hr className="my-6 border-[#1b2b27]" />
-                {/* 🌟 Client ID & Secret Section */}
-                <h3 className="text-xl font-semibold text-green-300 mb-3 flex items-center gap-2">
-                    🔑 API Credentials
-                    <Info
-                        size={18}
-                        className="text-green-400 cursor-pointer hover:text-green-300"
-                        onClick={() => setShowHelp(true)}
-                    />
-                </h3>
 
-                <div className="space-y-3">
-                    <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
-                        <span className="text-gray-400 text-sm">Client ID:</span>
-                        <button
-                            onClick={() => window.location.href = `${API_BASE_URL}/auth/gmail/connect`}
-                            className="bg-blue-500 text-white px-4 py-2 rounded-lg mt-2"
-                        >
-                            Continue with Google (Gmail Access)
-                        </button>
+                {/* Gmail OAuth */}
+                <h3 className="text-xl font-semibold text-green-300 mb-3">📧 Gmail Account</h3>
 
-                        {user.gmailEmail ? (
-                            <div className="mt-4 p-4 bg-[#131d1a] border border-[#1b2b27] rounded-lg">
-                                <p className="text-green-300 text-sm">Connected Gmail: {user.gmailEmail}</p>
-                                <p className="text-gray-400 text-xs mt-2">Client ID (Google):</p>
-                                <p className="text-green-300 break-all">{user.clientId || "—"}</p>
-
-                                <p className="text-gray-400 text-xs mt-2">Client Secret (Google):</p>
-                                <p className="text-green-300 break-all">{user.clientSecret || "—"}</p>
-                            </div>
-                        ) : null}
-
-                    </div>
-
-
-
+                {!user.gmailEmail ? (
                     <button
-                        onClick={handleSaveClientData}
-                        disabled={savingLink === "client"}
-                        className="mt-2 bg-green-500 text-black px-4 py-2 rounded-lg font-medium hover:opacity-90"
+                        onClick={() =>
+                            (window.location.href = `${API_BASE_URL}/auth/gmail/connect`)
+                        }
+                        className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90"
                     >
-                        {savingLink === "client"
-                            ? "Saving..."
-                            : saveStatus?.platform === "client" && saveStatus.success
-                                ? "Saved ✓"
-                                : "Save Credentials"}
+                        Connect Gmail (Continue with Google)
                     </button>
-                </div>
+                ) : (
+                    <div className="p-4 bg-[#131d1a] border border-[#1b2b27] rounded-lg">
+                        <ProfileItem label="Connected Gmail" value={user.gmailEmail} />
+                        <ProfileItem
+                            label="Connected At"
+                            value={new Date(user.gmailConnectedAt).toLocaleString()}
+                        />
+                        <ProfileItem
+                            label="Token Expiry"
+                            value={new Date(user.gmailTokenExpiry).toLocaleString()}
+                        />
+                    </div>
+                )}
 
                 <hr className="my-6 border-[#1b2b27]" />
 
@@ -315,9 +265,8 @@ export default function Profile() {
                                     placeholder={`Add ${platform} URL`}
                                     className="flex-1 bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-gray-200"
                                     onBlur={(e) => handleSaveLink(platform, e.target.value)}
-                                    disabled={saveStatus?.platform === platform && saveStatus.success} // 🔒 Disable input after save
                                 />
-                                {/* ✅ Conditional Save button */}
+
                                 {savingLink === platform ? (
                                     <span className="text-xs text-gray-400">Saving...</span>
                                 ) : saveStatus?.platform === platform ? (
@@ -326,16 +275,7 @@ export default function Profile() {
                                     ) : (
                                         <span className="text-xs text-red-400 font-medium">Error</span>
                                     )
-                                ) : (
-                                    <button
-                                        onClick={() =>
-                                            handleSaveLink(platform, document.querySelector(`[name="${platform}"]`)?.value)
-                                        }
-                                        className="text-xs text-green-400 hover:underline"
-                                    >
-                                        Save
-                                    </button>
-                                )}
+                                ) : null}
                             </div>
                         </div>
                     ))}
@@ -347,24 +287,19 @@ export default function Profile() {
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
                     <div className="bg-[#0e1513] border border-[#1b2b27] p-6 rounded-xl w-full max-w-lg text-gray-200 relative">
                         <h3 className="text-2xl font-semibold text-green-400 mb-4">
-                            How to Generate Client ID & Secret
+                            How Gmail Automation Works
                         </h3>
-                        <ol className="list-decimal pl-5 space-y-2 text-gray-300 text-sm">
-                            <li>Go to your developer portal (LinkedIn, GitHub, etc.).</li>
-                            <li>Create a new OAuth / API app.</li>
-                            <li>Set redirect URL (e.g., http://localhost:3000/auth/callback).</li>
-                            <li>Copy your <span className="text-green-400">Client ID</span> and <span className="text-green-400">Client Secret</span>.</li>
-                            <li>
-                                📘 For a full guide,{" "}
-                                <a
-                                    href="/docs/guide.pdf"
-                                    target="_blank"
-                                    className="text-green-400 underline flex items-center gap-1"
-                                >
-                                    <FileText size={14} /> View PDF
-                                </a>
-                            </li>
-                        </ol>
+                        <p className="text-gray-300 text-sm mb-4">
+                            When you click <b>Continue with Google</b>, we securely store:
+                        </p>
+
+                        <ul className="list-disc pl-5 text-gray-300 text-sm space-y-1">
+                            <li>Your Gmail email</li>
+                            <li>Access Token (encrypted)</li>
+                            <li>Refresh Token (encrypted)</li>
+                            <li>Token Expiry</li>
+                        </ul>
+
                         <button
                             onClick={() => setShowHelp(false)}
                             className="mt-6 bg-green-500 text-black px-4 py-2 rounded-lg font-medium hover:opacity-90"
