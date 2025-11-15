@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Linkedin } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
@@ -11,12 +11,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
-  // IMPORTANT → final backend URL
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
-  /* -----------------------------
-      LOGIN SUBMIT HANDLER
-  ------------------------------ */
+  // NORMAL EMAIL/PASSWORD LOGIN
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -41,14 +38,22 @@ export default function LoginPage() {
     }
   };
 
-  /* -----------------------------
-     GOOGLE LOGIN (NOT GMAIL CONNECT)
-  ------------------------------ */
+  // GOOGLE LOGIN START
   const handleGoogleConnect = () => {
-    window.location.href = `${API_BASE_URL}/auth/login/google`,
-     "_blank",
-    "width=600,height=700,noopener,noreferrer";
+    window.location.href = `${API_BASE_URL}/auth/login/google`;
   };
+
+  // GOOGLE CALLBACK HANDLER (token comes in URL)
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const token = url.searchParams.get("token");
+
+    if (token) {
+      document.cookie = `token=${token}; path=/; SameSite=Lax`;
+      router.push("/pages/userpanel");
+    }
+    
+  }, []);
 
   return (
     <div
