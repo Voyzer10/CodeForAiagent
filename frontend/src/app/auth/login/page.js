@@ -45,11 +45,12 @@ export default function LoginPage() {
   ------------------------------ */
   const handleGoogleConnect = () => {
     window.open(
-      `${API_BASE_URL}/auth/auth/google`,
+      `${API_BASE_URL}/auth/google`,
       "_blank",
       "width=600,height=700,noopener,noreferrer"
     );
-  };
+};
+
 
   return (
     <div
