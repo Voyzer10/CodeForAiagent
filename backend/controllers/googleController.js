@@ -111,10 +111,15 @@ exports.googleLoginCallback = async (req, res) => {
     if (!code) return res.status(400).send("Invalid Google Login Callback");
 
     const { tokens } = await loginClient.getToken(code);
+
+    console.log("🔑 Token Received? access_token =", tokens.access_token ? "YES" : "NO");
+
     loginClient.setCredentials(tokens);
 
     const oauth2 = google.oauth2({ auth: loginClient, version: "v2" });
     const googleUser = await oauth2.userinfo.get();
+
+    console.log("👤 Google User:", googleUser.data);
 
     const email = googleUser.data.email;
     const name = googleUser.data.name || "New User";
@@ -122,15 +127,13 @@ exports.googleLoginCallback = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      console.log("🆕 Creating New User...");
       user = await User.create({
         name,
         email,
         role: "user",
+        password: crypto.randomBytes(32).toString("hex"), // SAFE
       });
     }
-
-    console.log("user.userId typeof =", typeof user.userId, "value =", user.userId);
 
     const token = jwt.sign(
       { id: Number(user.userId), email: user.email, role: user.role },
@@ -142,7 +145,7 @@ exports.googleLoginCallback = async (req, res) => {
     return res.redirect(`${frontend}/auth/google?token=${token}`);
 
   } catch (err) {
-    console.error("❌ Google Login Callback Error:", err);
+    console.error("❌ Google Login Callback Error:", err.message);
     return res.status(500).send("Login Failed");
   }
 };
