@@ -10,8 +10,8 @@ export default function LogsPage() {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef(null);
 
-const fetchLogs = useCallback(async () => {
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
+  const fetchLogs = useCallback(async () => {
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
     try {
       setLoading(true);
       const logUrl =
@@ -54,32 +54,29 @@ const fetchLogs = useCallback(async () => {
         <div className="flex gap-2">
           <button
             onClick={() => setView("normal")}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold ${
-              view === "normal"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold ${view === "normal"
                 ? "bg-[#00ff9d] text-[#0f172a]"
                 : "bg-[#00ff9d33] text-[#00ff9d]"
-            }`}
+              }`}
           >
             Normal
           </button>
           <button
             onClick={() => setView("error")}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold ${
-              view === "error"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold ${view === "error"
                 ? "bg-red-500 text-white"
                 : "bg-red-500/30 text-red-400"
-            }`}
+              }`}
           >
             Errors
           </button>
           <button
             onClick={fetchLogs}
             disabled={loading}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-              loading
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${loading
                 ? "bg-[#00ff9d33] text-gray-400 cursor-not-allowed"
                 : "bg-[#00ff9d] text-[#0f172a] hover:bg-[#00cc80]"
-            }`}
+              }`}
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
@@ -88,12 +85,11 @@ const fetchLogs = useCallback(async () => {
 
       <div
         ref={scrollRef}
-        className="bg-[#1e293b] p-4 rounded-lg overflow-y-auto flex-1 border border-[#00ff9d33] shadow-lg max-h-[80vh]"
+        className="bg-[#1e293b] p-4 rounded-lg overflow-y-auto overflow-x-hidden flex-1 border border-[#00ff9d33] shadow-lg max-h-[80vh]"
       >
         <pre
-          className={`whitespace-pre-wrap text-sm font-mono ${
-            view === "error" ? "text-red-400" : "text-gray-200"
-          }`}
+          className={`whitespace-pre-wrap wrap-break-word text-sm font-mono ${view === "error" ? "text-red-400" : "text-gray-200"
+            }`}
         >
           {displayedLogs || "Loading logs..."}
         </pre>

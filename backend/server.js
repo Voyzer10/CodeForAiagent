@@ -51,7 +51,7 @@ const logRoutes = require("./routes/logRoutes");
 const creditsRoutes = require("./routes/creditsRoutes");
 const n8nCallbackRoutes = require("./routes/n8nCallback");
 
-app.use(["/api/auth", "/auth"], authRoutes);
+app.use(["/api/auth"], authRoutes);
 app.use("/api/userjobs", userjobsRoute);
 app.use("/api/admin", adminRoutes);
 app.use("/api/jobs", userjobsRoute);

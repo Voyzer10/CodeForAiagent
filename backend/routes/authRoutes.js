@@ -45,27 +45,14 @@ router.post("/update-client", auth, updateClientData);
 /* ======================================================
    GOOGLE LOGIN (Website Sign-in)
 ====================================================== */
-
-// Step 1 → Redirect to Google Login
+// PUBLIC ROUTES
 router.get("/login/google", googleLoginRedirect);
-
-// Step 2 → Google → Callback → Generate JWT
 router.get("/login/google/callback", googleLoginCallback);
 
-/* ======================================================
-   GMAIL CONNECT (OAuth for sending emails)
-====================================================== */
-
-// Step 1 → User clicks "Connect Gmail"
+// PROTECTED ROUTES
 router.get("/gmail/connect", auth, gmailRedirect);
-
-// Step 2 → Google sends tokens
 router.get("/gmail/callback", gmailCallback);
-
-/* ======================================================
-   n8n → Secure Gmail Token Fetch Route
-====================================================== */
-
 router.get("/gmail/tokens/:userId", getGmailTokens);
+;
 
 module.exports = router;
