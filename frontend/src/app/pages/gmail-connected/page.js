@@ -1,12 +1,13 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export const dynamic = "force-dynamic";  // 🔥 FIX HERE
+export const dynamic = "force-dynamic";
 
-export default function GmailConnected() {
-  const searchParams = useSearchParams();
-  const success = searchParams.get("success");
+function GmailConnectedContent() {
+  const params = useSearchParams();
+  const success = params.get("success");
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-black text-white p-6">
@@ -40,5 +41,13 @@ export default function GmailConnected() {
         </a>
       </div>
     </div>
+  );
+}
+
+export default function GmailConnected() {
+  return (
+    <Suspense fallback={<div className="text-white p-10">Loading...</div>}>
+      <GmailConnectedContent />
+    </Suspense>
   );
 }
