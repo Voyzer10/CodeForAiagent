@@ -137,6 +137,7 @@ exports.googleLoginCallback = async (req, res) => {
         name,
         email,
         role: "user",
+        authProvider: "google",
       });
       console.log("✔ New User Created:", user);
     }
