@@ -182,14 +182,15 @@ exports.gmailRedirect = async (req, res) => {
     console.log("➡️ Gmail OAuth Redirect HIT");
     console.log("👤 Auth User:", req.user);
 
-    const userId = req.user._id.toString();
+    // 🟩 FIX: Use numeric userId (not _id)
+    const userId = req.user.id; 
     console.log("🔗 Gmail Connect for UserID:", userId);
 
     const url = gmailClient.generateAuthUrl({
       access_type: "offline",
       prompt: "consent",
       scope: GMAIL_SCOPES,
-      state: userId,
+      state: String(userId),
     });
 
     console.log("🌐 Redirecting to Gmail OAuth:", url);
@@ -201,6 +202,7 @@ exports.gmailRedirect = async (req, res) => {
   }
 };
 
+
 /* ------------------------------------------
    2️⃣ GMAIL CALLBACK — SAVE TOKENS
 ------------------------------------------- */
@@ -209,7 +211,7 @@ exports.gmailCallback = async (req, res) => {
     console.log("⬅️ Gmail OAuth Callback HIT");
 
     const code = req.query.code;
-    const userId = req.query.state;
+    const userId = Number(req.query.state); // FIX: numeric
 
     if (!code || !userId) {
       return res.status(400).send("Invalid Gmail Callback");
@@ -223,22 +225,21 @@ exports.gmailCallback = async (req, res) => {
 
     const gmailEmail = profile.data.email;
 
-    const user = await User.findById(userId);
+    // 🟩 FIX: Find user by numeric userId
+    const user = await User.findOne({ userId });
     if (!user) return res.status(404).send("User not found");
 
-    // 🔐 Save Gmail OAuth Credentials
+    // Save tokens + clientId + clientSecret
     user.gmailEmail = gmailEmail;
     user.gmailAccessToken = encrypt(tokens.access_token || "");
     user.gmailRefreshToken = encrypt(tokens.refresh_token || "");
     user.gmailTokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
     user.gmailConnectedAt = new Date();
 
-    // 🔥 AUTO-GENERATE CLIENT ID & CLIENT SECRET
-    user.clientId = encrypt(gmailEmail);  // unique per-user
+    user.clientId = encrypt(gmailEmail);
     user.clientSecret = encrypt(tokens.refresh_token || crypto.randomBytes(32).toString("hex"));
 
     await user.save();
-    console.log("💾 Gmail OAuth + Client Keys Saved!");
 
     const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
     return res.redirect(`${frontend}/gmail-connected?success=1`);
@@ -249,6 +250,7 @@ exports.gmailCallback = async (req, res) => {
     return res.redirect(`${frontend}/gmail-connected?success=0`);
   }
 };
+
 
 
 /* ===================================================
