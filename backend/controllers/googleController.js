@@ -225,19 +225,19 @@ exports.gmailCallback = async (req, res) => {
 
     const gmailEmail = profile.data.email;
 
-    // 🟩 FIX: Find user by numeric userId
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).send("User not found");
 
-    // Save tokens + clientId + clientSecret
+    // Save tokens + correct clientId + clientSecret
     user.gmailEmail = gmailEmail;
     user.gmailAccessToken = encrypt(tokens.access_token || "");
     user.gmailRefreshToken = encrypt(tokens.refresh_token || "");
     user.gmailTokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
     user.gmailConnectedAt = new Date();
 
-    user.clientId = encrypt(gmailEmail);
-    user.clientSecret = encrypt(tokens.refresh_token || crypto.randomBytes(32).toString("hex"));
+    // Save app-level client credentials (encrypted) — must match the app used to generate tokens
+    user.clientId = encrypt(process.env.GOOGLE_CLIENT_ID || "");
+    user.clientSecret = encrypt(process.env.GOOGLE_CLIENT_SECRET || "");
 
     await user.save();
 
@@ -250,6 +250,7 @@ exports.gmailCallback = async (req, res) => {
     return res.redirect(`${frontend}/gmail-connected?success=0`);
   }
 };
+
 
 
 
