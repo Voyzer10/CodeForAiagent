@@ -36,51 +36,47 @@ const checkPlan = async (req, res) => {
   }
 };
 
-// 💳 2️⃣ Create Razorpay Order (with full debug)
+// 💳 2️⃣ Create Razorpay Order with USD→INR conversion
 const createOrder = async (req, res) => {
   try {
     console.log("🟢 /order hit");
-    console.log("🧩 Request user:", req.user);
-    console.log("📦 Request body:", req.body);
-
     const { planType } = req.body;
-    if (!planType) {
-      console.warn("⚠️ Missing planType in request body");
-      return res.status(400).json({ message: "planType is required" });
-    }
 
-    const planPrices = {
-      starter: 1100,        // ₹11.00
-      professional: 1900,   // ₹19.00
-      premium: 2500,        // ₹25.00
+    if (!planType) return res.status(400).json({ message: "planType is required" });
+
+    // USD prices (same as frontend)
+    const usdPrices = {
+      starter: 11,
+      professional: 19,
+      premium: 25,
     };
 
-    const amount = planPrices[planType];
-    if (!amount) {
-      console.warn("⚠️ Invalid plan type:", planType);
-      return res.status(400).json({ message: "Invalid plan type" });
-    }
+    const usdAmount = usdPrices[planType];
+    if (!usdAmount) return res.status(400).json({ message: "Invalid plan type" });
 
-    const options = {
-      amount: amount, // already in paise
+    // Fetch live USD→INR rate
+    const rateRes = await fetch("https://open.er-api.com/v6/latest/USD");
+    const rateJson = await rateRes.json();
+    const usdToInr = rateJson?.rates?.INR || 83; // fallback
+
+    const finalInr = Math.round(usdAmount * usdToInr); // INR
+    const amountInPaise = finalInr * 100;
+
+    console.log(`💰 USD=${usdAmount}, Rate=${usdToInr}, INR=${finalInr}, Paise=${amountInPaise}`);
+
+    const order = await razorpay.orders.create({
+      amount: amountInPaise,  // Razorpay amount in paise
       currency: "INR",
       receipt: `receipt_${Date.now()}`,
-    };
-
-    console.log("💳 Creating Razorpay order with options:", options);
-
-    const order = await razorpay.orders.create(options);
-    console.log("✅ Razorpay order created successfully:", order);
+    });
 
     res.json(order);
   } catch (err) {
     console.error("🔥 Error creating Razorpay order:", err);
-    res.status(500).json({
-      message: "Error creating Razorpay order",
-      error: err.message,
-    });
+    res.status(500).json({ message: "Error creating order", error: err.message });
   }
 };
+
 
 // 🔐 3️⃣ Verify Payment (with signature & plan activation)
 const verifyPayment = async (req, res) => {
