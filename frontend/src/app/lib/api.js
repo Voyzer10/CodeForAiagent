@@ -1,6 +1,6 @@
 "use client";
 
-const RAW_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:5000";
+const RAW_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://techm.work.gd/api/";
 
 // Remove trailing slash
 const API_BASE = RAW_BASE.replace(/\/+$/, "");
