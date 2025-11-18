@@ -1,11 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
+import UserNavbar from "../userpanel/Navbar";
+import Sidebar from "../userpanel/Sidebar";
 
 export default function Price() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [usdRate, setUsdRate] = useState(null); // live USD -> INR rate
   const [loadingOrder, setLoadingOrder] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   // your API base (keep as you currently have it)
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
@@ -187,6 +191,8 @@ export default function Price() {
 
   return (
     <div className="min-h-screen bg-[#0b0e11] text-white flex flex-col items-center px-6 py-14">
+      <UserNavbar onSidebarToggle={toggleSidebar} />
+            <Sidebar isOpen={sidebarOpen} />
       <h1 className="text-4xl font-extrabold mb-4">
         Choose Your <span className="text-[#00ff9d]">Plan</span>
       </h1>

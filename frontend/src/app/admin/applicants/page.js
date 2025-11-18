@@ -79,7 +79,7 @@ export default function UsersPage() {
   if (loading) return <p className="p-4">Loading Applicants...</p>;
 
   return (
-    <main className="p-6">
+   <main className="p-6 overflow-x-hidden w-full">
       <h1 className="text-2xl font-bold mb-4">
         User Data for Applicants Database
       </h1>
@@ -105,7 +105,8 @@ export default function UsersPage() {
             {users.length > 0 ? (
               users.map((user) => (
                 <tr key={user._id} className="hover:bg-gray-50 text-center">
-                  <td className="px-4 py-2 border">{user._id}</td>
+                  <td className="px-4 py-2 border truncate max-w-[150px]">
+{user._id}</td>
 
                   {/* Editable Name */}
                   <td className="px-4 py-2 border">
