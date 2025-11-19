@@ -273,7 +273,7 @@ exports.getGmailTokens = async (req, res) => {
     const userId = req.params.userId;
     console.log("🔍 Fetching Gmail Tokens for:", userId);
 
-    const user = await User.findById(userId);
+    const user = await User.findOne({ userId });
 
     if (!user) {
       console.error("❌ User Not Found");
