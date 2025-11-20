@@ -1,3 +1,4 @@
+// controllers/googleController.js
 const { google } = require("googleapis");
 const User = require("../model/User");
 const jwt = require("jsonwebtoken");
@@ -7,6 +8,8 @@ console.log("🔄 googleController.js LOADED");
 
 /* ===================================================
    ENCRYPTION HELPERS
+   - encrypt(text) -> returns iv:tag:encryptedHex
+   - decrypt(payload) -> returns plaintext
 =================================================== */
 
 const ENCRYPTION_KEY =
@@ -16,52 +19,53 @@ console.log("🔐 Encryption Key Loaded:", ENCRYPTION_KEY ? "YES" : "NO");
 
 const encrypt = (text) => {
   if (!text) return null;
-  console.log("🔐 Encrypting text...");
-  const iv = crypto.randomBytes(16);
+  try {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(
+      "aes-256-gcm",
+      Buffer.from(ENCRYPTION_KEY, "hex"),
+      iv
+    );
 
-  const cipher = crypto.createCipheriv(
-    "aes-256-gcm",
-    Buffer.from(ENCRYPTION_KEY, "hex"),
-    iv
-  );
+    let encrypted = cipher.update(text, "utf8", "hex");
+    encrypted += cipher.final("hex");
+    const tag = cipher.getAuthTag().toString("hex");
 
-  let encrypted = cipher.update(text, "utf8", "hex");
-  encrypted += cipher.final("hex");
-
-  const tag = cipher.getAuthTag().toString("hex");
-
-  return `${iv.toString("hex")}:${tag}:${encrypted}`;
+    return `${iv.toString("hex")}:${tag}:${encrypted}`;
+  } catch (err) {
+    console.error("❌ encrypt() error:", err.message);
+    return null;
+  }
 };
 
 const decrypt = (payload) => {
   if (!payload) return null;
-  console.log("🔓 Decrypting payload...");
-  const [ivHex, tagHex, encryptedText] = payload.split(":");
+  try {
+    const [ivHex, tagHex, encryptedText] = payload.split(":");
+    if (!ivHex || !tagHex || !encryptedText) return null;
+    const iv = Buffer.from(ivHex, "hex");
+    const tag = Buffer.from(tagHex, "hex");
+    const decipher = crypto.createDecipheriv(
+      "aes-256-gcm",
+      Buffer.from(ENCRYPTION_KEY, "hex"),
+      iv
+    );
 
-  const iv = Buffer.from(ivHex, "hex");
-  const tag = Buffer.from(tagHex, "hex");
-
-  const decipher = crypto.createDecipheriv(
-    "aes-256-gcm",
-    Buffer.from(ENCRYPTION_KEY, "hex"),
-    iv
-  );
-
-  decipher.setAuthTag(tag);
-
-  let decrypted = decipher.update(encryptedText, "hex", "utf8");
-  decrypted += decipher.final("utf8");
-  return decrypted;
+    decipher.setAuthTag(tag);
+    let decrypted = decipher.update(encryptedText, "hex", "utf8");
+    decrypted += decipher.final("utf8");
+    return decrypted;
+  } catch (err) {
+    console.error("❌ decrypt() error:", err.message);
+    return null;
+  }
 };
 
 /* ===================================================
-   FLOW A → GOOGLE LOGIN (NO Gmail scopes)
+   LOGIN (no Gmail scopes) - simple Google oauth login
 =================================================== */
 
 const LOGIN_SCOPES = ["email", "profile"];
-
-console.log("📡 LOGIN_SCOPES:", LOGIN_SCOPES);
-
 const loginClient = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
@@ -71,25 +75,15 @@ const loginClient = new google.auth.OAuth2(
 console.log("🔧 Google LOGIN OAuth Client Initialized");
 console.log("🔧 Login Redirect URI:", process.env.GOOGLE_LOGIN_REDIRECT);
 
-/* ------------------------------------------
-   1️⃣ REDIRECT TO GOOGLE LOGIN
-------------------------------------------- */
 exports.googleLoginRedirect = async (req, res) => {
   try {
     console.log("➡️ Google Login Redirect HIT");
-
-    // DEBUGGING LOGS – MUST BE BEFORE ANY RETURN
-    console.log(">>> GOOGLE_LOGIN_REDIRECT =", JSON.stringify(process.env.GOOGLE_LOGIN_REDIRECT));
-    console.log(">>> GMAIL_REDIRECT_URI =", JSON.stringify(process.env.GMAIL_REDIRECT_URI));
-
     const url = loginClient.generateAuthUrl({
       access_type: "online",
       prompt: "select_account",
       scope: LOGIN_SCOPES,
     });
-
     console.log("🌐 Redirecting to Google Login:", url);
-
     return res.redirect(url);
   } catch (err) {
     console.error("❌ Google Login Redirect Error:", err);
@@ -97,14 +91,9 @@ exports.googleLoginRedirect = async (req, res) => {
   }
 };
 
-
-/* ------------------------------------------
-   2️⃣ GOOGLE LOGIN CALLBACK
-------------------------------------------- */
 exports.googleLoginCallback = async (req, res) => {
   try {
     console.log("⬅️ Google Login Callback HIT");
-
     const code = req.query.code;
     if (!code) return res.status(400).send("Invalid Google Login");
 
@@ -120,7 +109,6 @@ exports.googleLoginCallback = async (req, res) => {
     if (!email) return res.status(400).send("Google account has no email");
 
     let user = await User.findOne({ email });
-
     if (!user) {
       user = await User.create({
         name,
@@ -136,13 +124,10 @@ exports.googleLoginCallback = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    // 🛠 FIX: remove trailing slash from FRONTEND_URL
     const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
-
     const finalUrl = `${frontend}/auth/google?token=${encodeURIComponent(token)}`;
 
     console.log("➡️ Redirecting to:", finalUrl);
-
     return res.redirect(finalUrl);
 
   } catch (err) {
@@ -151,10 +136,8 @@ exports.googleLoginCallback = async (req, res) => {
   }
 };
 
-
-
 /* ===================================================
-   FLOW B → GMAIL CONNECT (OFFLINE TOKENS)
+   GMAIL CONNECT (offline tokens)
 =================================================== */
 
 const GMAIL_SCOPES = [
@@ -162,8 +145,6 @@ const GMAIL_SCOPES = [
   "email",
   "profile",
 ];
-
-console.log("📡 GMAIL_SCOPES:", GMAIL_SCOPES);
 
 const gmailClient = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -174,17 +155,13 @@ const gmailClient = new google.auth.OAuth2(
 console.log("🔧 Google GMAIL OAuth Client Initialized");
 console.log("🔧 Gmail Redirect URI:", process.env.GMAIL_REDIRECT_URI);
 
-/* ------------------------------------------
-   1️⃣ REDIRECT TO GOOGLE CONSENT (GMAIL)
-------------------------------------------- */
 exports.gmailRedirect = async (req, res) => {
   try {
     console.log("➡️ Gmail OAuth Redirect HIT");
     console.log("👤 Auth User:", req.user);
 
-    // 🟩 FIX: Use numeric userId (not _id)
-    const userId = req.user.id; 
-    console.log("🔗 Gmail Connect for UserID:", userId);
+    const userId = req.user?.id || req.user?.userId;
+    if (!userId) return res.status(400).send("Invalid user");
 
     const url = gmailClient.generateAuthUrl({
       access_type: "offline",
@@ -194,7 +171,6 @@ exports.gmailRedirect = async (req, res) => {
     });
 
     console.log("🌐 Redirecting to Gmail OAuth:", url);
-
     return res.redirect(url);
   } catch (err) {
     console.error("❌ Gmail Redirect Error:", err);
@@ -202,16 +178,11 @@ exports.gmailRedirect = async (req, res) => {
   }
 };
 
-
-/* ------------------------------------------
-   2️⃣ GMAIL CALLBACK — SAVE TOKENS
-------------------------------------------- */
 exports.gmailCallback = async (req, res) => {
   try {
     console.log("⬅️ Gmail OAuth Callback HIT");
-
     const code = req.query.code;
-    const userId = Number(req.query.state); // FIX: numeric
+    const userId = Number(req.query.state);
 
     if (!code || !userId) {
       return res.status(400).send("Invalid Gmail Callback");
@@ -222,20 +193,18 @@ exports.gmailCallback = async (req, res) => {
 
     const oauth2 = google.oauth2({ auth: gmailClient, version: "v2" });
     const profile = await oauth2.userinfo.get();
-
     const gmailEmail = profile.data.email;
 
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).send("User not found");
 
-    // Save tokens + correct clientId + clientSecret
-    user.gmailEmail = gmailEmail;
+    // Save tokens + client credentials encrypted
+    user.gmailEmail = gmailEmail || user.gmailEmail;
     user.gmailAccessToken = encrypt(tokens.access_token || "");
     user.gmailRefreshToken = encrypt(tokens.refresh_token || "");
     user.gmailTokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
     user.gmailConnectedAt = new Date();
 
-    // Save app-level client credentials (encrypted) — must match the app used to generate tokens
     user.clientId = encrypt(process.env.GOOGLE_CLIENT_ID || "");
     user.clientSecret = encrypt(process.env.GOOGLE_CLIENT_SECRET || "");
 
@@ -243,7 +212,6 @@ exports.gmailCallback = async (req, res) => {
 
     const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
     return res.redirect(`${frontend}/gmail-connected?success=1`);
-
   } catch (err) {
     console.error("❌ Gmail Callback Error:", err);
     const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
@@ -251,13 +219,72 @@ exports.gmailCallback = async (req, res) => {
   }
 };
 
-
-
-
 /* ===================================================
-   SECURE n8n TOKEN FETCH
+   REFRESH TOKEN HELPER (shared)
+   - refreshGoogleTokens(user): asks Google for new access token
+   - updates DB with new access token + expiry
+   - returns { accessToken, expiry } or { error: "..." }
 =================================================== */
 
+async function refreshGoogleTokens(user) {
+  try {
+    console.log("🔁 refreshGoogleTokens() called for userId:", user.userId);
+
+    const refreshTokenEncrypted = user.gmailRefreshToken;
+    const clientIdEncrypted = user.clientId;
+    const clientSecretEncrypted = user.clientSecret;
+
+    const refreshToken = decrypt(refreshTokenEncrypted);
+    const clientId = decrypt(clientIdEncrypted);
+    const clientSecret = decrypt(clientSecretEncrypted);
+
+    if (!refreshToken || !clientId || !clientSecret) {
+      console.log("❌ Missing refresh token / client credentials");
+      return { error: "gmail_not_connected" };
+    }
+
+    const oAuthClient = new google.auth.OAuth2(clientId, clientSecret);
+    oAuthClient.setCredentials({ refresh_token: refreshToken });
+
+    console.log("⏳ Requesting new access token from Google…");
+    // google-auth-library recommended helper
+    const { credentials } = await oAuthClient.refreshAccessToken();
+
+    if (!credentials || !credentials.access_token) {
+      console.log("❌ Google did not return access_token:", credentials);
+      return { error: "refresh_failed" };
+    }
+
+    console.log("✅ Token refreshed:", {
+      hasAccessToken: !!credentials.access_token,
+      expiry: credentials.expiry_date || null,
+    });
+
+    // Update DB
+    user.gmailAccessToken = encrypt(credentials.access_token);
+    user.gmailTokenExpiry = credentials.expiry_date ? new Date(credentials.expiry_date) : new Date(Date.now() + 3500 * 1000);
+    await user.save();
+
+    console.log("💾 Updated refreshed token in DB for user:", user.userId);
+
+    return {
+      accessToken: credentials.access_token,
+      expiry: user.gmailTokenExpiry,
+    };
+  } catch (err) {
+    console.log("❌ refreshGoogleTokens error:", err.response?.data || err.message || err);
+    // Google often returns 'invalid_grant' when refresh token is revoked/expired
+    if (String(err.message || "").toLowerCase().includes("invalid_grant") || (err.response && err.response.data && String(err.response.data).toLowerCase().includes("invalid_grant"))) {
+      return { error: "invalid_refresh_token" };
+    }
+    return { error: "unknown_error", details: err.message || String(err) };
+  }
+}
+
+/* ===================================================
+   n8n / External fetch for tokens
+   GET /api/gmail/tokens/:userId (protected by x-api-key)
+=================================================== */
 exports.getGmailTokens = async (req, res) => {
   try {
     console.log("🚀 getGmailTokens HIT");
@@ -288,7 +315,7 @@ exports.getGmailTokens = async (req, res) => {
     let accessToken = decrypt(user.gmailAccessToken);
     const refreshToken = decrypt(user.gmailRefreshToken);
 
-    console.log("🔓 Tokens decrypted");
+    console.log("🔓 Tokens decrypted (accessToken present?):", !!accessToken);
 
     const expired =
       !user.gmailTokenExpiry ||
@@ -296,24 +323,25 @@ exports.getGmailTokens = async (req, res) => {
 
     if (expired) {
       console.log("⚠ Token expired → Refreshing...");
+      const refreshed = await refreshGoogleTokens(user);
 
-      const tempClient = new google.auth.OAuth2(
-        process.env.GOOGLE_CLIENT_ID,
-        process.env.GOOGLE_CLIENT_SECRET
-      );
-
-      const refreshed = await tempClient.refreshToken(refreshToken);
-      console.log("🔁 Tokens refreshed:", refreshed.credentials);
-
-      accessToken = refreshed.credentials.access_token;
-
-      user.gmailAccessToken = encrypt(accessToken);
-      if (refreshed.credentials.expiry_date) {
-        user.gmailTokenExpiry = new Date(refreshed.credentials.expiry_date);
+      if (refreshed.error === "invalid_refresh_token") {
+        console.log("❌ Refresh token invalid - user must reconnect Gmail");
+        return res.status(400).json({
+          error: "gmail_reconnect_needed",
+          message: "Your Gmail access expired. Please reconnect Gmail.",
+        });
       }
 
-      await user.save();
-      console.log("💾 Updated refreshed tokens in DB");
+      if (refreshed.error) {
+        console.log("❌ Token refresh failed:", refreshed);
+        return res.status(500).json({
+          error: "token_refresh_failed",
+          details: refreshed.details || refreshed.error,
+        });
+      }
+
+      accessToken = refreshed.accessToken;
     }
 
     return res.json({
@@ -326,4 +354,18 @@ exports.getGmailTokens = async (req, res) => {
     console.error("❌ getGmailTokens ERROR:", err);
     return res.status(500).json({ error: "Server error" });
   }
+};
+
+/* ===================================================
+   Export helpers for other controllers (gmailDraftController)
+=================================================== */
+module.exports = {
+  googleLoginRedirect: exports.googleLoginRedirect,
+  googleLoginCallback: exports.googleLoginCallback,
+  gmailRedirect: exports.gmailRedirect,
+  gmailCallback: exports.gmailCallback,
+  getGmailTokens: exports.getGmailTokens,
+  refreshGoogleTokens,
+  decrypt,
+  encrypt,
 };

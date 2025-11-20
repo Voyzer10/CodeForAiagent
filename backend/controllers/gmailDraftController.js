@@ -1,42 +1,20 @@
+// controllers/gmailDraftController.js
 const { google } = require("googleapis");
-const crypto = require("crypto");
 const User = require("../model/User");
 const Job = require("../model/application-tracking");
+const {
+  refreshGoogleTokens,
+  decrypt,
+  encrypt,
+} = require("./googleController"); // shared helpers
 
-// --------------------------------------------
-// Decrypt Helper
-// --------------------------------------------
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-const decrypt = (payload) => {
-  if (!payload) return null;
-  try {
-    const [ivHex, tagHex, encryptedText] = payload.split(":");
-    const iv = Buffer.from(ivHex, "hex");
-    const tag = Buffer.from(tagHex, "hex");
+const crypto = require("crypto");
 
-    const decipher = crypto.createDecipheriv(
-      "aes-256-gcm",
-      Buffer.from(ENCRYPTION_KEY, "hex"),
-      iv
-    );
-
-    decipher.setAuthTag(tag);
-
-    let decrypted = decipher.update(encryptedText, "hex", "utf8");
-    decrypted += decipher.final("utf8");
-
-    return decrypted;
-  } catch (error) {
-    console.error("❌ Decryption Failed:", error.message);
-    return null;
-  }
-};
-
-
-
-// ======================================================
-// CREATE GMAIL DRAFT WITH FULL DEBUGGING
-// ======================================================
+/* ======================================================
+   CREATE GMAIL DRAFT (MAIN FUNCTION)
+   POST /api/gmail/create-draft
+   Body: { userId, jobid, attachmentName?, attachmentBase64? }
+====================================================== */
 exports.createGmailDraft = async (req, res) => {
   console.log("\n\n=======================================");
   console.log("📩  createGmailDraft API HIT");
@@ -45,193 +23,157 @@ exports.createGmailDraft = async (req, res) => {
   try {
     const { userId, jobid, attachmentName, attachmentBase64 } = req.body;
 
-    console.log("📥 Incoming Payload:");
-    console.log({
-      userId,
-      jobid,
-      attachmentName,
-      hasAttachment: !!attachmentBase64
-    });
+    console.log("📥 Payload:", { userId, jobid, hasAttachment: !!attachmentBase64 });
 
     if (!userId || !jobid) {
-      console.log("❌ Missing parameters (userId or jobid)");
+      console.log("❌ Missing userId or jobid");
       return res.status(400).json({ error: "userId and jobid required" });
     }
 
-    // ---------------------------------------------------
-    // STEP 1: Fetch Applied Job
-    // ---------------------------------------------------
-    console.log("\n🔍 Fetching job from DB using jobid:", jobid);
-
+    // STEP 1: Fetch job
+    console.log("🔍 Finding job by jobid:", jobid);
     const job = await Job.findOne({ jobid });
-
     if (!job) {
-      console.log("❌ Job Not Found:", jobid);
+      console.log("❌ Job not found:", jobid);
       return res.status(404).json({ error: "Job not found" });
     }
+    console.log("✅ Job found:", { to: job.email_to, subject: job.email_subject });
 
-    console.log("✅ Job Found:");
-    console.log({
-      to: job.email_to,
-      subject: job.email_subject
-    });
-
-
-    // ---------------------------------------------------
-    // STEP 2: Fetch User Gmail Tokens
-    // ---------------------------------------------------
-    console.log("\n🔍 Fetching user by userId:", userId);
-
+    // STEP 2: Fetch user
+    console.log("🔍 Finding user by userId:", userId);
     const user = await User.findOne({ userId });
-
     if (!user) {
-      console.log("❌ User Not Found:", userId);
+      console.log("❌ User not found:", userId);
       return res.status(404).json({ error: "User not found" });
     }
+    console.log("✅ User found:", user.email);
 
-    console.log("✅ User Found:", user.email);
+    // STEP 3: Ensure tokens present
+    if (!user.gmailRefreshToken) {
+      console.log("❌ Gmail not connected for user:", userId);
+      return res.status(400).json({ error: "gmail_not_connected" });
+    }
 
+    // Decrypt access token (may be null) and refresh token
+    let accessToken = decrypt(user.gmailAccessToken);
+    const refreshTokenPlain = decrypt(user.gmailRefreshToken);
 
-    // ---------------------------------------------------
-    // STEP 3: Decrypt Gmail Tokens
-    // ---------------------------------------------------
-    console.log("\n🔐 Decrypting Gmail credentials...");
+    console.log("🔎 Access token present?:", !!accessToken);
 
+    // STEP 4: Refresh access token if expired or missing
+    const tokenExpired =
+      !user.gmailTokenExpiry || new Date(user.gmailTokenExpiry).getTime() < Date.now() + 60000;
+
+    if (!accessToken || tokenExpired) {
+      console.log("⚠ Access token missing/expired → refreshing...");
+      const refreshed = await refreshGoogleTokens(user);
+
+      if (refreshed.error === "invalid_refresh_token") {
+        console.log("❌ Refresh token invalid - require reconnect");
+        return res.status(400).json({
+          error: "gmail_reconnect_needed",
+          message: "Gmail refresh token invalid. Please reconnect Gmail.",
+        });
+      }
+
+      if (refreshed.error) {
+        console.log("❌ Token refresh failed:", refreshed);
+        return res.status(500).json({
+          error: "token_refresh_failed",
+          details: refreshed.details || refreshed.error,
+        });
+      }
+
+      accessToken = refreshed.accessToken;
+    }
+
+    // STEP 5: Create OAuth client with (refreshed) access token
     const clientId = decrypt(user.clientId);
     const clientSecret = decrypt(user.clientSecret);
-    let accessToken = decrypt(user.gmailAccessToken);
-    const refreshToken = decrypt(user.gmailRefreshToken);
 
-    console.log("🔎 Token Status:", {
-      hasClientId: !!clientId,
-      hasClientSecret: !!clientSecret,
-      hasAccessToken: !!accessToken,
-      hasRefreshToken: !!refreshToken
-    });
-
-    if (!clientId || !clientSecret || !refreshToken) {
-      console.log("❌ Missing Gmail credentials in user record");
-      return res.status(400).json({ error: "Gmail not connected" });
+    if (!clientId || !clientSecret) {
+      console.log("❌ Missing clientId/clientSecret in user record");
+      return res.status(400).json({ error: "client_credentials_missing" });
     }
-
-
-    // ---------------------------------------------------
-    // STEP 4: Create OAuth Client + Refresh Token
-    // ---------------------------------------------------
-    console.log("\n🔧 Preparing OAuth2 Client...");
 
     const oAuthClient = new google.auth.OAuth2(clientId, clientSecret);
-    oAuthClient.setCredentials({
-      access_token: accessToken,
-      refresh_token: refreshToken
-    });
+    oAuthClient.setCredentials({ access_token: accessToken, refresh_token: refreshTokenPlain });
 
-    const now = Date.now();
-    const exp = user.gmailTokenExpiry?.getTime() || 0;
-
-    console.log("⏳ Token Expiry Check:", {
-      expiresAt: user.gmailTokenExpiry,
-      expired: now > exp - 60000
-    });
-
-    if (!exp || now > exp - 60000) {
-      console.log("🔁 Access Token expired → Refreshing...");
-
-      const refreshed = await oAuthClient.refreshToken(refreshToken);
-
-      accessToken = refreshed.credentials.access_token;
-
-      user.gmailAccessToken = encrypt(accessToken);
-      user.gmailTokenExpiry = new Date(refreshed.credentials.expiry_date);
-
-      await user.save();
-
-      console.log("✅ Token Refreshed & Saved");
-    }
-
-
-
-    // ---------------------------------------------------
-    // STEP 5: Build MIME Email
-    // ---------------------------------------------------
-    console.log("\n📦 Building MIME Email...");
-
+    // STEP 6: Build MIME message
     const to = job.email_to;
     const subject = job.email_subject;
-    const body = job.email_content;
+    const body = job.email_content || "";
 
-    console.log("📧 Email Details:", { to, subject });
+    console.log("📦 Building MIME for:", { to, subject, hasAttachment: !!attachmentBase64 });
 
-    let mimeParts = [
-      `To: ${to}`,
-      `Subject: ${subject}`,
-      `Content-Type: multipart/mixed; boundary="boundary123"`,
-      "",
-      "--boundary123",
-      `Content-Type: text/plain; charset="UTF-8"`,
-      "",
-      body,
-      ""
-    ];
+    // Use boundary and include plain text body. If you need html, adjust content-type.
+    const boundary = "----=_NodeMailBoundary_" + Date.now();
+    const parts = [];
+
+    parts.push(`To: ${to}`);
+    parts.push(`Subject: ${subject}`);
+    parts.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+    parts.push("");
+    parts.push(`--${boundary}`);
+    parts.push(`Content-Type: text/plain; charset="UTF-8"`);
+    parts.push("");
+    parts.push(body);
+    parts.push("");
 
     if (attachmentBase64 && attachmentName) {
-      console.log("📎 Adding attachment:", attachmentName);
-      mimeParts.push(
-        "--boundary123",
-        `Content-Type: application/pdf; name="${attachmentName}"`,
-        "Content-Transfer-Encoding: base64",
-        `Content-Disposition: attachment; filename="${attachmentName}"`,
-        "",
-        attachmentBase64,
-        ""
+      // NOTE: we assume attachmentBase64 is raw base64 (no data:<type>;base64,)
+      parts.push(`--${boundary}`);
+      parts.push(
+        `Content-Type: application/octet-stream; name="${attachmentName}"`
       );
+      parts.push("Content-Transfer-Encoding: base64");
+      parts.push(`Content-Disposition: attachment; filename="${attachmentName}"`);
+      parts.push("");
+      parts.push(attachmentBase64);
+      parts.push("");
     }
 
-    mimeParts.push("--boundary123--");
+    parts.push(`--${boundary}--`);
+    const raw = parts.join("\r\n");
 
-    const rawMessage = Buffer.from(mimeParts.join("\n"))
+    // Convert to base64url
+    const rawEncoded = Buffer.from(raw, "utf8")
       .toString("base64")
       .replace(/\+/g, "-")
       .replace(/\//g, "_")
       .replace(/=+$/, "");
 
-    console.log("📦 MIME Built Successfully!");
-
-    // ---------------------------------------------------
-    // STEP 6: Create Draft in Gmail
-    // ---------------------------------------------------
-    console.log("\n📤 Creating Gmail Draft...");
-
+    // STEP 7: Create draft
+    console.log("📤 Creating draft via Gmail API...");
     const gmail = google.gmail({ version: "v1", auth: oAuthClient });
 
     const draft = await gmail.users.drafts.create({
       userId: "me",
-      requestBody: { message: { raw: rawMessage } }
+      requestBody: { message: { raw: rawEncoded } },
     });
 
-    const draftId = draft.data.id;
-    console.log("✅ Draft Created Successfully:", draftId);
+    const draftId = draft?.data?.id;
+    console.log("✅ Draft created:", draftId);
 
     const gmailLink = `https://mail.google.com/mail/u/0/?fs=1&drafts=${draftId}`;
 
-    console.log("\n📨 Gmail Draft URL:", gmailLink);
+    // Optionally mark job as 'sent' = true/flag or save tracking etc. (not changing here)
 
-
-    // ---------------------------------------------------
-    // FINAL RESPONSE
-    // ---------------------------------------------------
     return res.json({
       success: true,
       draftId,
       gmailUrl: gmailLink,
-      job
+      job,
     });
-
-
   } catch (err) {
-    console.error("\n❌ GLOBAL ERROR CAUGHT:");
-    console.error(err);
-
-    return res.status(500).json({ error: "Failed to create draft", details: err.message });
+    console.error("❌ createGmailDraft ERROR:", err.response?.data || err.message || err);
+    // If error looks like invalid_grant during API call, notify reconnect
+    if (String(err.message || "").toLowerCase().includes("invalid_grant")) {
+      return res.status(400).json({
+        error: "gmail_reconnect_needed",
+        message: "Gmail credentials invalid. Please reconnect Gmail.",
+      });
+    }
+    return res.status(500).json({ error: "Failed to create draft", details: err.message || String(err) });
   }
 };
