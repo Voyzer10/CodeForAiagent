@@ -8,8 +8,6 @@ console.log("🔄 googleController.js LOADED");
 
 /* ===================================================
    ENCRYPTION HELPERS
-   - encrypt(text) -> returns iv:tag:encryptedHex
-   - decrypt(payload) -> returns plaintext
 =================================================== */
 
 const ENCRYPTION_KEY =
@@ -62,7 +60,7 @@ const decrypt = (payload) => {
 };
 
 /* ===================================================
-   LOGIN (no Gmail scopes) - simple Google oauth login
+   LOGIN (no Gmail scopes)
 =================================================== */
 
 const LOGIN_SCOPES = ["email", "profile"];
@@ -205,6 +203,7 @@ exports.gmailCallback = async (req, res) => {
     user.gmailTokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
     user.gmailConnectedAt = new Date();
 
+    // Save the client credentials that were used to generate these tokens
     user.clientId = encrypt(process.env.GOOGLE_CLIENT_ID || "");
     user.clientSecret = encrypt(process.env.GOOGLE_CLIENT_SECRET || "");
 
@@ -221,9 +220,6 @@ exports.gmailCallback = async (req, res) => {
 
 /* ===================================================
    REFRESH TOKEN HELPER (shared)
-   - refreshGoogleTokens(user): asks Google for new access token
-   - updates DB with new access token + expiry
-   - returns { accessToken, expiry } or { error: "..." }
 =================================================== */
 
 async function refreshGoogleTokens(user) {
@@ -243,12 +239,14 @@ async function refreshGoogleTokens(user) {
       return { error: "gmail_not_connected" };
     }
 
+    // Use the clientId/clientSecret that were saved when user connected
     const oAuthClient = new google.auth.OAuth2(clientId, clientSecret);
     oAuthClient.setCredentials({ refresh_token: refreshToken });
 
     console.log("⏳ Requesting new access token from Google…");
-    // google-auth-library recommended helper
-    const { credentials } = await oAuthClient.refreshAccessToken();
+
+    // IMPORTANT: use refreshToken(refreshToken) — returns {credentials}
+    const { credentials } = await oAuthClient.refreshToken(refreshToken);
 
     if (!credentials || !credentials.access_token) {
       console.log("❌ Google did not return access_token:", credentials);
@@ -260,7 +258,7 @@ async function refreshGoogleTokens(user) {
       expiry: credentials.expiry_date || null,
     });
 
-    // Update DB
+    // Update DB (store encrypted)
     user.gmailAccessToken = encrypt(credentials.access_token);
     user.gmailTokenExpiry = credentials.expiry_date ? new Date(credentials.expiry_date) : new Date(Date.now() + 3500 * 1000);
     await user.save();
@@ -273,7 +271,6 @@ async function refreshGoogleTokens(user) {
     };
   } catch (err) {
     console.log("❌ refreshGoogleTokens error:", err.response?.data || err.message || err);
-    // Google often returns 'invalid_grant' when refresh token is revoked/expired
     if (String(err.message || "").toLowerCase().includes("invalid_grant") || (err.response && err.response.data && String(err.response.data).toLowerCase().includes("invalid_grant"))) {
       return { error: "invalid_refresh_token" };
     }
@@ -283,7 +280,6 @@ async function refreshGoogleTokens(user) {
 
 /* ===================================================
    n8n / External fetch for tokens
-   GET /api/gmail/tokens/:userId (protected by x-api-key)
 =================================================== */
 exports.getGmailTokens = async (req, res) => {
   try {
@@ -357,7 +353,7 @@ exports.getGmailTokens = async (req, res) => {
 };
 
 /* ===================================================
-   Export helpers for other controllers (gmailDraftController)
+   Exports
 =================================================== */
 module.exports = {
   googleLoginRedirect: exports.googleLoginRedirect,

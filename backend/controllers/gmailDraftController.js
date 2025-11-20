@@ -1,5 +1,6 @@
 // controllers/gmailDraftController.js
 const { google } = require("googleapis");
+const mongoose = require("mongoose");
 const User = require("../model/User");
 const Job = require("../model/application-tracking");
 const {
@@ -30,9 +31,24 @@ exports.createGmailDraft = async (req, res) => {
       return res.status(400).json({ error: "userId and jobid required" });
     }
 
-    // STEP 1: Fetch job
+    // STEP 1: Fetch job — try multiple possible fields
     console.log("🔍 Finding job by jobid:", jobid);
-    const job = await Job.findOne({ jobid });
+
+    let job = await Job.findOne({ jobid });
+    if (!job) job = await Job.findOne({ jobId: jobid });
+    if (!job) job = await Job.findOne({ id: jobid });
+
+    // try _id if jobid looks like an ObjectId
+    if (!job) {
+      try {
+        if (mongoose.Types.ObjectId.isValid(jobid)) {
+          job = await Job.findById(jobid);
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     if (!job) {
       console.log("❌ Job not found:", jobid);
       return res.status(404).json({ error: "Job not found" });
@@ -121,15 +137,19 @@ exports.createGmailDraft = async (req, res) => {
     parts.push("");
 
     if (attachmentBase64 && attachmentName) {
-      // NOTE: we assume attachmentBase64 is raw base64 (no data:<type>;base64,)
+      // Strip potential "data:*;base64," prefix
+      let pureBase64 = attachmentBase64;
+      const prefixIndex = pureBase64.indexOf("base64,");
+      if (prefixIndex !== -1) {
+        pureBase64 = pureBase64.slice(prefixIndex + 7);
+      }
+
       parts.push(`--${boundary}`);
-      parts.push(
-        `Content-Type: application/octet-stream; name="${attachmentName}"`
-      );
+      parts.push(`Content-Type: application/octet-stream; name="${attachmentName}"`);
       parts.push("Content-Transfer-Encoding: base64");
       parts.push(`Content-Disposition: attachment; filename="${attachmentName}"`);
       parts.push("");
-      parts.push(attachmentBase64);
+      parts.push(pureBase64);
       parts.push("");
     }
 
