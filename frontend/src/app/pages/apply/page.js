@@ -1,163 +1,133 @@
 "use client";
 
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { Mail } from "lucide-react";
 
 export default function ApplyPage() {
-  const [form, setForm] = useState({
-    userId: "",
-    to: "",
-    subject: "",
-    body: "",
-    attachment: null,
-    attachmentName: "",
-    attachmentBase64: "",
-  });
+  const params = useSearchParams();
+  const jobid = params.get("jobid"); // 👈 GET jobid from URL
 
-  const [loading, setLoading] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [draftUrl, setDraftUrl] = useState(null);
+  const [jobDetails, setJobDetails] = useState(null);
 
-  // ---------------------------
-  // Handle Input Changes
-  // ---------------------------
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
-  // ---------------------------
-  // File to Base64 Converter
-  // ---------------------------
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  /* -----------------------------------------
+     STEP 1 — Load Logged-in User
+  ------------------------------------------*/
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
+          credentials: "include",
+        });
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result.split(",")[1];
-      setForm({
-        ...form,
-        attachment: file,
-        attachmentName: file.name,
-        attachmentBase64: base64,
-      });
-    };
-    reader.readAsDataURL(file);
-  };
+        const data = await res.json();
 
-  // ---------------------------
-  // Create Gmail Draft
-  // ---------------------------
-  const handleOpenGmail = async () => {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
-    try {
-      if (!form.userId) return alert("User ID is required!");
-
-      setLoading(true);
-
-      const res = await axios.post( `${API_BASE_URL}/gmail/create-draft`, {
-        userId: form.userId,
-        to: form.to,
-        subject: form.subject,
-        body: form.body,
-        attachmentName: form.attachmentName,
-        attachmentBase64: form.attachmentBase64,
-      });
-
-      if (res.data.gmailUrl) {
-        window.open(res.data.gmailUrl, "_blank");
-      } else {
-        alert("Failed to open Gmail draft!");
+        if (data?.user?.userId) {
+          setUserId(data.user.userId);
+        } else {
+          console.error("❌ No user found");
+        }
+      } catch (err) {
+        console.error("❌ User load error:", err);
       }
-    } catch (err) {
-      console.error(err);
-      alert("Gmail draft creation failed!");
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
+    fetchUser();
+  }, []);
+
+  /* -----------------------------------------
+     STEP 2 — Auto Create Gmail Draft
+  ------------------------------------------*/
+  useEffect(() => {
+    if (!userId || !jobid) return;
+
+    const createDraft = async () => {
+      try {
+        console.log("📨 Creating Gmail Draft for job:", jobid);
+
+        const res = await axios.post(`${API_BASE_URL}/gmail/create-draft`, {
+          userId,
+          jobid,
+        });
+
+        if (res.data) {
+          setDraftUrl(res.data.gmailUrl);
+          setJobDetails(res.data.job);
+        } else {
+          console.error("❌ No data returned from draft API");
+        }
+      } catch (err) {
+        console.error("❌ Draft creation failed:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    createDraft();
+  }, [userId, jobid]);
+
+  /* -----------------------------------------
+     UI STATES
+  ------------------------------------------*/
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen text-green-400 text-lg">
+        Creating Gmail Draft…
+      </div>
+    );
+  }
+
+  if (!jobDetails) {
+    return (
+      <div className="flex items-center justify-center h-screen text-red-400 text-lg">
+        Something went wrong. No job details available.
+      </div>
+    );
+  }
+
+  /* -----------------------------------------
+     FINAL OUTPUT
+  ------------------------------------------*/
   return (
-    <div className="min-h-screen bg-gray-100 flex justify-center items-start p-8">
-      <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-3xl">
-        <h1 className="text-2xl font-bold mb-6">Apply for Job</h1>
+    <div className="min-h-screen bg-black text-white flex items-center justify-center p-6">
+      <div className="bg-[#0e1614] border border-green-900 rounded-xl p-8 shadow-2xl w-full max-w-3xl">
 
-        {/* USER ID */}
-        <div className="mb-4">
-          <label className="block font-medium">User ID</label>
-          <input
-            type="text"
-            name="userId"
-            value={form.userId}
-            onChange={handleChange}
-            className="w-full border p-2 rounded mt-1"
-            placeholder="Enter your userId"
-          />
+        <h1 className="text-2xl font-bold text-green-400 mb-4">
+          Your Application Is Ready ✨
+        </h1>
+
+        {/* Job Email Preview */}
+        <div className="bg-[#0f1d19] border border-green-800 rounded-lg p-5 mb-6">
+          <h2 className="text-xl font-semibold text-green-300 mb-3">
+            {jobDetails.email_subject}
+          </h2>
+
+          <p
+            className="text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto"
+          >
+            {jobDetails.email_content}
+          </p>
         </div>
 
-        {/* TO FIELD */}
-        <div className="mb-4">
-          <label className="block font-medium">To</label>
-          <input
-            type="email"
-            name="to"
-            value={form.to}
-            onChange={handleChange}
-            className="w-full border p-2 rounded mt-1"
-            placeholder="recipient@example.com"
-          />
-        </div>
-
-        {/* SUBJECT FIELD */}
-        <div className="mb-4">
-          <label className="block font-medium">Subject</label>
-          <input
-            type="text"
-            name="subject"
-            value={form.subject}
-            onChange={handleChange}
-            className="w-full border p-2 rounded mt-1"
-            placeholder="Enter subject"
-          />
-        </div>
-
-        {/* BODY FIELD */}
-        <div className="mb-4">
-          <label className="block font-medium">Body</label>
-          <textarea
-            name="body"
-            value={form.body}
-            onChange={handleChange}
-            rows={5}
-            className="w-full border p-2 rounded mt-1"
-            placeholder="Write your message here..."
-          ></textarea>
-        </div>
-
-        {/* ATTACHMENT */}
-        <div className="mb-4">
-          <label className="block font-medium">Resume Attachment</label>
-          <input
-            type="file"
-            onChange={handleFile}
-            className="w-full border p-2 rounded mt-1"
-          />
-          {form.attachmentName && (
-            <p className="text-sm text-gray-600 mt-1">
-              Selected: {form.attachmentName}
-            </p>
-          )}
-        </div>
-
-        {/* OPEN GMAIL BUTTON */}
+        {/* Gmail Button */}
         <button
-          onClick={handleOpenGmail}
-          disabled={loading}
-          className="mt-6 flex items-center gap-3 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition"
+          onClick={() => window.open(draftUrl, "_blank")}
+          className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-lg text-lg shadow-md transition"
         >
-          <Mail size={22} />
-          {loading ? "Creating Draft..." : "Open Gmail Draft"}
+          <Mail size={26} />
+          Open Gmail Draft
         </button>
+
+        <p className="text-gray-400 mt-4 text-center text-sm">
+          Review your mail in Gmail → click <span className="text-green-400">Send</span>.
+        </p>
+
       </div>
     </div>
   );

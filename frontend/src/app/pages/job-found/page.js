@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
+import { useRouter } from "next/navigation";
+
 
 export default function JobFound() {
   const [user, setUser] = useState(null);
@@ -23,7 +25,8 @@ export default function JobFound() {
   // Track which recent search is active
   const [activeSearch, setActiveSearch] = useState("All Jobs");
 
- 
+ const router = useRouter();
+
 
   useEffect(() => {
      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
@@ -146,6 +149,7 @@ export default function JobFound() {
     }
 
     alert(`Successfully triggered apply for ${jobsToApply.length} job(s) one by one!`);
+     router.push(`/pages/apply?jobid=${jobid}`);
   } catch (err) {
     console.error("Error applying:", err);
     alert("Error applying: " + err.message);
