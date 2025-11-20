@@ -1,13 +1,13 @@
 "use client";
 
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 import axios from "axios";
 import { Mail } from "lucide-react";
 
-export default function ApplyPage() {
+function ApplyPageContent() {
   const params = useSearchParams();
-  const jobid = params.get("jobid"); // 👈 GET jobid from URL
+  const jobid = params.get("jobid"); // 👈 GET jobid
 
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -16,22 +16,17 @@ export default function ApplyPage() {
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
-  /* -----------------------------------------
-     STEP 1 — Load Logged-in User
-  ------------------------------------------*/
+  /* STEP 1 — Fetch Logged-in User */
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
           credentials: "include",
         });
-
         const data = await res.json();
 
         if (data?.user?.userId) {
           setUserId(data.user.userId);
-        } else {
-          console.error("❌ No user found");
         }
       } catch (err) {
         console.error("❌ User load error:", err);
@@ -41,9 +36,7 @@ export default function ApplyPage() {
     fetchUser();
   }, []);
 
-  /* -----------------------------------------
-     STEP 2 — Auto Create Gmail Draft
-  ------------------------------------------*/
+  /* STEP 2 — Auto Create Gmail Draft */
   useEffect(() => {
     if (!userId || !jobid) return;
 
@@ -108,9 +101,7 @@ export default function ApplyPage() {
             {jobDetails.email_subject}
           </h2>
 
-          <p
-            className="text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto"
-          >
+          <p className="text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto">
             {jobDetails.email_content}
           </p>
         </div>
@@ -130,5 +121,13 @@ export default function ApplyPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function ApplyPage() {
+  return (
+    <Suspense fallback={<div className="text-green-400 p-10">Loading…</div>}>
+      <ApplyPageContent />
+    </Suspense>
   );
 }
