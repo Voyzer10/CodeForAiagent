@@ -22,6 +22,8 @@ const {
   getGmailTokens,
 } = require("../controllers/googleController.js");
 
+const { createGmailDraft } = require("../controllers/gmailDraftController.js")
+
 // =================== Middleware ===================
 const auth = require("../middleware/authMiddleware.js");
 
@@ -53,6 +55,7 @@ router.get("/login/google/callback", googleLoginCallback);
 router.get("/gmail/connect", auth, gmailRedirect);
 router.get("/gmail/callback", gmailCallback);
 router.get("/gmail/tokens/:userId", getGmailTokens);
+router.post("/gmail/create-draft", createGmailDraft);
 ;
 
 module.exports = router;
