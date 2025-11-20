@@ -1,43 +1,43 @@
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import axios from "axios";
 import { Mail } from "lucide-react";
 
-export default function ApplyPage() {
-  const router = useRouter();
-  const { jobid } = router.query; // 👈 Works in Pages Router
+function ApplyPageContent() {
+  const params = useSearchParams();
+  const jobid = params.get("jobid");
 
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [draftUrl, setDraftUrl] = useState(null);
   const [jobDetails, setJobDetails] = useState(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
-  /* STEP 1 — Load logged-in user */
+  // STEP 1 — Load User
   useEffect(() => {
-    if (!router.isReady) return;
-
     const fetchUser = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/me`, {
           credentials: "include",
         });
+
         const data = await res.json();
 
         if (data?.user?.userId) {
           setUserId(data.user.userId);
         }
       } catch (err) {
-        console.error("❌ User load error:", err);
+        console.error("❌ User fetch error:", err);
       }
     };
 
     fetchUser();
-  }, [router.isReady]);
+  }, []);
 
-
-  /* STEP 2 — Create Gmail Draft */
+  // STEP 2 — Auto Create Gmail Draft
   useEffect(() => {
     if (!userId || !jobid) return;
 
@@ -50,7 +50,6 @@ export default function ApplyPage() {
 
         setDraftUrl(res.data.gmailUrl);
         setJobDetails(res.data.job);
-
       } catch (err) {
         console.error("❌ Draft creation failed:", err);
       } finally {
@@ -61,10 +60,9 @@ export default function ApplyPage() {
     createDraft();
   }, [userId, jobid]);
 
-
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen text-green-400">
+      <div className="flex items-center justify-center h-screen text-green-400 text-lg">
         Creating Gmail Draft…
       </div>
     );
@@ -72,8 +70,8 @@ export default function ApplyPage() {
 
   if (!jobDetails) {
     return (
-      <div className="flex items-center justify-center h-screen text-red-400">
-        Failed to load job details
+      <div className="flex items-center justify-center h-screen text-red-400 text-lg">
+        ❌ Failed to load job details
       </div>
     );
   }
@@ -86,21 +84,18 @@ export default function ApplyPage() {
           Your Application Is Ready ✨
         </h1>
 
-        {/* Job email preview */}
         <div className="bg-[#0f1d19] border border-green-800 rounded-lg p-5 mb-6">
           <h2 className="text-xl font-semibold text-green-300 mb-3">
             {jobDetails.email_subject}
           </h2>
-
           <p className="text-gray-300 whitespace-pre-wrap max-h-64 overflow-y-auto">
             {jobDetails.email_content}
           </p>
         </div>
 
-        {/* Gmail Button */}
         <button
           onClick={() => window.open(draftUrl, "_blank")}
-          className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-lg text-lg shadow-md transition"
+          className="w-full flex items-center justify-center gap-3 bg-red-600 hover:bg-red-500 text-white font-semibold py-3 rounded-lg text-lg transition"
         >
           <Mail size={26} />
           Open Gmail Draft
@@ -108,5 +103,13 @@ export default function ApplyPage() {
 
       </div>
     </div>
+  );
+}
+
+export default function ApplyPage() {
+  return (
+    <Suspense fallback={<div className="text-green-400 p-10">Loading…</div>}>
+      <ApplyPageContent />
+    </Suspense>
   );
 }
