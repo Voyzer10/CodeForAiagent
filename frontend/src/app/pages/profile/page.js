@@ -11,6 +11,9 @@ import {
     CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import UserNavbar from "../userpanel/Navbar";
+import Sidebar from "../userpanel/Sidebar";
+
 
 export default function Profile() {
     const [user, setUser] = useState(null);
@@ -22,6 +25,8 @@ export default function Profile() {
     const [socialLinks, setSocialLinks] = useState({ github: "", linkedin: "" });
     const [savingLink, setSavingLink] = useState("");
     const [saveStatus, setSaveStatus] = useState(null);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
     const API_BASE_URL =
         process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
@@ -144,6 +149,8 @@ export default function Profile() {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#09110f] text-white p-6 font-[Inter]">
+            <UserNavbar onSidebarToggle={toggleSidebar} className="top-0 " />
+            <Sidebar isOpen={sidebarOpen} />
             <div className="w-full max-w-4xl bg-[#0e1513] border border-[#1b2b27] rounded-2xl shadow-[0_0_30px_#00ff9d33] p-8">
 
                 {/* HEADER */}
