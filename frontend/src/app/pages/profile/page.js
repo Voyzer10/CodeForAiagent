@@ -9,7 +9,6 @@ import {
     Github,
     Linkedin,
     CheckCircle2,
-    FileText,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -24,7 +23,8 @@ export default function Profile() {
     const [savingLink, setSavingLink] = useState("");
     const [saveStatus, setSaveStatus] = useState(null);
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
+    const API_BASE_URL =
+        process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -35,7 +35,8 @@ export default function Profile() {
                 });
 
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.message || "Failed to fetch user");
+                if (!res.ok)
+                    throw new Error(data.message || "Failed to fetch user");
 
                 setUser(data.user);
                 setNewName(data.user.name);
@@ -50,27 +51,29 @@ export default function Profile() {
                 setLoading(false);
             }
         };
+
         fetchUser();
     }, []);
 
-    // 🔹 Save GitHub / LinkedIn via API
     const handleSaveLink = async (platform, value) => {
         if (!value.trim()) return;
         setSavingLink(platform);
         setSaveStatus(null);
 
         try {
-            const res = await fetch(`${API_BASE_URL}/api/auth/update-socials`, {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ [platform]: value }),
-            });
+            const res = await fetch(
+                `${API_BASE_URL}/api/auth/update-socials`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ [platform]: value }),
+                }
+            );
 
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Failed to update");
 
-            // Update UI immediately
             setUser((prev) => ({ ...prev, [platform]: value }));
             setSaveStatus({ platform, success: true });
         } catch (err) {
@@ -81,7 +84,6 @@ export default function Profile() {
         }
     };
 
-    // 🔹 Save Edited Name (local only)
     const handleNameSave = () => {
         if (newName.trim()) {
             setUser((prev) => ({ ...prev, name: newName.trim() }));
@@ -91,7 +93,7 @@ export default function Profile() {
 
     const handleResumeUpload = (e) => {
         const file = e.target.files[0];
-        if (file) alert(`Uploaded file: ${file.name}`);
+        if (file) alert(`Uploaded: ${file.name}`);
     };
 
     if (loading)
@@ -111,18 +113,42 @@ export default function Profile() {
 
     if (!user)
         return (
-            <div className="text-center text-gray-400 mt-10">No user data found.</div>
+            <div className="text-center text-gray-400 mt-10">
+                No user data found.
+            </div>
         );
 
-    const { email, role, plan } = user;
+    /* TOKEN EXPIRY CHECK */
+    let gmailStatus = "not_connected";
+    let tokenExpired = false;
+    let tokenExpiringSoon = false;
+
+    if (user.gmailEmail) {
+        if (!user.gmailTokenExpiry) {
+            gmailStatus = "expired";
+        } else {
+            const expiry = new Date(user.gmailTokenExpiry).getTime();
+            const now = Date.now();
+
+            if (expiry < now) {
+                gmailStatus = "expired";
+                tokenExpired = true;
+            } else if (expiry - now < 10 * 60 * 1000) {
+                gmailStatus = "expiring_soon";
+                tokenExpiringSoon = true;
+            } else {
+                gmailStatus = "active";
+            }
+        }
+    }
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen w-full bg-[#09110f] text-white p-6 font-[Inter]">
-            <div className="w-full max-w-4xl bg-[#0e1513] border border-[#1b2b27] rounded-2xl shadow-[0_0_30px_#00ff9d33] p-8 transition-all duration-300 hover:shadow-[0_0_45px_#00ff9d55]">
+            <div className="w-full max-w-4xl bg-[#0e1513] border border-[#1b2b27] rounded-2xl shadow-[0_0_30px_#00ff9d33] p-8">
 
-                {/* Header */}
+                {/* HEADER */}
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-3xl font-semibold text-green-400 tracking-wide">
+                    <h2 className="text-3xl font-semibold text-green-400">
                         👤 Profile Dashboard
                     </h2>
                     <Info
@@ -132,7 +158,7 @@ export default function Profile() {
                     />
                 </div>
 
-                {/* Editable Name */}
+                {/* NAME */}
                 <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
                     <span className="text-gray-400 text-sm">Name:</span>
                     {editingName ? (
@@ -141,17 +167,17 @@ export default function Profile() {
                                 type="text"
                                 value={newName}
                                 onChange={(e) => setNewName(e.target.value)}
-                                className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-green-300 focus:outline-none"
+                                className="bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-green-300"
                             />
                             <button
                                 onClick={handleNameSave}
-                                className="text-green-400 hover:text-green-300 transition"
+                                className="text-green-400"
                             >
                                 <CheckCircle2 size={18} />
                             </button>
                             <button
                                 onClick={() => setEditingName(false)}
-                                className="text-red-400 hover:text-red-300 transition"
+                                className="text-red-400"
                             >
                                 <X size={18} />
                             </button>
@@ -170,61 +196,24 @@ export default function Profile() {
                     )}
                 </div>
 
-                <ProfileItem label="Email" value={email} />
-                <ProfileItem label="Role" value={role} />
+                <ProfileItem label="Email" value={user.email} />
+                <ProfileItem label="Role" value={user.role} />
 
                 <hr className="my-6 border-[#1b2b27]" />
 
-                {/* Plan Info */}
-                <h3 className="text-xl font-semibold text-green-300 mb-3">💎 Plan Details</h3>
-                {plan && plan.type ? (
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27]">
-                            <span className="text-gray-400">
-                                Plan Type:{" "}
-                                <span className="text-green-300 font-medium capitalize">
-                                    {plan.type}
-                                </span>
-                            </span>
-                            <Link href="/pages/price">
-                                <span className="text-sm text-red-400 hover:text-red-300 underline">
-                                    *Upgrade
-                                </span>
-                            </Link>
-                        </div>
-                        <ProfileItem label="Remaining Tokens" value={plan.remainingJobs ?? "—"} />
-                    </div>
-                ) : (
-                    <p className="text-gray-500">No active plan</p>
-                )}
-
-                <hr className="my-6 border-[#1b2b27]" />
-
-                {/* Resume Upload */}
-                <h3 className="text-xl font-semibold text-green-300 mb-3">📄 Resume / CV</h3>
-                <div className="bg-[#131d1a] px-4 py-4 rounded-lg border border-[#1b2b27] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <span className="text-gray-400 text-sm">Upload your resume:</span>
-                    <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        className="text-sm text-gray-300 file:mr-4 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-500 file:text-black hover:file:opacity-90"
-                        onChange={handleResumeUpload}
-                    />
-                </div>
-
-                <hr className="my-6 border-[#1b2b27]" />
-
-                {/* Gmail OAuth */}
-                <h3 className="text-xl font-semibold text-green-300 mb-3">📧 Gmail Account</h3>
+                {/* GMAIL SECTION */}
+                <h3 className="text-xl font-semibold text-green-300 mb-3">
+                    📧 Gmail Account
+                </h3>
 
                 {!user.gmailEmail ? (
                     <button
                         onClick={() =>
                             (window.location.href = `${API_BASE_URL}/auth/gmail/connect`)
                         }
-                        className="bg-blue-500 text-white px-4 py-2 rounded-lg font-medium hover:opacity-90"
+                        className="bg-blue-500 text-white px-4 py-2 rounded-lg"
                     >
-                        Connect Gmail (Continue with Google)
+                        Connect Gmail
                     </button>
                 ) : (
                     <div className="p-4 bg-[#131d1a] border border-[#1b2b27] rounded-lg">
@@ -237,83 +226,75 @@ export default function Profile() {
                             label="Token Expiry"
                             value={new Date(user.gmailTokenExpiry).toLocaleString()}
                         />
+
+                        {gmailStatus === "expired" && (
+                            <div className="mt-4">
+                                <p className="text-red-400 text-sm mb-1">
+                                    Your Gmail session has expired.
+                                </p>
+                                <button
+                                    onClick={() =>
+                                        (window.location.href = `${API_BASE_URL}/auth/gmail/connect`)
+                                    }
+                                    className="bg-red-600 px-4 py-2 rounded-lg"
+                                >
+                                    Reconnect Gmail
+                                </button>
+                            </div>
+                        )}
+
+                        {gmailStatus === "expiring_soon" && (
+                            <div className="mt-4">
+                                <p className="text-yellow-400 text-sm mb-1">
+                                    Gmail token is expiring soon.
+                                </p>
+                                <button
+                                    onClick={() =>
+                                        (window.location.href = `${API_BASE_URL}/auth/gmail/connect`)
+                                    }
+                                    className="bg-yellow-500 text-black px-4 py-2 rounded-lg"
+                                >
+                                    Refresh Gmail Connection
+                                </button>
+                            </div>
+                        )}
+
+                        {gmailStatus === "active" && (
+                            <p className="text-green-400 text-sm mt-4">
+                                Gmail connection active ✔
+                            </p>
+                        )}
                     </div>
                 )}
 
                 <hr className="my-6 border-[#1b2b27]" />
 
-                {/* Social Links */}
-                <h3 className="text-xl font-semibold text-green-300 mb-3">🌐 Social Profiles</h3>
-                <div className="space-y-3">
-                    {[
-                        { platform: "github", icon: <Github size={20} className="text-gray-300" /> },
-                        { platform: "linkedin", icon: <Linkedin size={20} className="text-blue-400" /> },
-                    ].map(({ platform, icon }) => (
-                        <div
-                            key={platform}
-                            className="flex items-center justify-between bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27] hover:border-green-700 transition"
-                        >
-                            <div className="flex items-center gap-2">
-                                {icon}
-                                <span className="capitalize text-gray-400 text-sm">{platform}:</span>
-                            </div>
+                {/* SOCIAL LINKS */}
+                <h3 className="text-xl font-semibold text-green-300 mb-3">
+                    🌐 Social Profiles
+                </h3>
 
-                            <div className="flex items-center gap-2 w-2/3">
-                                <input
-                                    type="url"
-                                    defaultValue={user[platform] || ""}
-                                    placeholder={`Add ${platform} URL`}
-                                    className="flex-1 bg-transparent border border-[#1b2b27] px-2 py-1 rounded-lg text-sm text-gray-200"
-                                    onBlur={(e) => handleSaveLink(platform, e.target.value)}
-                                />
-
-                                {savingLink === platform ? (
-                                    <span className="text-xs text-gray-400">Saving...</span>
-                                ) : saveStatus?.platform === platform ? (
-                                    saveStatus.success ? (
-                                        <span className="text-xs text-green-400 font-medium">Saved ✓</span>
-                                    ) : (
-                                        <span className="text-xs text-red-400 font-medium">Error</span>
-                                    )
-                                ) : null}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* Help Modal */}
-            {showHelp && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-                    <div className="bg-[#0e1513] border border-[#1b2b27] p-6 rounded-xl w-full max-w-lg text-gray-200 relative">
-                        <h3 className="text-2xl font-semibold text-green-400 mb-4">
-                            How Gmail Automation Works
-                        </h3>
-                        <p className="text-gray-300 text-sm mb-4">
-                            When you click <b>Continue with Google</b>, we securely store:
-                        </p>
-
-                        <ul className="list-disc pl-5 text-gray-300 text-sm space-y-1">
-                            <li>Your Gmail email</li>
-                            <li>Access Token (encrypted)</li>
-                            <li>Refresh Token (encrypted)</li>
-                            <li>Token Expiry</li>
-                        </ul>
-
-                        <button
-                            onClick={() => setShowHelp(false)}
-                            className="mt-6 bg-green-500 text-black px-4 py-2 rounded-lg font-medium hover:opacity-90"
-                        >
-                            Close
-                        </button>
+                {["github", "linkedin"].map((platform) => (
+                    <div
+                        key={platform}
+                        className="flex items-center justify-between bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27] mb-3"
+                    >
+                        <span className="text-gray-400 capitalize">{platform}</span>
+                        <input
+                            type="url"
+                            defaultValue={user[platform] || ""}
+                            className="bg-transparent w-2/3 border px-2 py-1 rounded-lg"
+                            onBlur={(e) =>
+                                handleSaveLink(platform, e.target.value)
+                            }
+                        />
                     </div>
-                </div>
-            )}
+                ))}
+            </div>
         </div>
     );
 }
 
-// 🔹 Reusable Row Component
 function ProfileItem({ label, value }) {
     return (
         <div className="flex justify-between items-center bg-[#131d1a] px-4 py-2 rounded-lg border border-[#1b2b27]">

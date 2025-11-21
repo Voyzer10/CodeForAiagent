@@ -5,12 +5,13 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 
 /* ===================================================
-   ENCRYPTION HELPERS
+   ⚡ ENCRYPTION HELPERS
 =================================================== */
 
 const ENCRYPTION_KEY =
   process.env.ENCRYPTION_KEY || "00000000000000000000000000000000";
 
+// encrypt (AES-256-GCM)
 const encrypt = (text) => {
   if (!text) return null;
   try {
@@ -20,21 +21,20 @@ const encrypt = (text) => {
       Buffer.from(ENCRYPTION_KEY, "hex"),
       iv
     );
-
     let encrypted = cipher.update(text, "utf8", "hex");
     encrypted += cipher.final("hex");
     const tag = cipher.getAuthTag().toString("hex");
 
     return `${iv.toString("hex")}:${tag}:${encrypted}`;
   } catch (err) {
-    console.error("encrypt error:", err);
+    console.error("❌ encrypt() error:", err);
     return null;
   }
 };
 
+// decrypt (AES-256-GCM)
 const decrypt = (payload) => {
   if (!payload) return null;
-
   try {
     const [ivHex, tagHex, encryptedText] = payload.split(":");
     const iv = Buffer.from(ivHex, "hex");
@@ -45,21 +45,19 @@ const decrypt = (payload) => {
       Buffer.from(ENCRYPTION_KEY, "hex"),
       iv
     );
-
     decipher.setAuthTag(tag);
 
     let decrypted = decipher.update(encryptedText, "hex", "utf8");
     decrypted += decipher.final("utf8");
-
     return decrypted;
   } catch (err) {
-    console.error("decrypt error:", err);
+    console.error("❌ decrypt() error:", err);
     return null;
   }
 };
 
 /* ===================================================
-   GOOGLE LOGIN (NO GMAIL SCOPE)
+   ⚡ GOOGLE LOGIN (NO GMAIL SCOPE)
 =================================================== */
 
 const LOGIN_SCOPES = ["email", "profile"];
@@ -70,6 +68,7 @@ const loginClient = new google.auth.OAuth2(
   process.env.GOOGLE_LOGIN_REDIRECT
 );
 
+// Google Login Redirect
 exports.googleLoginRedirect = async (req, res) => {
   try {
     const url = loginClient.generateAuthUrl({
@@ -80,15 +79,15 @@ exports.googleLoginRedirect = async (req, res) => {
 
     return res.redirect(url);
   } catch (err) {
-    console.error("Google Login Redirect Error:", err);
+    console.error("❌ Google Login Redirect Error:", err);
     return res.status(500).send("Google Login Failed");
   }
 };
 
+// Google Login Callback
 exports.googleLoginCallback = async (req, res) => {
   try {
     const code = req.query.code;
-    if (!code) return res.status(400).send("Invalid Login Callback");
 
     const { tokens } = await loginClient.getToken(code);
     loginClient.setCredentials(tokens);
@@ -117,14 +116,15 @@ exports.googleLoginCallback = async (req, res) => {
 
     const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
     return res.redirect(`${frontend}/auth/google?token=${encodeURIComponent(token)}`);
+
   } catch (err) {
-    console.error("Google Login Callback Error:", err);
+    console.error("❌ Google Login Callback Error:", err);
     return res.status(500).send("Login Failed");
   }
 };
 
 /* ===================================================
-   GMAIL CONNECT (OFFLINE TOKEN)
+   ⚡ GMAIL CONNECT (OFFLINE REFRESH TOKEN)
 =================================================== */
 
 const GMAIL_SCOPES = [
@@ -139,10 +139,10 @@ const gmailClient = new google.auth.OAuth2(
   process.env.GMAIL_REDIRECT_URI
 );
 
+// Gmail OAuth Redirect
 exports.gmailRedirect = async (req, res) => {
   try {
     const userId = req.user?.id || req.user?.userId;
-    if (!userId) return res.status(400).send("Invalid User");
 
     const url = gmailClient.generateAuthUrl({
       access_type: "offline",
@@ -153,11 +153,12 @@ exports.gmailRedirect = async (req, res) => {
 
     return res.redirect(url);
   } catch (err) {
-    console.error("Gmail Redirect Error:", err);
+    console.error("❌ Gmail Redirect Error:", err);
     return res.status(500).send("Gmail OAuth Redirect Failed");
   }
 };
 
+// Gmail OAuth Callback
 exports.gmailCallback = async (req, res) => {
   try {
     const code = req.query.code;
@@ -168,17 +169,27 @@ exports.gmailCallback = async (req, res) => {
 
     const oauth2 = google.oauth2({ auth: gmailClient, version: "v2" });
     const profile = await oauth2.userinfo.get();
-
     const gmailEmail = profile.data.email;
 
     const user = await User.findOne({ userId });
-    if (!user) return res.status(404).send("User not found");
 
     user.gmailEmail = gmailEmail;
-    user.gmailAccessToken = encrypt(tokens.access_token || "");
-    user.gmailRefreshToken = encrypt(tokens.refresh_token || "");
-    user.gmailTokenExpiry = tokens.expiry_date ? new Date(tokens.expiry_date) : null;
 
+    // Only update access token if Google sent it
+    if (tokens.access_token) {
+      user.gmailAccessToken = encrypt(tokens.access_token);
+    }
+
+    // Only update refresh token if Google sent it (Google normally sends only ONCE)
+    if (tokens.refresh_token) {
+      user.gmailRefreshToken = encrypt(tokens.refresh_token);
+    }
+
+    if (tokens.expiry_date) {
+      user.gmailTokenExpiry = new Date(tokens.expiry_date);
+    }
+
+    // Encrypt credentials
     user.clientId = encrypt(process.env.GOOGLE_CLIENT_ID);
     user.clientSecret = encrypt(process.env.GOOGLE_CLIENT_SECRET);
 
@@ -186,20 +197,21 @@ exports.gmailCallback = async (req, res) => {
 
     const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
     return res.redirect(`${frontend}/gmail-connected?success=1`);
+
   } catch (err) {
-    console.error("Gmail Callback Error:", err);
+    console.error("❌ Gmail Callback Error:", err);
     const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
     return res.redirect(`${frontend}/gmail-connected?success=0`);
   }
 };
 
 /* ===================================================
-   REFRESH TOKEN (LATEST GOOGLE API)
+   ⚡ REFRESH ACCESS TOKEN (LATEST METHOD)
 =================================================== */
 
 async function refreshGoogleTokens(user) {
   try {
-    console.log("🔁 refreshGoogleTokens() → user:", user.userId);
+    console.log("🔁 refreshGoogleTokens → user:", user.userId);
 
     const refreshToken = decrypt(user.gmailRefreshToken);
     const clientId = decrypt(user.clientId);
@@ -209,25 +221,29 @@ async function refreshGoogleTokens(user) {
       return { error: "missing_credentials" };
     }
 
-    const oAuth2Client = new google.auth.OAuth2(clientId, clientSecret);
+    const oAuthClient = new google.auth.OAuth2(clientId, clientSecret);
 
-    oAuth2Client.setCredentials({ refresh_token: refreshToken });
+    oAuthClient.setCredentials({ refresh_token: refreshToken });
 
-    console.log("⏳ Requesting new access token...");
+    console.log("⏳ Requesting updated access token…");
 
-    const refreshed = await oAuth2Client.refreshToken(refreshToken);
+    const { credentials } = await oAuthClient.refreshAccessToken();
 
-    const newAccess = refreshed?.credentials?.access_token;
-    const expiry = refreshed?.credentials?.expiry_date;
+    if (!credentials.access_token) {
+      return { error: "refresh_failed" };
+    }
 
-    if (!newAccess) return { error: "refresh_failed" };
-
-    user.gmailAccessToken = encrypt(newAccess);
-    user.gmailTokenExpiry = new Date(expiry);
+    user.gmailAccessToken = encrypt(credentials.access_token);
+    user.gmailTokenExpiry = new Date(
+      credentials.expiry_date || Date.now() + 3500 * 1000
+    );
 
     await user.save();
 
-    return { accessToken: newAccess, expiry };
+    return {
+      accessToken: credentials.access_token,
+      expiry: user.gmailTokenExpiry,
+    };
   } catch (err) {
     const msg = (err?.message || "").toLowerCase();
 
@@ -240,7 +256,7 @@ async function refreshGoogleTokens(user) {
 }
 
 /* ===================================================
-   GET TOKENS FOR N8N
+   ⚡ GET TOKENS FOR N8N
 =================================================== */
 
 exports.getGmailTokens = async (req, res) => {
@@ -258,6 +274,7 @@ exports.getGmailTokens = async (req, res) => {
     }
 
     let accessToken = decrypt(user.gmailAccessToken);
+
     const expired =
       !user.gmailTokenExpiry ||
       new Date(user.gmailTokenExpiry).getTime() < Date.now() + 60000;
@@ -278,13 +295,17 @@ exports.getGmailTokens = async (req, res) => {
       refresh_token: decrypt(user.gmailRefreshToken),
       expires_at: user.gmailTokenExpiry,
     });
+
   } catch (err) {
-    console.error("getGmailTokens ERROR:", err);
+    console.error("❌ getGmailTokens ERROR:", err);
     return res.status(500).json({ error: "Server error" });
   }
 };
 
-/* EXPORT HELPERS */
+/* ===================================================
+   EXPORTS
+=================================================== */
+
 module.exports = {
   googleLoginRedirect: exports.googleLoginRedirect,
   googleLoginCallback: exports.googleLoginCallback,
