@@ -7,6 +7,7 @@ const {
   getUsers,
   getUserById,
   getCurrentUser,
+  logoutUser,
 } = require("../controllers/authController.js");
 
 const {
@@ -35,6 +36,7 @@ const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/logout", logoutUser);
 
 router.get("/users", getUsers);
 router.get("/users/:id", getUserById);

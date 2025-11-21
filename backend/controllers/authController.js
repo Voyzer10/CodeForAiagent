@@ -151,6 +151,22 @@ const getUserById = async (req, res) => {
   }
 };
 
+exports.logoutUser = async (req, res) => {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+
+    return res.json({ success: true, message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    return res.status(500).json({ success: false, message: "Logout failed" });
+  }
+};
+
+
 module.exports = {
   register,
   login,

@@ -10,7 +10,7 @@ export default function UserNavbar({ onSidebarToggle }) {
     const [error, setError] = useState("");
     const router = useRouter();
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
 
     const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
@@ -32,9 +32,23 @@ export default function UserNavbar({ onSidebarToggle }) {
         fetchUser();
     }, []);
 
+    // 🔥 REAL LOGOUT FUNCTION
+    const handleLogout = async () => {
+        try {
+            await fetch(`${API_BASE_URL}/auth/logout`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            setUser(null);
+            router.push("/pages/logout");
+        } catch (err) {
+            console.error("Logout error:", err);
+        }
+    };
+
     return (
         <nav className="flex justify-between fixed items-center w-full bg-[#0a0f0d] p-4 text-white z-50 cursor-pointer">
-            {/* Hamburger */}
             <button
                 onClick={onSidebarToggle}
                 className="text-2xl focus:outline-none cursor-pointer py-3"
@@ -49,7 +63,6 @@ export default function UserNavbar({ onSidebarToggle }) {
                 </svg>
             </button>
 
-            {/* User Avatar */}
             <div className="relative cursor-pointer">
                 <button
                     onClick={toggleDropdown}
@@ -68,6 +81,7 @@ export default function UserNavbar({ onSidebarToggle }) {
 
                 {dropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-[#1F2937] text-green-400 rounded-md shadow-lg z-50 cursor-pointer border-2 border-white">
+
                         {user && (
                             <div className="px-4 py-3 border-b border-white">
                                 <p className="text-green-400 font-semibold">{user.name}</p>
@@ -86,8 +100,9 @@ export default function UserNavbar({ onSidebarToggle }) {
                             Settings
                         </button>
 
+                        {/* 🔥 FIXED LOGOUT */}
                         <button
-                            onClick={() => router.push("/")}
+                            onClick={handleLogout}
                             className="flex w-full text-left px-4 py-3 hover:bg-[#2e3b34] text-red-400"
                         >
                             <LogOut className="mr-2" /> Logout
