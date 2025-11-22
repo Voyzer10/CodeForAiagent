@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function UserNavbar({ onSidebarToggle }) {
+export default function UserNavbar({ onSidebarToggle, className }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [user, setUser] = useState(null);
     const [error, setError] = useState("");
@@ -48,7 +48,7 @@ export default function UserNavbar({ onSidebarToggle }) {
     };
 
     return (
-        <nav className="flex justify-between fixed items-center w-full bg-[#0a0f0d] p-4 text-white z-50 cursor-pointer">
+        <nav className={`flex justify-between fixed top-0 left-0 items-center w-full bg-[#0a0f0d] p-4 text-white z-50 cursor-pointer ${className || ""}`}>
             <button
                 onClick={onSidebarToggle}
                 className="text-2xl focus:outline-none cursor-pointer py-3"
