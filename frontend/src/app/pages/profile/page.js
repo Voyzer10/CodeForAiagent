@@ -154,7 +154,7 @@ export default function Profile() {
             <div className="w-full max-w-4xl bg-[#0e1513] border border-[#1b2b27] rounded-2xl shadow-[0_0_30px_#00ff9d33] p-8">
 
                 {/* HEADER */}
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mt-20 mb-8">
                     <h2 className="text-3xl font-semibold text-green-400">
                         👤 Profile Dashboard
                     </h2>

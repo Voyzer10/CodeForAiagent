@@ -193,7 +193,7 @@ export default function Price() {
     <div className="min-h-screen bg-[#0b0e11] text-white flex flex-col items-center px-6 py-14">
       <UserNavbar onSidebarToggle={toggleSidebar} />
             <Sidebar isOpen={sidebarOpen} />
-      <h1 className="text-4xl font-extrabold mb-4">
+      <h1 className="text-4xl font-extrabold mb-4 mt-28">
         Choose Your <span className="text-[#00ff9d]">Plan</span>
       </h1>
 

@@ -41,6 +41,11 @@ export default function Sidebar({ isOpen, onSelectSearch }) {
         <li className="px-6 py-3 hover:bg-[#2e3b34] cursor-pointer rounded-md">
           Job Applied
         </li>
+        <Link href="/pages/userpanel">
+          <li className="px-6 py-3 hover:bg-[#2e3b34] cursor-pointer rounded-md">
+            User Panel
+          </li>
+        </Link>
       </ul>
 
       {/* Recent Searches */}
