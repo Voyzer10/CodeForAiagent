@@ -26,6 +26,7 @@ export default function Profile() {
     const [savingLink, setSavingLink] = useState("");
     const [saveStatus, setSaveStatus] = useState(null);
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [credits, setCredits] = useState(0);
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
     const API_BASE_URL =
@@ -50,6 +51,15 @@ export default function Profile() {
                     github: data.user.github || "",
                     linkedin: data.user.linkedin || "",
                 });
+
+                // Fetch credits
+                try {
+                    const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${data.user.userId}`, { credentials: "include" });
+                    const creditData = await creditRes.json();
+                    if (creditRes.ok) setCredits(creditData.credits);
+                } catch (e) {
+                    console.error("Failed to fetch credits", e);
+                }
             } catch (err) {
                 setError(err.message);
             } finally {
@@ -67,7 +77,7 @@ export default function Profile() {
 
         try {
             const res = await fetch(
-                `${API_BASE_URL}/api/auth/update-socials`,
+                `${API_BASE_URL}/auth/update-socials`,
                 {
                     method: "POST",
                     credentials: "include",
@@ -203,6 +213,19 @@ export default function Profile() {
                     )}
                 </div>
 
+                {/* TOKENS & UPGRADE */}
+                <div className="flex justify-between items-center bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27] mt-4 mb-4">
+                    <span className="text-gray-400 text-sm">Total Tokens:</span>
+                    <div className="flex items-center gap-4">
+                        <span className="font-medium text-green-300 text-lg">{credits}</span>
+                        <Link href="/pages/price">
+                            <button className="bg-green-600 text-black px-3 py-1 rounded-md text-sm font-semibold hover:bg-green-500 transition">
+                                ★ Upgrade
+                            </button>
+                        </Link>
+                    </div>
+                </div>
+
                 <ProfileItem label="Email" value={user.email} />
                 <ProfileItem label="Role" value={user.role} />
 
@@ -286,15 +309,23 @@ export default function Profile() {
                         key={platform}
                         className="flex items-center justify-between bg-[#131d1a] px-4 py-3 rounded-lg border border-[#1b2b27] mb-3"
                     >
-                        <span className="text-gray-400 capitalize">{platform}</span>
-                        <input
-                            type="url"
-                            defaultValue={user[platform] || ""}
-                            className="bg-transparent w-2/3 border px-2 py-1 rounded-lg"
-                            onBlur={(e) =>
-                                handleSaveLink(platform, e.target.value)
-                            }
-                        />
+                        <span className="text-gray-400 capitalize w-24">{platform}</span>
+                        <div className="flex flex-1 items-center gap-2">
+                            <input
+                                type="url"
+                                value={socialLinks[platform]}
+                                onChange={(e) => setSocialLinks(prev => ({ ...prev, [platform]: e.target.value }))}
+                                className="bg-transparent flex-1 border border-[#1b2b27] px-2 py-1 rounded-lg text-green-300 text-sm focus:outline-none focus:border-green-500"
+                                placeholder={`Enter ${platform} URL`}
+                            />
+                            <button
+                                onClick={() => handleSaveLink(platform, socialLinks[platform])}
+                                disabled={savingLink === platform}
+                                className="bg-green-600/20 text-green-400 border border-green-600 px-3 py-1 rounded-md text-sm hover:bg-green-600 hover:text-black transition disabled:opacity-50"
+                            >
+                                {savingLink === platform ? <Loader2 className="animate-spin w-4 h-4" /> : "Save"}
+                            </button>
+                        </div>
                     </div>
                 ))}
             </div>

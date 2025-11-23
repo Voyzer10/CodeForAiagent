@@ -149,7 +149,7 @@ export default function JobFound() {
     }
 
     alert(`Successfully triggered apply for ${jobsToApply.length} job(s) one by one!`);
-     router.push(`/pages/apply?jobid=${jobid}`);
+     router.push(`/apply?jobid=${jobid}`);
   } catch (err) {
     console.error("Error applying:", err);
     alert("Error applying: " + err.message);
