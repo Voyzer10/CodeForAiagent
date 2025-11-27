@@ -1,35 +1,97 @@
+// backend/controllers/adminController.js
 const AdminUser = require("../model/AdminUser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// Simple recursive sanitizer: removes keys starting with '$' or containing '.'.
+// Also returns trimmed strings for string values.
+// This defends against typical NoSQL injection payload keys like {"$gt":""}
+function sanitizeObject(input) {
+  if (input === null || input === undefined) return input;
+
+  if (Array.isArray(input)) {
+    return input.map((item) => sanitizeObject(item));
+  }
+
+  if (typeof input === "object") {
+    const out = {};
+    for (const key of Object.keys(input)) {
+      // skip keys that could be operator injections or nested path injections
+      if (key.startsWith("$") || key.includes(".")) {
+        // drop this key entirely
+        continue;
+      }
+      const value = input[key];
+      out[key] = sanitizeObject(value);
+    }
+    return out;
+  }
+
+  if (typeof input === "string") {
+    return input.trim();
+  }
+
+  // numbers / booleans / other primitives
+  return input;
+}
+
+// Simple email regex check (reasonable for input validation).
+// If you prefer, use `validator` package's isEmail() in production.
+function isValidEmail(email) {
+  if (typeof email !== "string") return false;
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email.trim());
+}
+
 // 🔹 Admin register
 const registerAdmin = async (req, res) => {
   try {
-    console.log("Incoming body:", req.body); // 🔎 Debug here
-
-    const { name, password } = req.body;
-    const email = String(req.body.email);
+    // sanitize the incoming body first
+    const safeBody = sanitizeObject(req.body || {});
+    // whitelist allowed fields only
+    const name = typeof safeBody.name === "string" ? safeBody.name.trim() : "";
+    const password = typeof safeBody.password === "string" ? safeBody.password : "";
+    const emailRaw = safeBody.email;
+    const email = typeof emailRaw === "string" ? String(emailRaw).trim().toLowerCase() : "";
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    const adminExists = await AdminUser.findOne({ email });
-    if (adminExists) return res.status(400).json({ message: "Admin already exists" });
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // lookup using the sanitized email (string) only
+    const adminExists = await AdminUser.findOne({ email }).lean();
+    if (adminExists) {
+      return res.status(400).json({ message: "Admin already exists" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const admin = await AdminUser.create({
+    // explicitly construct the object we create in DB (no req.body spread)
+    const adminDoc = {
       name,
       email,
       password: hashedPassword,
       role: "admin",
-    });
+    };
 
-    res.status(201).json({ message: "Admin created successfully", admin });
+    const admin = await AdminUser.create(adminDoc);
+
+    // Avoid returning password; Mongoose doc contains it, so strip before sending
+    const adminSafe = {
+      id: admin._id,
+      name: admin.name,
+      email: admin.email,
+      role: admin.role,
+    };
+
+    res.status(201).json({ message: "Admin created successfully", admin: adminSafe });
   } catch (err) {
-    console.error(err);
+    console.error("registerAdmin error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -37,9 +99,20 @@ const registerAdmin = async (req, res) => {
 // 🔹 Admin login
 const loginAdmin = async (req, res) => {
   try {
-    const { password } = req.body;
-    const email = String(req.body.email);
+    const safeBody = sanitizeObject(req.body || {});
+    const password = typeof safeBody.password === "string" ? safeBody.password : "";
+    const emailRaw = safeBody.email;
+    const email = typeof emailRaw === "string" ? String(emailRaw).trim().toLowerCase() : "";
 
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password required" });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // Query with sanitized string only
     const admin = await AdminUser.findOne({ email });
     if (!admin) return res.status(400).json({ message: "Invalid credentials" });
 
@@ -53,12 +126,11 @@ const loginAdmin = async (req, res) => {
       { expiresIn: "1h" }
     );
 
-    // ✅ Save token in DB
+    // Save token in DB explicitly (only token field)
     admin.token = token;
     await admin.save();
-    console.log("Updated Admin:", admin);
 
-
+    // Set cookie (same as before)
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -74,23 +146,22 @@ const loginAdmin = async (req, res) => {
         name: admin.name,
         email: admin.email,
         role: admin.role,
-        token: admin.token, // ✅ return it
+        token: admin.token,
       },
     });
   } catch (err) {
-    console.error(err);
+    console.error("loginAdmin error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
 // 🔹 Get all admins (optional, only for super-admin if needed)
 const getAdmins = async (req, res) => {
   try {
-    const admins = await AdminUser.find().select("-password");
+    const admins = await AdminUser.find().select("-password -__v"); // avoid sending sensitive fields
     res.json(admins);
   } catch (err) {
-    console.error(err);
+    console.error("getAdmins error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
