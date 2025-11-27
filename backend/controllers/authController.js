@@ -7,47 +7,54 @@ const jwt = require('jsonwebtoken');
  * sanitizeObject(input)
  * - Recursively removes keys that start with '$' or contain '.' (NoSQL injection vectors).
  * - Trims string values.
- * - Returns a new sanitized object/array/value.
  */
 function sanitizeObject(input) {
   if (input === null || input === undefined) return input;
-
-  if (Array.isArray(input)) {
-    return input.map((item) => sanitizeObject(item));
-  }
-
+  if (Array.isArray(input)) return input.map(item => sanitizeObject(item));
   if (typeof input === 'object') {
     const out = {};
     for (const key of Object.keys(input)) {
-      // Reject operator keys or dotted-path keys
-      if (key.startsWith('$') || key.includes('.')) {
-        continue;
-      }
+      if (key.startsWith('$') || key.includes('.')) continue;
       out[key] = sanitizeObject(input[key]);
     }
     return out;
   }
-
-  if (typeof input === 'string') {
-    return input.trim();
-  }
-
-  return input; // number / boolean / other
+  if (typeof input === 'string') return input.trim();
+  return input;
 }
 
 /**
- * Basic email validator (sufficient for input validation; you can replace with validator.isEmail)
+ * Deterministic email validator (no regex) to avoid ReDoS risks.
+ * - Limits length to 254 characters (practical RFC limit).
+ * - Checks there is exactly one '@', no spaces, local and domain parts present,
+ *   domain contains at least one dot with characters on both sides, and no leading/trailing dot.
  */
 function isValidEmail(email) {
   if (typeof email !== 'string') return false;
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email.trim());
+  const trimmed = email.trim();
+  if (trimmed.length === 0 || trimmed.length > 254) return false;
+  if (/\s/.test(trimmed)) return false; // no whitespace allowed
+
+  const atCount = (trimmed.match(/@/g) || []).length;
+  if (atCount !== 1) return false;
+
+  const [local, domain] = trimmed.split('@');
+  if (!local || !domain) return false;
+
+  // domain must contain a dot (.) not at the start or end and with at least one char on both sides
+  const lastDot = domain.lastIndexOf('.');
+  if (lastDot <= 0 || lastDot === domain.length - 1) return false;
+
+  // simple character checks: local and domain must not start or end with '.'
+  if (local.startsWith('.') || local.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) {
+    return false;
+  }
+
+  return true;
 }
 
 /* ============================================================
    REGISTER USER
-   - Whitelist fields: name, email, password
-   - Do NOT pass req.body directly to User.create
 ============================================================ */
 const register = async (req, res) => {
   try {
@@ -57,7 +64,12 @@ const register = async (req, res) => {
     const name = typeof safeBody.name === 'string' ? safeBody.name.trim() : '';
     const password = typeof safeBody.password === 'string' ? safeBody.password : '';
     const emailRaw = safeBody.email;
-    const email = typeof emailRaw === 'string' ? String(emailRaw).trim().toLowerCase() : '';
+
+    // Early type and length guard to avoid heavy processing on large inputs
+    if (typeof emailRaw !== 'string' || emailRaw.length > 254) {
+      return res.status(400).json({ message: 'Invalid email' });
+    }
+    const email = String(emailRaw).trim().toLowerCase();
 
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -78,7 +90,6 @@ const register = async (req, res) => {
       });
     }
 
-    // Use sanitized email in query
     const userExists = await User.findOne({ email }).lean();
     if (userExists) {
       console.log('❌ User already exists:', email);
@@ -87,13 +98,11 @@ const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Explicitly construct the document we will insert
     const newUserDoc = {
       name,
       email,
       password: hashedPassword,
       role: 'user',
-      // do NOT accept user-supplied userId, tokens, or other sensitive fields
     };
 
     const user = await User.create(newUserDoc);
@@ -112,14 +121,17 @@ const register = async (req, res) => {
 
 /* ============================================================
    LOGIN USER
-   - Query only by sanitized email string.
 ============================================================ */
 const login = async (req, res) => {
   try {
     const safeBody = sanitizeObject(req.body || {});
     const password = typeof safeBody.password === 'string' ? safeBody.password : '';
     const emailRaw = safeBody.email;
-    const email = typeof emailRaw === 'string' ? String(emailRaw).trim().toLowerCase() : '';
+
+    if (typeof emailRaw !== 'string' || emailRaw.length > 254) {
+      return res.status(400).json({ message: 'Invalid email' });
+    }
+    const email = String(emailRaw).trim().toLowerCase();
 
     console.log('🔹 Login attempt for:', email);
 
@@ -151,13 +163,12 @@ const login = async (req, res) => {
 
     console.log('🔐 JWT created for user:', user.email);
 
-    // Send token as a secure HTTP-only cookie
     res.cookie('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 4 * 60 * 60 * 1000, // 4 hours
+      maxAge: 4 * 60 * 60 * 1000,
     });
 
     return res.json({
@@ -177,11 +188,9 @@ const login = async (req, res) => {
 
 /* ============================================================
    GET CURRENT USER
-   - Use req.user.id (should be set by auth middleware) and only query by that scalar id
 ============================================================ */
 const getCurrentUser = async (req, res) => {
   try {
-    // req.user should come from your auth middleware (decoded JWT)
     const requester = req.user;
     console.log('🔹 Fetching current user for id:', requester?.id);
 
@@ -189,7 +198,6 @@ const getCurrentUser = async (req, res) => {
       return res.status(401).json({ message: 'Unauthorized' });
     }
 
-    // Query using sanitized scalar only
     const user = await User.findOne({ userId: requester.id }).select('-password');
 
     if (!user) {
@@ -210,7 +218,6 @@ const getCurrentUser = async (req, res) => {
 const getUsers = async (req, res) => {
   try {
     console.log('🔹 Fetching all users');
-
     const users = await User.find().select('-password');
     return res.json(users);
   } catch (error) {
@@ -221,7 +228,6 @@ const getUsers = async (req, res) => {
 
 /* ============================================================
    GET USER BY ID
-   - Convert req.params.id to a Number and use that scalar in query
 ============================================================ */
 const getUserById = async (req, res) => {
   try {
@@ -257,7 +263,7 @@ const logoutUser = async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      path: '/', // IMPORTANT
+      path: '/',
     });
 
     console.log('✅ User logged out successfully');
@@ -275,9 +281,6 @@ const logoutUser = async (req, res) => {
   }
 };
 
-/* ============================================================
-   EXPORT CONTROLLERS
-============================================================ */
 module.exports = {
   register,
   login,

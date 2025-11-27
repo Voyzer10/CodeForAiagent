@@ -3,56 +3,64 @@ const AdminUser = require("../model/AdminUser");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
-// Simple recursive sanitizer: removes keys starting with '$' or containing '.'.
-// Also returns trimmed strings for string values.
-// This defends against typical NoSQL injection payload keys like {"$gt":""}
+/**
+ * sanitizeObject(input)
+ * - Recursively removes keys that start with '$' or contain '.' (NoSQL injection vectors).
+ * - Trims string values.
+ */
 function sanitizeObject(input) {
   if (input === null || input === undefined) return input;
-
-  if (Array.isArray(input)) {
-    return input.map((item) => sanitizeObject(item));
-  }
-
+  if (Array.isArray(input)) return input.map(item => sanitizeObject(item));
   if (typeof input === "object") {
     const out = {};
     for (const key of Object.keys(input)) {
-      // skip keys that could be operator injections or nested path injections
-      if (key.startsWith("$") || key.includes(".")) {
-        // drop this key entirely
-        continue;
-      }
-      const value = input[key];
-      out[key] = sanitizeObject(value);
+      if (key.startsWith("$") || key.includes(".")) continue;
+      out[key] = sanitizeObject(input[key]);
     }
     return out;
   }
-
-  if (typeof input === "string") {
-    return input.trim();
-  }
-
-  // numbers / booleans / other primitives
+  if (typeof input === "string") return input.trim();
   return input;
 }
 
-// Simple email regex check (reasonable for input validation).
-// If you prefer, use `validator` package's isEmail() in production.
+/**
+ * Deterministic email validator (no regex) to avoid ReDoS risks.
+ */
 function isValidEmail(email) {
   if (typeof email !== "string") return false;
-  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return re.test(email.trim());
+  const trimmed = email.trim();
+  if (trimmed.length === 0 || trimmed.length > 254) return false;
+  if (/\s/.test(trimmed)) return false;
+
+  const atCount = (trimmed.match(/@/g) || []).length;
+  if (atCount !== 1) return false;
+
+  const [local, domain] = trimmed.split('@');
+  if (!local || !domain) return false;
+
+  const lastDot = domain.lastIndexOf('.');
+  if (lastDot <= 0 || lastDot === domain.length - 1) return false;
+
+  if (local.startsWith('.') || local.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) {
+    return false;
+  }
+  return true;
 }
 
 // 🔹 Admin register
 const registerAdmin = async (req, res) => {
   try {
-    // sanitize the incoming body first
+    console.log("Incoming body (sanitized):", req.body && typeof req.body === 'object' ? Object.keys(req.body) : typeof req.body);
+
     const safeBody = sanitizeObject(req.body || {});
-    // whitelist allowed fields only
     const name = typeof safeBody.name === "string" ? safeBody.name.trim() : "";
     const password = typeof safeBody.password === "string" ? safeBody.password : "";
     const emailRaw = safeBody.email;
-    const email = typeof emailRaw === "string" ? String(emailRaw).trim().toLowerCase() : "";
+
+    if (typeof emailRaw !== "string" || emailRaw.length > 254) {
+      return res.status(400).json({ message: "Invalid email" });
+    }
+    const email = String(emailRaw).trim().toLowerCase();
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -62,16 +70,12 @@ const registerAdmin = async (req, res) => {
       return res.status(400).json({ message: "Invalid email format" });
     }
 
-    // lookup using the sanitized email (string) only
     const adminExists = await AdminUser.findOne({ email }).lean();
-    if (adminExists) {
-      return res.status(400).json({ message: "Admin already exists" });
-    }
+    if (adminExists) return res.status(400).json({ message: "Admin already exists" });
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // explicitly construct the object we create in DB (no req.body spread)
     const adminDoc = {
       name,
       email,
@@ -81,7 +85,6 @@ const registerAdmin = async (req, res) => {
 
     const admin = await AdminUser.create(adminDoc);
 
-    // Avoid returning password; Mongoose doc contains it, so strip before sending
     const adminSafe = {
       id: admin._id,
       name: admin.name,
@@ -91,7 +94,7 @@ const registerAdmin = async (req, res) => {
 
     res.status(201).json({ message: "Admin created successfully", admin: adminSafe });
   } catch (err) {
-    console.error("registerAdmin error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -102,35 +105,27 @@ const loginAdmin = async (req, res) => {
     const safeBody = sanitizeObject(req.body || {});
     const password = typeof safeBody.password === "string" ? safeBody.password : "";
     const emailRaw = safeBody.email;
-    const email = typeof emailRaw === "string" ? String(emailRaw).trim().toLowerCase() : "";
 
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email and password required" });
+    if (typeof emailRaw !== "string" || emailRaw.length > 254) {
+      return res.status(400).json({ message: "Invalid email" });
     }
+    const email = String(emailRaw).trim().toLowerCase();
 
-    if (!isValidEmail(email)) {
-      return res.status(400).json({ message: "Invalid email format" });
-    }
-
-    // Query with sanitized string only
     const admin = await AdminUser.findOne({ email });
     if (!admin) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
 
-    // Generate JWT
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: "admin" },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // Save token in DB explicitly (only token field)
     admin.token = token;
     await admin.save();
 
-    // Set cookie (same as before)
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -150,18 +145,18 @@ const loginAdmin = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("loginAdmin error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-// 🔹 Get all admins (optional, only for super-admin if needed)
+// 🔹 Get all admins
 const getAdmins = async (req, res) => {
   try {
-    const admins = await AdminUser.find().select("-password -__v"); // avoid sending sensitive fields
+    const admins = await AdminUser.find().select("-password");
     res.json(admins);
   } catch (err) {
-    console.error("getAdmins error:", err);
+    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 };
