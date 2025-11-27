@@ -128,7 +128,7 @@ export default function ContactSection() {
                   }}
                 >
                   <svg width="18" height="20" viewBox="0 0 18 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-                    <path d="M2 11L16 2L11 17L8 13L2 11Z" fill="#030604"/>
+                    <path d="M2 11L16 2L11 17L8 13L2 11Z" fill="#030604" />
                   </svg>
                   Send Message
                 </button>
@@ -143,6 +143,15 @@ export default function ContactSection() {
                 key={index}
                 className="bg-[#ffffff0c] border border-[#00fa924c] rounded-[12px] p-6 flex items-center gap-4 hover:border-[#00fa92] transition-all duration-200 cursor-pointer shadow-[0_8px_30px_rgba(0,0,0,0.6)]"
                 style={{ boxShadow: '0 8px 30px rgba(0,0,0,0.6), 0 0 20px rgba(0,250,146,0.06) inset' }}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    if (option.title === 'Email Us') {
+                      window.location.href = 'mailto:hello@jobscraperai.com';
+                    }
+                  }
+                }}
                 onClick={() => {
                   // Option click handler placeholder
                   if (option.title === 'Email Us') {
