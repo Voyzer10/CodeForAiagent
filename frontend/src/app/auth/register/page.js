@@ -1,9 +1,9 @@
 // src/app/auth/login/page.js
 'use client'
 
-import {Lock, Mail, User, ArrowRight, Eye, EyeOff} from 'lucide-react'
-import {useState} from 'react'
-import {useRouter} from 'next/navigation'
+import { Lock, Mail, User, ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import axios from 'axios'
 
 
@@ -20,7 +20,7 @@ export default function RegisterPage() {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     const handleChange = (e) => {
-        const {name, value, type, checked} = e.target
+        const { name, value, type, checked } = e.target
         setFormData((prev) => ({
             ...prev,
             [name]: type === 'checkbox' ? checked : value,
@@ -28,7 +28,9 @@ export default function RegisterPage() {
     }
 
     const handleSubmit = async (e) => {
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+        let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+        if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+        while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
         e.preventDefault()
         if (formData.password !== formData.confirmPassword) {
             alert('Passwords do not match')

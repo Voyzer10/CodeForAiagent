@@ -25,11 +25,13 @@ export default function JobFound() {
   // Track which recent search is active
   const [activeSearch, setActiveSearch] = useState("All Jobs");
 
- const router = useRouter();
+  const router = useRouter();
 
 
   useEffect(() => {
-     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+    let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
     const fetchUserAndJobs = async () => {
       try {
         setLoading(true);
@@ -125,36 +127,36 @@ export default function JobFound() {
   };
 
   const applyJobs = async (jobsToApply) => {
-  if (!jobsToApply.length) return alert("No jobs selected!");
+    if (!jobsToApply.length) return alert("No jobs selected!");
 
-  const webhookUrl = "https://n8n.techm.work.gd/webhook/apply-jobs";
+    const webhookUrl = "https://n8n.techm.work.gd/webhook/apply-jobs";
 
-  try {
-    for (let i = 0; i < jobsToApply.length; i++) {
-      const job = jobsToApply[i];
+    try {
+      for (let i = 0; i < jobsToApply.length; i++) {
+        const job = jobsToApply[i];
 
-      const res = await fetch(webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job }), // 👈 send one job at a time
-      });
+        const res = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ job }), // 👈 send one job at a time
+        });
 
-      if (!res.ok) {
-        console.error(`Failed to send job ${i + 1}`, await res.text());
-        continue;
+        if (!res.ok) {
+          console.error(`Failed to send job ${i + 1}`, await res.text());
+          continue;
+        }
+
+        console.log(`✅ Sent job ${i + 1}/${jobsToApply.length}`);
+        await new Promise((resolve) => setTimeout(resolve, 500)); // small delay (optional)
       }
 
-      console.log(`✅ Sent job ${i + 1}/${jobsToApply.length}`);
-      await new Promise((resolve) => setTimeout(resolve, 500)); // small delay (optional)
+      alert(`Successfully triggered apply for ${jobsToApply.length} job(s) one by one!`);
+      router.push(`/apply?jobid=${jobid}`);
+    } catch (err) {
+      console.error("Error applying:", err);
+      alert("Error applying: " + err.message);
     }
-
-    alert(`Successfully triggered apply for ${jobsToApply.length} job(s) one by one!`);
-     router.push(`/apply?jobid=${jobid}`);
-  } catch (err) {
-    console.error("Error applying:", err);
-    alert("Error applying: " + err.message);
-  }
-};
+  };
 
 
   // ✅ Switch between searches
@@ -205,8 +207,8 @@ export default function JobFound() {
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
                 className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === "All Jobs"
-                    ? "bg-green-700/50 border-green-600 text-green-200"
-                    : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                  ? "bg-green-700/50 border-green-600 text-green-200"
+                  : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
                   }`}
               >
                 All Jobs
@@ -219,8 +221,8 @@ export default function JobFound() {
                     key={idx}
                     onClick={() => handleSearchSelect(search)}
                     className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === search.name
-                        ? "bg-green-700/50 border-green-600 text-green-200"
-                        : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                      ? "bg-green-700/50 border-green-600 text-green-200"
+                      : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
                       }`}
                   >
                     {search.name}
@@ -238,8 +240,8 @@ export default function JobFound() {
               onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
               disabled={!selectedJobs.length}
               className={`px-3 py-2 text-sm rounded-md border transition ${selectedJobs.length
-                  ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
-                  : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+                ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
+                : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
                 }`}
             >
               Apply Now ({selectedJobs.length})
@@ -311,8 +313,8 @@ export default function JobFound() {
                   <div
                     key={job._id || idx}
                     className={`p-4 border rounded-xl shadow-md transition cursor-pointer ${isSelected
-                        ? "bg-green-900/20 border-green-500"
-                        : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
+                      ? "bg-green-900/20 border-green-500"
+                      : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
                       }`}
                     onClick={() => toggleJobSelection(jobId)}
                   >

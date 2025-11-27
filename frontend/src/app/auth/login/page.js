@@ -1,6 +1,6 @@
 "use client";
 
-import { useState} from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, Linkedin } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
@@ -11,7 +11,9 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
+  let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+  while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
   // NORMAL EMAIL/PASSWORD LOGIN
   const handleSubmit = async (e) => {
@@ -161,7 +163,7 @@ export default function LoginPage() {
                 Forgot your password?
               </a>
               <div className="mt-2 text-[14px] text-[#9CA3AF]">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
                 <a href="/auth/register" className="text-[#00FA92] font-medium">
                   Sign Up
                 </a>

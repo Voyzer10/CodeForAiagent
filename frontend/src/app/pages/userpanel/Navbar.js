@@ -10,7 +10,9 @@ export default function UserNavbar({ onSidebarToggle, className }) {
     const [error, setError] = useState("");
     const router = useRouter();
 
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
+    let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
     const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
 
@@ -30,7 +32,7 @@ export default function UserNavbar({ onSidebarToggle, className }) {
             }
         };
         fetchUser();
-    }, []);
+    }, [API_BASE_URL]);
 
     // 🔥 REAL LOGOUT FUNCTION
     const handleLogout = async () => {

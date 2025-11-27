@@ -12,7 +12,9 @@ export default function Price() {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   // your API base (keep as you currently have it)
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");;
+  let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+  while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
   const plans = [
     {
@@ -192,7 +194,7 @@ export default function Price() {
   return (
     <div className="min-h-screen bg-[#0b0e11] text-white flex flex-col items-center px-6 py-14">
       <UserNavbar onSidebarToggle={toggleSidebar} />
-            <Sidebar isOpen={sidebarOpen} />
+      <Sidebar isOpen={sidebarOpen} />
       <h1 className="text-4xl font-extrabold mb-4 mt-28">
         Choose Your <span className="text-[#00ff9d]">Plan</span>
       </h1>
@@ -219,9 +221,8 @@ export default function Price() {
           return (
             <div
               key={plan.name}
-              className={`bg-[#111827] border ${
-                selectedPlan === plan.name ? "border-[#00ff9d]" : "border-[#1b2b27]"
-              } rounded-2xl p-8 shadow-[0_0_20px_#00ff9d22] hover:scale-105 transition`}
+              className={`bg-[#111827] border ${selectedPlan === plan.name ? "border-[#00ff9d]" : "border-[#1b2b27]"
+                } rounded-2xl p-8 shadow-[0_0_20px_#00ff9d22] hover:scale-105 transition`}
             >
               <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
 
@@ -259,7 +260,7 @@ export default function Price() {
       <div className="mt-14 text-sm text-gray-400 max-w-2xl text-center">
         <p>
           Prices are shown in USD for clarity. Final charge is processed in INR at checkout using the
-          amount returned by the server (based on current conversion or your server's pricing logic).
+          amount returned by the server (based on current conversion or your server&apos;s pricing logic).
         </p>
       </div>
     </div>
