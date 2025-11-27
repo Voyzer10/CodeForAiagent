@@ -114,7 +114,10 @@ exports.googleLoginCallback = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
+    let frontend = process.env.FRONTEND_URL;
+    if (frontend.endsWith("/")) {
+      frontend = frontend.slice(0, -1);
+    }
     return res.redirect(`${frontend}/auth/google?token=${encodeURIComponent(token)}`);
 
   } catch (err) {
@@ -195,12 +198,18 @@ exports.gmailCallback = async (req, res) => {
 
     await user.save();
 
-    const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
+    let frontend = process.env.FRONTEND_URL;
+    if (frontend.endsWith("/")) {
+      frontend = frontend.slice(0, -1);
+    }
     return res.redirect(`${frontend}/gmail-connected?success=1`);
 
   } catch (err) {
     console.error("❌ Gmail Callback Error:", err);
-    const frontend = process.env.FRONTEND_URL.replace(/\/+$/, "");
+    let frontend = process.env.FRONTEND_URL;
+    if (frontend.endsWith("/")) {
+      frontend = frontend.slice(0, -1);
+    }
     return res.redirect(`${frontend}/gmail-connected?success=0`);
   }
 };
