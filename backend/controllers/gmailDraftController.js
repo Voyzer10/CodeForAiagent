@@ -157,11 +157,17 @@ exports.createGmailDraft = async (req, res) => {
     const raw = parts.join("\r\n");
 
     // Convert to base64url
-    const rawEncoded = Buffer.from(raw, "utf8")
+    let rawEncoded = Buffer.from(raw, "utf8")
       .toString("base64")
       .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
+      .replace(/\//g, "_");
+
+    // Remove padding manually to avoid ReDoS warning
+    if (rawEncoded.endsWith("==")) {
+      rawEncoded = rawEncoded.slice(0, -2);
+    } else if (rawEncoded.endsWith("=")) {
+      rawEncoded = rawEncoded.slice(0, -1);
+    }
 
     // STEP 7: Create draft
     console.log("📤 Creating draft via Gmail API...");

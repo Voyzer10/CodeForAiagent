@@ -7,7 +7,8 @@ const registerAdmin = async (req, res) => {
   try {
     console.log("Incoming body:", req.body); // 🔎 Debug here
 
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    const email = String(req.body.email);
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: "All fields are required" });
@@ -36,7 +37,8 @@ const registerAdmin = async (req, res) => {
 // 🔹 Admin login
 const loginAdmin = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = String(req.body.email);
 
     const admin = await AdminUser.findOne({ email });
     if (!admin) return res.status(400).json({ message: "Invalid credentials" });

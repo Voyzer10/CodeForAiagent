@@ -266,7 +266,7 @@ exports.getGmailTokens = async (req, res) => {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    const userId = req.params.userId;
+    const userId = String(req.params.userId);
     const user = await User.findOne({ userId });
 
     if (!user || !user.gmailRefreshToken) {

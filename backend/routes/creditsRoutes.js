@@ -15,12 +15,14 @@ console.log("✅ creditsRoutes.js successfully loaded");
 // });
 router.post("/deduct", async (req, res) => {
   try {
-    const { userId, jobCount, sessionId } = req.body;
+    const userId = Number(req.body.userId);
+    const jobCount = Number(req.body.jobCount);
+    const sessionId = String(req.body.sessionId);
 
-    if (!userId || jobCount == null) {
+    if (!userId || isNaN(userId) || isNaN(jobCount)) {
       return res
         .status(400)
-        .json({ message: "userId and jobCount are required" });
+        .json({ message: "userId and jobCount are required and must be numbers" });
     }
 
     logToFile(
