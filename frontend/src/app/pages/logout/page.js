@@ -6,8 +6,9 @@ import { Loader2, LogIn } from "lucide-react";
 export default function LogoutPage() {
   const [status, setStatus] = useState("processing"); // processing | done | error
 
-  const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/+$/, "");
+  let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+  while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
   useEffect(() => {
     const logoutUser = async () => {

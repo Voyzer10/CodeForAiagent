@@ -33,11 +33,12 @@ export default function UserPanel() {
 
   // Generate unique session ID when page loads
   useEffect(() => {
-    const newSessionId = `session_${Date.now()}_${Math.random()
-      .toString(36)
-      .substring(2, 9)}`;
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const newSessionId = `session_${Date.now()}_${array[0].toString(16)}`;
     setSessionId(newSessionId);
   }, []);
+
 
   // Auto-close Save Search Modal after 2 minutes
   useEffect(() => {

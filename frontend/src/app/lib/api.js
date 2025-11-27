@@ -2,8 +2,9 @@
 
 const RAW_BASE = process.env.NEXT_PUBLIC_API_BASE || "https://techm.work.gd/api/";
 
-// Remove trailing slash
-const API_BASE = RAW_BASE.replace(/\/+$/, "");
+let API_BASE = RAW_BASE || "";
+if (API_BASE.length > 2048) API_BASE = API_BASE.slice(0, 2048);
+while (API_BASE.endsWith('/')) API_BASE = API_BASE.slice(0, -1);
 
 class ApiError extends Error {
   constructor(message, { status, code, details, url, method, requestId, response, cause } = {}) {
