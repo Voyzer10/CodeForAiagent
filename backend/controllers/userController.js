@@ -4,7 +4,7 @@ const User = require("../model/User");
 const updateSocialLinks = async (req, res) => {
   try {
     // 1️⃣ Identify user correctly
-    const userId = req.params.userId || req.user?.id;
+    const userId = String(req.params.userId || req.user?.id);
     if (!userId) return res.status(400).json({ error: "Missing user ID" });
 
     // 2️⃣ Determine lookup field dynamically

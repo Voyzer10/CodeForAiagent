@@ -22,12 +22,14 @@ exports.createGmailDraft = async (req, res) => {
   console.log("=======================================\n");
 
   try {
-    const { userId, jobid, attachmentName, attachmentBase64 } = req.body;
+    const userId = Number(req.body.userId);
+    const jobid = String(req.body.jobid);
+    const { attachmentName, attachmentBase64 } = req.body;
 
     console.log("📥 Payload:", { userId, jobid, hasAttachment: !!attachmentBase64 });
 
-    if (!userId || !jobid) {
-      console.log("❌ Missing userId or jobid");
+    if (!userId || isNaN(userId) || !jobid || jobid === "undefined" || jobid === "null") {
+      console.log("❌ Missing or invalid userId/jobid");
       return res.status(400).json({ error: "userId and jobid required" });
     }
 

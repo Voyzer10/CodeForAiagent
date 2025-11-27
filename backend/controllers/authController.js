@@ -10,7 +10,8 @@ const register = async (req, res) => {
   try {
     console.log("🔹 Register request:", req.body);
 
-    const { name, email, password } = req.body;
+    const { name, password } = req.body;
+    const email = String(req.body.email);
 
     const passwordRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
@@ -56,7 +57,8 @@ const register = async (req, res) => {
 ============================================================ */
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { password } = req.body;
+    const email = String(req.body.email);
     console.log("🔹 Login attempt:", email);
 
     const user = await User.findOne({ email });
@@ -146,9 +148,10 @@ const getUsers = async (req, res) => {
 ============================================================ */
 const getUserById = async (req, res) => {
   try {
-    console.log("🔹 Fetching user by ID:", req.params.id);
+    const userId = Number(req.params.id);
+    console.log("🔹 Fetching user by ID:", userId);
 
-    const user = await User.findOne({ userId: req.params.id }).select('-password');
+    const user = await User.findOne({ userId }).select('-password');
 
     if (!user) {
       console.log("❌ User not found:", req.params.id);
