@@ -3,43 +3,54 @@ name: 🚀 Deploy to VPS
 on:
   push:
     branches:
-      - main
+      - main   # deploy on push to main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # 1) Checkout repo
       - name: 🧩 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🔐 Secure SSH Setup
-        shell: bash
+      # 2) Secure SSH setup
+      - name: 🔐 Setup SSH
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          # Write SSH private key securely
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" | tr -d '\r' | base64 --decode > ~/.ssh/id_ed25519
+          # 🔑 Write SSH private key directly (NO base64 decode)
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          # Strict host key validation
+          # Add VPS fingerprint
           ssh-keyscan -H 2.56.246.163 >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
+      # 3) Deploy to server
       - name: 🚀 Deploy to VPS
-        shell: bash
         run: |
           ssh -o StrictHostKeyChecking=yes -i ~/.ssh/id_ed25519 ansh@2.56.246.163 << 'EOF'
+
+          echo "🚀 Starting deployment..."
+
+          # Navigate to project
           cd ~/CodeForAiagent
+
+          # Pull latest changes
           git pull origin main
 
+          echo "📦 Updating backend..."
           cd backend
           npm ci --omit=dev
           pm2 restart backend || pm2 start server.js --name backend
 
+          echo "🎨 Updating frontend..."
           cd ../frontend
           npm ci --omit=dev
           npm run build
           pm2 restart frontend || pm2 start npm --name frontend -- start
+
+          echo "✅ Deployment complete!"
           EOF
