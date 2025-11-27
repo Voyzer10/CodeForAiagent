@@ -16,163 +16,132 @@ const crypto = require("crypto");
    POST /api/gmail/create-draft
    Body: { userId, jobid, attachmentName?, attachmentBase64? }
 ====================================================== */
+// Helper: Find Job
+async function findJob(jobid) {
+  let job = await Job.findOne({ jobid });
+  if (!job) job = await Job.findOne({ jobId: jobid });
+  if (!job) job = await Job.findOne({ id: jobid });
+
+  if (!job && mongoose.Types.ObjectId.isValid(jobid)) {
+    try {
+      job = await Job.findById(jobid);
+    } catch (e) {
+      // ignore
+    }
+  }
+  return job;
+}
+
+// Helper: Ensure Tokens
+async function ensureTokens(user) {
+  if (!user.gmailRefreshToken) {
+    return { error: "gmail_not_connected" };
+  }
+
+  let accessToken = decrypt(user.gmailAccessToken);
+  const refreshTokenPlain = decrypt(user.gmailRefreshToken);
+
+  const tokenExpired =
+    !user.gmailTokenExpiry || new Date(user.gmailTokenExpiry).getTime() < Date.now() + 60000;
+
+  if (!accessToken || tokenExpired) {
+    const refreshed = await refreshGoogleTokens(user);
+    if (refreshed.error) return refreshed;
+    accessToken = refreshed.accessToken;
+  }
+
+  return { accessToken, refreshTokenPlain };
+}
+
+// Helper: Build Raw Email
+function buildRawEmail(to, subject, body, attachmentName, attachmentBase64) {
+  const boundary = "----=_NodeMailBoundary_" + Date.now();
+  const parts = [
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `Content-Type: multipart/mixed; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    "",
+    body,
+    ""
+  ];
+
+  if (attachmentBase64 && attachmentName) {
+    let pureBase64 = attachmentBase64;
+    const prefixIndex = pureBase64.indexOf("base64,");
+    if (prefixIndex !== -1) {
+      pureBase64 = pureBase64.slice(prefixIndex + 7);
+    }
+
+    parts.push(
+      `--${boundary}`,
+      `Content-Type: application/octet-stream; name="${attachmentName}"`,
+      "Content-Transfer-Encoding: base64",
+      `Content-Disposition: attachment; filename="${attachmentName}"`,
+      "",
+      pureBase64,
+      ""
+    );
+  }
+
+  parts.push(`--${boundary}--`);
+  const raw = parts.join("\r\n");
+
+  let rawEncoded = Buffer.from(raw, "utf8")
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_");
+
+  if (rawEncoded.endsWith("==")) {
+    rawEncoded = rawEncoded.slice(0, -2);
+  } else if (rawEncoded.endsWith("=")) {
+    rawEncoded = rawEncoded.slice(0, -1);
+  }
+
+  return rawEncoded;
+}
+
 exports.createGmailDraft = async (req, res) => {
-  console.log("\n\n=======================================");
-  console.log("📩  createGmailDraft API HIT");
-  console.log("=======================================\n");
+  console.log("\n\n=======================================\n📩  createGmailDraft API HIT\n=======================================\n");
 
   try {
     const userId = Number(req.body.userId);
     const jobid = String(req.body.jobid);
     const { attachmentName, attachmentBase64 } = req.body;
 
-    console.log("📥 Payload:", { userId, jobid, hasAttachment: !!attachmentBase64 });
-
     if (!userId || isNaN(userId) || !jobid || jobid === "undefined" || jobid === "null") {
-      console.log("❌ Missing or invalid userId/jobid");
       return res.status(400).json({ error: "userId and jobid required" });
     }
 
-    // STEP 1: Fetch job — try multiple possible fields
-    console.log("🔍 Finding job by jobid:", jobid);
+    // 1. Find Job
+    const job = await findJob(jobid);
+    if (!job) return res.status(404).json({ error: "Job not found" });
 
-    let job = await Job.findOne({ jobid });
-    if (!job) job = await Job.findOne({ jobId: jobid });
-    if (!job) job = await Job.findOne({ id: jobid });
-
-    // try _id if jobid looks like an ObjectId
-    if (!job) {
-      try {
-        if (mongoose.Types.ObjectId.isValid(jobid)) {
-          job = await Job.findById(jobid);
-        }
-      } catch (e) {
-        // ignore
-      }
-    }
-
-    if (!job) {
-      console.log("❌ Job not found:", jobid);
-      return res.status(404).json({ error: "Job not found" });
-    }
-    console.log("✅ Job found:", { to: job.email_to, subject: job.email_subject });
-
-    // STEP 2: Fetch user
-    console.log("🔍 Finding user by userId:", userId);
+    // 2. Find User
     const user = await User.findOne({ userId });
-    if (!user) {
-      console.log("❌ User not found:", userId);
-      return res.status(404).json({ error: "User not found" });
-    }
-    console.log("✅ User found:", user.email);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // STEP 3: Ensure tokens present
-    if (!user.gmailRefreshToken) {
-      console.log("❌ Gmail not connected for user:", userId);
-      return res.status(400).json({ error: "gmail_not_connected" });
-    }
-
-    // Decrypt access token (may be null) and refresh token
-    let accessToken = decrypt(user.gmailAccessToken);
-    const refreshTokenPlain = decrypt(user.gmailRefreshToken);
-
-    console.log("🔎 Access token present?:", !!accessToken);
-
-    // STEP 4: Refresh access token if expired or missing
-    const tokenExpired =
-      !user.gmailTokenExpiry || new Date(user.gmailTokenExpiry).getTime() < Date.now() + 60000;
-
-    if (!accessToken || tokenExpired) {
-      console.log("⚠ Access token missing/expired → refreshing...");
-      const refreshed = await refreshGoogleTokens(user);
-
-      if (refreshed.error === "invalid_refresh_token") {
-        console.log("❌ Refresh token invalid - require reconnect");
-        return res.status(400).json({
-          error: "gmail_reconnect_needed",
-          message: "Gmail refresh token invalid. Please reconnect Gmail.",
-        });
+    // 3. Ensure Tokens
+    const tokens = await ensureTokens(user);
+    if (tokens.error) {
+      if (tokens.error === "invalid_refresh_token") {
+        return res.status(400).json({ error: "gmail_reconnect_needed", message: "Reconnect Gmail." });
       }
-
-      if (refreshed.error) {
-        console.log("❌ Token refresh failed:", refreshed);
-        return res.status(500).json({
-          error: "token_refresh_failed",
-          details: refreshed.details || refreshed.error,
-        });
-      }
-
-      accessToken = refreshed.accessToken;
+      return res.status(400).json(tokens);
     }
 
-    // STEP 5: Create OAuth client with (refreshed) access token
+    // 4. OAuth Client
     const clientId = decrypt(user.clientId);
     const clientSecret = decrypt(user.clientSecret);
-
-    if (!clientId || !clientSecret) {
-      console.log("❌ Missing clientId/clientSecret in user record");
-      return res.status(400).json({ error: "client_credentials_missing" });
-    }
+    if (!clientId || !clientSecret) return res.status(400).json({ error: "client_credentials_missing" });
 
     const oAuthClient = new google.auth.OAuth2(clientId, clientSecret);
-    oAuthClient.setCredentials({ access_token: accessToken, refresh_token: refreshTokenPlain });
+    oAuthClient.setCredentials({ access_token: tokens.accessToken, refresh_token: tokens.refreshTokenPlain });
 
-    // STEP 6: Build MIME message
-    const to = job.email_to;
-    const subject = job.email_subject;
-    const body = job.email_content || "";
-
-    console.log("📦 Building MIME for:", { to, subject, hasAttachment: !!attachmentBase64 });
-
-    // Use boundary and include plain text body. If you need html, adjust content-type.
-    const boundary = "----=_NodeMailBoundary_" + Date.now();
-    const parts = [];
-
-    parts.push(`To: ${to}`);
-    parts.push(`Subject: ${subject}`);
-    parts.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
-    parts.push("");
-    parts.push(`--${boundary}`);
-    parts.push(`Content-Type: text/plain; charset="UTF-8"`);
-    parts.push("");
-    parts.push(body);
-    parts.push("");
-
-    if (attachmentBase64 && attachmentName) {
-      // Strip potential "data:*;base64," prefix
-      let pureBase64 = attachmentBase64;
-      const prefixIndex = pureBase64.indexOf("base64,");
-      if (prefixIndex !== -1) {
-        pureBase64 = pureBase64.slice(prefixIndex + 7);
-      }
-
-      parts.push(`--${boundary}`);
-      parts.push(`Content-Type: application/octet-stream; name="${attachmentName}"`);
-      parts.push("Content-Transfer-Encoding: base64");
-      parts.push(`Content-Disposition: attachment; filename="${attachmentName}"`);
-      parts.push("");
-      parts.push(pureBase64);
-      parts.push("");
-    }
-
-    parts.push(`--${boundary}--`);
-    const raw = parts.join("\r\n");
-
-    // Convert to base64url
-    let rawEncoded = Buffer.from(raw, "utf8")
-      .toString("base64")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
-
-    // Remove padding manually to avoid ReDoS warning
-    if (rawEncoded.endsWith("==")) {
-      rawEncoded = rawEncoded.slice(0, -2);
-    } else if (rawEncoded.endsWith("=")) {
-      rawEncoded = rawEncoded.slice(0, -1);
-    }
-
-    // STEP 7: Create draft
-    console.log("📤 Creating draft via Gmail API...");
+    // 5. Create Draft
+    const rawEncoded = buildRawEmail(job.email_to, job.email_subject, job.email_content || "", attachmentName, attachmentBase64);
     const gmail = google.gmail({ version: "v1", auth: oAuthClient });
 
     const draft = await gmail.users.drafts.create({
@@ -181,27 +150,18 @@ exports.createGmailDraft = async (req, res) => {
     });
 
     const draftId = draft?.data?.id;
-    console.log("✅ Draft created:", draftId);
-
-    const gmailLink = `https://mail.google.com/mail/u/0/?fs=1&drafts=${draftId}`;
-
-    // Optionally mark job as 'sent' = true/flag or save tracking etc. (not changing here)
-
     return res.json({
       success: true,
       draftId,
-      gmailUrl: gmailLink,
+      gmailUrl: `https://mail.google.com/mail/u/0/?fs=1&drafts=${draftId}`,
       job,
     });
+
   } catch (err) {
-    console.error("❌ createGmailDraft ERROR:", err.response?.data || err.message || err);
-    // If error looks like invalid_grant during API call, notify reconnect
+    console.error("❌ createGmailDraft ERROR:", err.message);
     if (String(err.message || "").toLowerCase().includes("invalid_grant")) {
-      return res.status(400).json({
-        error: "gmail_reconnect_needed",
-        message: "Gmail credentials invalid. Please reconnect Gmail.",
-      });
+      return res.status(400).json({ error: "gmail_reconnect_needed", message: "Reconnect Gmail." });
     }
-    return res.status(500).json({ error: "Failed to create draft", details: err.message || String(err) });
+    return res.status(500).json({ error: "Failed to create draft", details: err.message });
   }
 };

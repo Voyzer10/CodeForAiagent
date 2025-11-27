@@ -79,11 +79,7 @@ export default function UserPanel() {
     if (loading) return;
 
     const num = Number(count);
-
-    if (!Number.isFinite(num) || num < 100 || num > 1000) {
-      setCountError("Count must be between 100–1000");
-      return;
-    }
+    if (!validateCount(num)) return;
 
     setCountError("");
     setError(null);
@@ -91,43 +87,7 @@ export default function UserPanel() {
     setShowSaveModal(true);
 
     try {
-      // Check active plan
-      const planRes = await fetch(`${API_BASE_URL}/payment/check`, {
-        credentials: "include",
-      });
-      const planData = await planRes.json();
-
-      if (!planData.hasPlan) {
-        setLoading(false);
-        router.push("/pages/price");
-        return;
-      }
-
-      // NEW: Check actual credit balance
-      const creditRes = await fetch(
-       `${API_BASE_URL}/credits/check?userId=${user.userId}`,
-        {
-          credentials: "include",
-        }
-      );
-
-      const creditData = await creditRes.json();
-
-      if (!creditRes.ok) {
-        setLoading(false);
-        setError(creditData.message || "Failed to check credits");
-        return;
-      }
-
-      if (creditData.credits < 100) {
-        setLoading(false);
-        alert(
-          `Not enough credits! You have ${creditData.credits}. Buy credits first.`
-        );
-        router.push("/pages/price");
-        return;
-      }
-
+      if (!(await checkPlanAndCredits(num))) return;
 
       const prompt = `
         Job Title: ${jobTitle}
@@ -137,32 +97,70 @@ export default function UserPanel() {
         Count: ${num}
       `;
 
-      const res = await fetch(`${API_BASE_URL}/userjobs/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ prompt, sessionId }),
-      });
-
-      if (!res.ok) throw new Error("Server error while enqueuing job");
-
-      const data = await res.json();
-      setResponse(data);
-
-      if (user?.userId) {
-        const jobRes = await fetch(
-          `${API_BASE_URL}/userjobs/${user.userId}`,
-          { credentials: "include" }
-        );
-        const jobData = await jobRes.json();
-        setUserJobs(jobData.jobs || []);
-      }
+      await submitJob(prompt, sessionId);
     } catch (err) {
       console.error("❌ Error submitting job:", err);
       setError(err.message);
     } finally {
       setLoading(false);
-      // ❌ removed auto-close timeout — modal stays open until user closes
+    }
+  };
+
+  const validateCount = (num) => {
+    if (!Number.isFinite(num) || num < 100 || num > 1000) {
+      setCountError("Count must be between 100–1000");
+      return false;
+    }
+    return true;
+  };
+
+  const checkPlanAndCredits = async (num) => {
+    // Check active plan
+    const planRes = await fetch(`${API_BASE_URL}/payment/check`, { credentials: "include" });
+    const planData = await planRes.json();
+
+    if (!planData.hasPlan) {
+      setLoading(false);
+      router.push("/pages/price");
+      return false;
+    }
+
+    // Check actual credit balance
+    const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${user.userId}`, { credentials: "include" });
+    const creditData = await creditRes.json();
+
+    if (!creditRes.ok) {
+      setLoading(false);
+      setError(creditData.message || "Failed to check credits");
+      return false;
+    }
+
+    if (creditData.credits < 100) {
+      setLoading(false);
+      alert(`Not enough credits! You have ${creditData.credits}. Buy credits first.`);
+      router.push("/pages/price");
+      return false;
+    }
+    return true;
+  };
+
+  const submitJob = async (prompt, sessionId) => {
+    const res = await fetch(`${API_BASE_URL}/userjobs/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ prompt, sessionId }),
+    });
+
+    if (!res.ok) throw new Error("Server error while enqueuing job");
+
+    const data = await res.json();
+    setResponse(data);
+
+    if (user?.userId) {
+      const jobRes = await fetch(`${API_BASE_URL}/userjobs/${user.userId}`, { credentials: "include" });
+      const jobData = await jobRes.json();
+      setUserJobs(jobData.jobs || []);
     }
   };
 
