@@ -11,7 +11,14 @@ export default function LogsPage() {
 
   // Fetch logs
   const fetchLogs = useCallback(async () => {
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL.replace(/\/+$/, "");
+    let API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    // defensive: cap length to avoid any giant string handling
+    if (API_BASE.length > 2048) API_BASE = API_BASE.slice(0, 2048);
+
+    // remove trailing slashes without regex
+    while (API_BASE.endsWith('/')) {
+      API_BASE = API_BASE.slice(0, -1);
+    }
 
     try {
       setLoading(true);
@@ -60,22 +67,20 @@ export default function LogsPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setView("normal")}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold ${
-              view === "normal"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold ${view === "normal"
                 ? "bg-[#00ff9d] text-[#0f172a]"
                 : "bg-[#00ff9d33] text-[#00ff9d]"
-            }`}
+              }`}
           >
             Normal
           </button>
 
           <button
             onClick={() => setView("error")}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold ${
-              view === "error"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold ${view === "error"
                 ? "bg-red-500 text-white"
                 : "bg-red-500/30 text-red-400"
-            }`}
+              }`}
           >
             Errors
           </button>
@@ -83,11 +88,10 @@ export default function LogsPage() {
           <button
             onClick={fetchLogs}
             disabled={loading}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${
-              loading
+            className={`px-4 py-2 rounded-lg text-sm font-semibold transition ${loading
                 ? "bg-[#00ff9d33] text-gray-400 cursor-not-allowed"
                 : "bg-[#00ff9d] text-[#0f172a] hover:bg-[#00cc80]"
-            }`}
+              }`}
           >
             {loading ? "Refreshing..." : "Refresh"}
           </button>
