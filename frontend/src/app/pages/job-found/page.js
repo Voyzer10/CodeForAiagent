@@ -211,7 +211,7 @@ export default function JobFound() {
                   : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
                   }`}
               >
-                All Jobs
+                All Jobs ({userJobs.length})
               </button>
 
               {/* Recent searches list */}
@@ -225,7 +225,7 @@ export default function JobFound() {
                       : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
                       }`}
                   >
-                    {search.name}
+                    {search.name} ({search.jobs?.length || 0})
                   </button>
                 ))
               ) : (

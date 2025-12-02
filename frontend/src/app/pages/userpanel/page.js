@@ -165,6 +165,8 @@ export default function UserPanel() {
       const jobData = await jobRes.json();
       setUserJobs(jobData.jobs || []);
     }
+
+    router.push("/pages/job-found");
   };
 
   return (

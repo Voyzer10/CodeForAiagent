@@ -17,11 +17,16 @@ let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
 while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
-export default function Sidebar({ isOpen, onSelectSearch }) {
+export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRecentSearches }) {
   const pathname = usePathname() || '/';
   const [recentSearches, setRecentSearches] = useState([]);
 
   useEffect(() => {
+    if (propRecentSearches) {
+      setRecentSearches(propRecentSearches);
+      return;
+    }
+
     const fetchSearches = async () => {
       try {
         if (!API_BASE_URL) return;
@@ -37,7 +42,7 @@ export default function Sidebar({ isOpen, onSelectSearch }) {
     };
 
     fetchSearches();
-  }, []); // unchanged: runs on mount only
+  }, [propRecentSearches]); // Run when prop changes or on mount
 
   // Helper to check active route
   const isActive = (href) => {
@@ -118,7 +123,7 @@ export default function Sidebar({ isOpen, onSelectSearch }) {
                 className={`inline-flex items-center justify-center w-9 h-9 rounded-md transition-all ${isActive('/pages/job-found') ? 'bg-gradient-to-r from-[#00fa92] to-[#4ade80] shadow-[0_8px_40px_rgba(0,250,146,0.12)]' : 'bg-transparent'
                   }`}
               >
-                <Briefcase className={`${isActive('/pages/job-found') ? 'text-[#04220e]' : 'text-[#9fffcf]' } w-4 h-4`} />
+                <Briefcase className={`${isActive('/pages/job-found') ? 'text-[#04220e]' : 'text-[#9fffcf]'} w-4 h-4`} />
               </span>
 
               <span className={`flex-1 text-sm ${isActive('/pages/job-found') ? 'text-[#eafff0] font-semibold' : 'text-[#dfe9e5]'}`}>
@@ -152,7 +157,7 @@ export default function Sidebar({ isOpen, onSelectSearch }) {
             </button>
           </li>
 
-          
+
 
           {/* Saved Jobs */}
           <li>
@@ -208,7 +213,7 @@ export default function Sidebar({ isOpen, onSelectSearch }) {
                 onClick={() => onSelectSearch?.(search)}
                 className="w-full text-left px-3 py-2 rounded-md bg-[#071a16] text-sm text-[#c7d7cf] hover:bg-[#062217] transition-colors"
               >
-                {search.name}
+                {search.name} ({search.jobs?.length || 0})
               </button>
             ))
           ) : (
@@ -225,7 +230,7 @@ export default function Sidebar({ isOpen, onSelectSearch }) {
             // keep functionality unchanged: you can wire actual logout logic elsewhere
             try {
               // example placeholder: clear cookies/localstorage if needed
-            } catch (e) {}
+            } catch (e) { }
           }}
           className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-gradient-to-r from-[#00fa92] to-[#4ade80] text-[#030604] font-semibold shadow-[0_10px_30px_rgba(0,250,146,0.12)]"
         >
