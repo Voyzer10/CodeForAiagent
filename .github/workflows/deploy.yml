@@ -36,7 +36,7 @@ jobs:
       - name: Test SSH connection
         shell: /usr/bin/bash -e {0}
         run: |
-          ssh -o StrictHostKeyChecking=yes -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@2.56.246.163 "echo 'SSH connection OK'"
+           ssh -o StrictHostKeyChecking=yes -i ~/.ssh/id_ed25519 ${{ secrets.SSH_USER }}@2.56.246.163 "echo 'SSH connection OK'"
 
       # Example deploy step
       - name: Deploy app
