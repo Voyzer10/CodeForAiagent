@@ -343,6 +343,7 @@ export default function UserPanel() {
                       throw new Error(data.error || "Failed to save search");
                     alert("Search saved successfully!");
                     setShowSaveModal(false);
+                    router.push("/pages/job-found");
                   } catch (err) {
                     alert(err.message || "Error saving search");
                   }
