@@ -1,61 +1,48 @@
-name: Deploy via SSH
+name: 🚀 Deploy to VPS
 
 on:
   push:
     branches:
-      - main
+      - main  # or whichever branch you deploy
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 🧩 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup SSH
-        shell: /usr/bin/bash -e {0}
+      - name: 🔑 Setup SSH
         run: |
-          # Create .ssh directory
+          # Create .ssh directory with safe permissions
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          # Write SSH private key from GitHub secret
-          # Add SSH_PRIVATE_KEY in: Settings -> Secrets and variables -> Actions
+          # Write SSH private key from secret (no extra formatting)
           printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          # (Optional) Show first line of key to verify header
-          head -n 1 ~/.ssh/id_ed25519 || true
-
-          # Add VPS fingerprint (don't fail workflow if host is unreachable)
-          ssh-keyscan -H 2.56.246.163 2>/dev/null >> ~/.ssh/known_hosts || echo "ssh-keyscan failed, continuing"
+          # Safely add VPS host key (hashed, no noisy stderr)
+          ssh-keyscan -H 2.56.246.163 2>/dev/null >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      - name: Test SSH connection
-        shell: /usr/bin/bash -e {0}
+      - name: 🚀 Deploy via SSH
         run: |
-          # SSH_USER is another secret (e.g. root, ubuntu, deploy, etc.)
-          ssh -o StrictHostKeyChecking=yes \
-              -i ~/.ssh/id_ed25519 \
-              "${{ secrets.SSH_USER }}@2.56.246.163" \
-              "echo 'SSH connection OK'"
+          ssh \
+            -o StrictHostKeyChecking=yes \
+            -o IdentitiesOnly=yes \
+            -i ~/.ssh/id_ed25519 \
+            ansh@2.56.246.163 << 'EOF'
+          cd ~/CodeForAiagent
+          git pull origin main
+          
+          cd backend
+          npm install --omit=dev
+          pm2 restart backend
 
-      - name: Deploy application
-        shell: /usr/bin/bash -e {0}
-        run: |
-          ssh -o StrictHostKeyChecking=yes \
-              -i ~/.ssh/id_ed25519 \
-              "${{ secrets.SSH_USER }}@2.56.246.163" << 'EOF'
-            # ===== Your server-side deploy commands here =====
-            cd /var/www/your-app-folder
-
-            # Example: git + build + restart
-            git pull origin main
-
-            # If Node app:
-            npm install --production
-            pm2 restart all || pm2 start ecosystem.config.js
-            # or: docker compose pull && docker compose up -d
-            # =================================================
+          cd ../frontend
+          npm install --omit=dev
+          npm run build
+          pm2 restart frontend
           EOF
