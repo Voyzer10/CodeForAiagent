@@ -20,10 +20,13 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          # 🔑 Write SSH private key directly (NO base64 decode)
-          echo -e "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          # 🔑 Write SSH private key using printf for better formatting
+          printf "%s\n" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
+          # Verify key format
+          head -n 1 ~/.ssh/id_ed25519
+          
           # Add VPS fingerprint
           ssh-keyscan -H 2.56.246.163 2>/dev/null >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
