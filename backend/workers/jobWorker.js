@@ -152,3 +152,4 @@ jobWorker.on("failed", (job, err) => {
 console.log("🚀 BullMQ Worker started (N8N mode), waiting for jobs...");
 
 module.exports = jobWorker;
+
