@@ -60,8 +60,14 @@ const getUserJobs = async (req, res) => {
   try {
     console.log("📡 Fetching jobs for UserID:", userId);
 
+    // ✅ Build query
+    const query = { UserID: userId };
+    if (req.query.sessionId) {
+      query.sessionId = req.query.sessionId;
+    }
+
     // ✅ Use correct DB field name
-    const jobs = await Job.find({ UserID: userId }).sort({ Posted_At: -1 });
+    const jobs = await Job.find(query).sort({ Posted_At: -1 });
 
     // ✅ No normalization — send directly
     res.status(200).json({ jobs });

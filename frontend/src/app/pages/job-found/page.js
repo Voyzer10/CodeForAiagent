@@ -10,6 +10,7 @@ export default function JobFound() {
   const [userJobs, setUserJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
+  const [sessions, setSessions] = useState([]); // ✅ Store user sessions
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,6 +48,14 @@ export default function JobFound() {
         setUser(userData.user);
         const userId = userData.user?.userId;
         if (!userId) throw new Error("User info missing");
+
+        // ✅ Extract sessions from history
+        if (userData.user?.plan?.history) {
+          const sortedSessions = userData.user.plan.history.sort(
+            (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
+          );
+          setSessions(sortedSessions);
+        }
 
         // 2️⃣ Get user jobs (All jobs)
         const jobsRes = await fetch(`${API_BASE_URL}/userjobs/${userId}`, {
@@ -159,7 +168,6 @@ export default function JobFound() {
   };
 
 
-  // ✅ Switch between searches
   const handleSearchSelect = (search) => {
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
@@ -169,6 +177,17 @@ export default function JobFound() {
       setFilteredJobs(flatJobs);
       setActiveSearch(search.name);
     }
+  };
+
+  // ✅ Handle Session Selection
+  const handleSessionSelect = (session) => {
+    const sessionId = session.sessionId;
+    const sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
+
+    // If no jobs found with sessionId, maybe try filtering by timestamp proximity? 
+    // For now, strict filtering.
+    setFilteredJobs(sessionJobs);
+    setActiveSearch(`Session: ${sessionId.substring(0, 8)}...`);
   };
 
   if (loading)
@@ -233,34 +252,64 @@ export default function JobFound() {
               )}
             </div>
           </div>
+        </div>
 
-          {/* 🧩 Action Buttons */}
-          <div className="flex gap-3 mt-6 md:mt-0">
-            <button
-              onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
-              disabled={!selectedJobs.length}
-              className={`px-3 py-2 text-sm rounded-md border transition ${selectedJobs.length
-                ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
-                : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
-                }`}
-            >
-              Apply Now ({selectedJobs.length})
-            </button>
-
-            <button
-              onClick={() => applyJobs(userJobs)}
-              className="px-3 py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition"
-            >
-              Apply All
-            </button>
-
-            <button
-              onClick={() => setSaveModalOpen(true)}
-              className="px-3 py-2 text-sm rounded-md bg-green-700/30 border border-green-700 text-green-300 hover:bg-green-700/50 transition"
-            >
-              Save This Search
-            </button>
+        {/* 🕒 Recent Sessions (New) */}
+        <div className="flex flex-col mt-4 w-full">
+          <h2 className="text-md font-bold text-green-400 mb-2 px-3">
+            Recent Sessions
+          </h2>
+          <div className="flex flex-wrap gap-2 px-3">
+            {sessions.length > 0 ? (
+              sessions.map((session, idx) => {
+                const sessId = session.sessionId || "";
+                const isActive = activeSearch && sessId && activeSearch.includes(sessId.substring(0, 8));
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => handleSessionSelect(session)}
+                    className={`px-3 py-1 rounded-md text-xs border transition ${isActive
+                        ? "bg-green-700/50 border-green-600 text-green-200"
+                        : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
+                      }`}
+                  >
+                    {new Date(session.timestamp).toLocaleString()}
+                    <span className="ml-1 opacity-70">({session.deducted} jobs)</span>
+                  </button>
+                );
+              })
+            ) : (
+              <p className="text-gray-500 text-xs italic">No recent sessions</p>
+            )}
           </div>
+        </div>
+
+        {/* 🧩 Action Buttons */}
+        <div className="flex gap-3 mt-6 md:mt-0">
+          <button
+            onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
+            disabled={!selectedJobs.length}
+            className={`px-3 py-2 text-sm rounded-md border transition ${selectedJobs.length
+              ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
+              : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+              }`}
+          >
+            Apply Now ({selectedJobs.length})
+          </button>
+
+          <button
+            onClick={() => applyJobs(userJobs)}
+            className="px-3 py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition"
+          >
+            Apply All
+          </button>
+
+          <button
+            onClick={() => setSaveModalOpen(true)}
+            className="px-3 py-2 text-sm rounded-md bg-green-700/30 border border-green-700 text-green-300 hover:bg-green-700/50 transition"
+          >
+            Save This Search
+          </button>
         </div>
 
         {/* ✅ Save Search Modal */}
@@ -421,6 +470,6 @@ export default function JobFound() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
