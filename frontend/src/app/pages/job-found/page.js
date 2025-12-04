@@ -25,6 +25,7 @@ export default function JobFound() {
 
   // Track which recent search is active
   const [activeSearch, setActiveSearch] = useState("All Jobs");
+  const [currentSession, setCurrentSession] = useState(null); // ✅ Track current session for renaming
 
   const router = useRouter();
 
@@ -204,10 +205,12 @@ export default function JobFound() {
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
       setActiveSearch("All Jobs");
+      setCurrentSession(null); // Clear session when switching to saved search
     } else if (search?.jobs) {
       const flatJobs = search.jobs.flatMap((j) => j.jobs || [j]);
       setFilteredJobs(flatJobs);
       setActiveSearch(search.name);
+      setCurrentSession(null); // Clear session when switching to saved search
     }
   };
 
@@ -215,6 +218,9 @@ export default function JobFound() {
   const handleSessionSelect = (session) => {
     const sessionId = session.sessionId;
     const sessionTime = new Date(session.timestamp).getTime();
+
+    // Store the current session for potential renaming
+    setCurrentSession(session);
 
     // 1️⃣ Try exact ID match
     let sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
@@ -233,7 +239,9 @@ export default function JobFound() {
     }
 
     setFilteredJobs(sessionJobs);
-    setActiveSearch(`Session: ${new Date(session.timestamp).toLocaleString()}`);
+    // Use sessionName if available, otherwise use timestamp
+    const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
+    setActiveSearch(`Session: ${displayName}`);
   };
 
   if (loading)
@@ -308,7 +316,8 @@ export default function JobFound() {
           <div className="flex flex-wrap gap-2 px-3">
             {sessions.length > 0 ? (
               sessions.map((session, idx) => {
-                const isActive = activeSearch === `Session: ${new Date(session.timestamp).toLocaleString()}`;
+                const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
+                const isActive = activeSearch === `Session: ${displayName}`;
                 return (
                   <button
                     key={idx}
@@ -318,7 +327,7 @@ export default function JobFound() {
                       : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
                       }`}
                   >
-                    {new Date(session.timestamp).toLocaleString()}
+                    {displayName}
                     <span className="ml-1 opacity-70">({session.deducted} jobs)</span>
                   </button>
                 );
