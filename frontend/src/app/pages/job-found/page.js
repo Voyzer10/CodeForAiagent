@@ -179,15 +179,29 @@ export default function JobFound() {
     }
   };
 
-  // ✅ Handle Session Selection
+  // ✅ Handle Session Selection with Fallback
   const handleSessionSelect = (session) => {
     const sessionId = session.sessionId;
-    const sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
+    const sessionTime = new Date(session.timestamp).getTime();
 
-    // If no jobs found with sessionId, maybe try filtering by timestamp proximity? 
-    // For now, strict filtering.
+    // 1️⃣ Try exact ID match
+    let sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
+
+    // 2️⃣ Fallback: Time-based matching (within 10 minutes) if ID match fails
+    if (sessionJobs.length === 0) {
+      console.warn("⚠️ No jobs found by Session ID. Trying time-based matching...");
+      sessionJobs = userJobs.filter((job) => {
+        // Use postedAt or createdAt (if available)
+        const jobTime = new Date(job.postedAt || job.createdAt || job.datePosted).getTime();
+        if (isNaN(jobTime)) return false;
+
+        const diff = Math.abs(jobTime - sessionTime);
+        return diff < 10 * 60 * 1000; // 10 minutes window
+      });
+    }
+
     setFilteredJobs(sessionJobs);
-    setActiveSearch(`Session: ${sessionId.substring(0, 8)}...`);
+    setActiveSearch(`Session: ${new Date(session.timestamp).toLocaleString()}`);
   };
 
   if (loading)
@@ -262,15 +276,14 @@ export default function JobFound() {
           <div className="flex flex-wrap gap-2 px-3">
             {sessions.length > 0 ? (
               sessions.map((session, idx) => {
-                const sessId = session.sessionId || "";
-                const isActive = activeSearch && sessId && activeSearch.includes(sessId.substring(0, 8));
+                const isActive = activeSearch === `Session: ${new Date(session.timestamp).toLocaleString()}`;
                 return (
                   <button
                     key={idx}
                     onClick={() => handleSessionSelect(session)}
                     className={`px-3 py-1 rounded-md text-xs border transition ${isActive
-                        ? "bg-green-700/50 border-green-600 text-green-200"
-                        : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
+                      ? "bg-green-700/50 border-green-600 text-green-200"
+                      : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
                       }`}
                   >
                     {new Date(session.timestamp).toLocaleString()}

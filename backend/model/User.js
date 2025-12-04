@@ -40,6 +40,13 @@ const userSchema = new mongoose.Schema(
       remainingJobs: { type: Number, default: 0 },
       purchasedAt: Date,
       expiresAt: Date,
+      history: [
+        {
+          sessionId: String,
+          deducted: Number,
+          timestamp: { type: Date, default: Date.now },
+        },
+      ],
     },
 
     customCategories: { type: [String], default: [] },
