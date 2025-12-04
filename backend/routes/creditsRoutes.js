@@ -18,6 +18,7 @@ router.post("/deduct", async (req, res) => {
     const userId = Number(req.body.userId);
     const jobCount = Number(req.body.jobCount);
     const sessionId = String(req.body.sessionId);
+    const sessionName = req.body.sessionName ? String(req.body.sessionName) : null;
 
     if (!userId || isNaN(userId) || isNaN(jobCount)) {
       return res
@@ -26,10 +27,10 @@ router.post("/deduct", async (req, res) => {
     }
 
     logToFile(
-      `[CreditsRoutes:DEBUG] Deduct request for userId=${userId}, jobCount=${jobCount}, sessionId=${sessionId}`
+      `[CreditsRoutes:DEBUG] Deduct request for userId=${userId}, jobCount=${jobCount}, sessionId=${sessionId}, sessionName=${sessionName}`
     );
 
-    const result = await deductCredits(userId, jobCount, sessionId);
+    const result = await deductCredits(userId, jobCount, sessionId, sessionName);
 
     if (result.success) {
       res.json(result);

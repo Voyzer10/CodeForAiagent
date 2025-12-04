@@ -43,6 +43,7 @@ const userSchema = new mongoose.Schema(
       history: [
         {
           sessionId: String,
+          sessionName: String, // ✅ Added sessionName
           deducted: Number,
           timestamp: { type: Date, default: Date.now },
         },

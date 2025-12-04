@@ -90,11 +90,22 @@ export default function JobFound() {
     fetchUserAndJobs();
   }, []);
 
-  // Save current search
+  // Save current search OR Rename Session
   const saveCurrentSearch = async () => {
     if (!newSearchName.trim()) {
-      alert("Please enter a search name.");
+      alert("Please enter a name.");
       return;
+    }
+
+    // Check if we are renaming a session
+    if (activeSearch.startsWith("Session: ")) {
+      // Find the current session object
+      // We need to store the current session object in state or derived
+      // But for now, let's assume we can find it in sessions array
+      // Actually, activeSearch string is "Session: <Date>" or "Session: <Name>"
+      // This is brittle. Let's rely on selectedSession state if we add it, or parse.
+
+      // Better approach: When clicking a session, store `currentSession` state.
     }
 
     const jobsPayload = filteredJobs.map((job) => ({
@@ -107,6 +118,27 @@ export default function JobFound() {
     }));
 
     try {
+      // If it's a session rename
+      if (currentSession) {
+        const res = await fetch(`${API_BASE_URL}/userjobs/sessions/rename`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ sessionId: currentSession.sessionId, newName: newSearchName }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to rename session");
+
+        // Update local state
+        setSessions(prev => prev.map(s => s.sessionId === currentSession.sessionId ? { ...s, sessionName: newSearchName } : s));
+        setActiveSearch(`Session: ${newSearchName}`);
+        setSaveModalOpen(false);
+        setNewSearchName("");
+        alert("Session renamed successfully!");
+        return;
+      }
+
+      // Normal Save Search
       const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

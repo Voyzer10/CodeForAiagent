@@ -2,7 +2,7 @@
 const User = require("../model/User");
 const { logToFile, logErrorToFile } = require("../logger");
 
-exports.deductCredits = async (userId, jobCount, sessionId = null) => {
+exports.deductCredits = async (userId, jobCount, sessionId = null, sessionName = null) => {
   try {
     const user = await User.findOne({ userId }); // ✅ find by your numeric userId
     if (!user) throw new Error(`User not found: ${userId}`);
@@ -52,6 +52,7 @@ exports.deductCredits = async (userId, jobCount, sessionId = null) => {
     user.plan.lowBalance = afterCredits < 100;
     user.plan.history.push({
       sessionId,
+      sessionName, // ✅ Store session name
       deducted: numericJobCount,
       timestamp: new Date(),
     });

@@ -176,6 +176,34 @@ const deleteSavedSearch = async (req, res) => {
   }
 };
 
+// 🟢 Rename a session in history
+const renameSession = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { sessionId, newName } = req.body;
+
+    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    if (!sessionId || !newName) return res.status(400).json({ error: "Session ID and new name required" });
+
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (user.plan && user.plan.history) {
+      const session = user.plan.history.find(h => h.sessionId === sessionId);
+      if (session) {
+        session.sessionName = newName;
+        await user.save();
+        return res.json({ success: true, message: "Session renamed", history: user.plan.history });
+      }
+    }
+
+    res.status(404).json({ error: "Session not found" });
+  } catch (err) {
+    console.error("Error renaming session:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
 
   updateSocialLinks,
@@ -185,6 +213,7 @@ module.exports = {
   getSavedSearches,
   saveSearch,
   deleteSavedSearch,
+  renameSession,
 };
 
 
