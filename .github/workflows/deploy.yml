@@ -3,7 +3,7 @@ name: 🚀 Deploy to VPS
 on:
   push:
     branches:
-      - main  # or whichever branch you deploy
+      - main
 
 jobs:
   deploy:
@@ -20,18 +20,23 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H 2.56.246.163 >> ~/.ssh/known_hosts
 
-      - name: 🚀 Deploy via SSH
+      - name: 🚀 Deploy to VPS
         run: |
-          ssh -i ~/.ssh/id_ed25519 ansh@2.56.246.163 << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519 ansh@2.56.246.163 << 'EOF'
+          set -e
+
           cd ~/CodeForAiagent
+          git reset --hard
           git pull origin main
-          
+
           cd backend
-          npm install --omit=dev
-          pm2 restart backend
+          npm ci --omit=dev
+          pm2 restart backend || pm2 start index.js --name backend
 
           cd ../frontend
-          npm install --omit=dev
+          npm ci --omit=dev
           npm run build
-          pm2 restart frontend
+          pm2 restart frontend || pm2 start npm --name frontend -- start
+
+          pm2 save
           EOF
