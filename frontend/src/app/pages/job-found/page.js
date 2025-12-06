@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 
 export default function JobFound() {
@@ -26,18 +26,25 @@ export default function JobFound() {
   // Track which recent search is active
   const [activeSearch, setActiveSearch] = useState("All Jobs");
   const [currentSession, setCurrentSession] = useState(null); // ✅ Track current session for renaming
+  const [isPolling, setIsPolling] = useState(false);
 
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const runIdParam = searchParams.get("runId");
+  const pollingRef = useRef(null);
 
 
   useEffect(() => {
     let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
     while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+    pollingRef.current = false; // Reset polling on mount/change
+
     const fetchUserAndJobs = async () => {
       try {
-        setLoading(true);
-        setError("");
+        if (!isPolling) setLoading(true);
+        // setError(""); // Keep error visible if polling fails?
 
         // 1️⃣ Get user
         const userRes = await fetch(`${API_BASE_URL}/auth/me`, {
@@ -51,14 +58,21 @@ export default function JobFound() {
         if (!userId) throw new Error("User info missing");
 
         // ✅ Extract sessions from history
+        let currentSessions = [];
         if (userData.user?.plan?.history) {
           const sortedSessions = userData.user.plan.history.sort(
             (a, b) => new Date(b.timestamp) - new Date(a.timestamp)
           );
           setSessions(sortedSessions);
+          currentSessions = sortedSessions;
         }
 
         // 2️⃣ Get user jobs (All jobs)
+        // If runIdParam is present, maybe we can filter server side? 
+        // But getUserJobs filters by query params.
+        // Let's fetch ALL for now to handle "Recent Sessions" UI correctly.
+        // Or if polling, we might want to be more specific.
+
         const jobsRes = await fetch(`${API_BASE_URL}/userjobs/${userId}`, {
           method: "GET",
           credentials: "include",
@@ -68,10 +82,38 @@ export default function JobFound() {
 
         if (Array.isArray(jobsData.jobs)) {
           setUserJobs(jobsData.jobs);
-          setFilteredJobs(jobsData.jobs); // ✅ show all jobs initially
+
+          // ✨ Handle Run ID Logic
+          if (runIdParam) {
+            console.log("🏃 [JobFound] Filtering by runId:", runIdParam);
+            // Find matching session
+            const sessionMatch = currentSessions.find(s => s.sessionId === runIdParam);
+            const jobsMatch = jobsData.jobs.filter(j => j.sessionId === runIdParam);
+
+            if (jobsMatch.length > 0 || sessionMatch) {
+              // Found!
+              setFilteredJobs(jobsMatch);
+              setActiveSearch(`Session: ${sessionMatch?.sessionName || runIdParam}`);
+              if (sessionMatch) setCurrentSession(sessionMatch);
+              setIsPolling(false); // Stop polling
+            } else {
+              // Not found yet... Poll?
+              console.log("⏳ [JobFound] Run ID not found in jobs yet. Polling...");
+              setFilteredJobs([]);
+              setActiveSearch(`Processing Run: ${runIdParam}...`);
+              setIsPolling(true);
+              // Trigger re-fetch in 5s
+              if (!pollingRef.current) {
+                pollingRef.current = setTimeout(fetchUserAndJobs, 5000);
+              }
+              return; // Exit here to avoid overriding loading state too early
+            }
+          } else {
+            setFilteredJobs(jobsData.jobs); // Default: show all
+          }
         }
 
-        if (jobsData.jobs?.length > 0) setSelectedJob(jobsData.jobs[0]);
+        if (jobsData.jobs?.length > 0 && !selectedJob) setSelectedJob(jobsData.jobs[0]);
 
         // 3️⃣ Get saved searches
         const searchesRes = await fetch(
@@ -83,13 +125,16 @@ export default function JobFound() {
       } catch (err) {
         console.error("[JobFound] fetch error:", err);
         setError(err.message || "Unknown error");
+        setIsPolling(false);
       } finally {
-        setLoading(false);
+        if (!isPolling) setLoading(false);
       }
     };
 
     fetchUserAndJobs();
-  }, []);
+
+    return () => clearTimeout(pollingRef.current);
+  }, [runIdParam]); // Re-run if runId changes
 
   // Save current search OR Rename Session
   const saveCurrentSearch = async () => {

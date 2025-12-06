@@ -130,7 +130,7 @@ const getSavedSearches = async (req, res) => {
 const saveSearch = async (req, res) => {
   try {
     const userId = req.user?.id;
-    const { name, jobs } = req.body;
+    const { name, jobs, runId, sessionId } = req.body;
 
     if (!userId) return res.status(400).json({ error: "Missing user ID" });
     if (!name) return res.status(400).json({ error: "Search name required" });
@@ -138,7 +138,7 @@ const saveSearch = async (req, res) => {
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const newSearch = { name, jobs, createdAt: new Date() };
+    const newSearch = { name, jobs, runId: runId || sessionId, createdAt: new Date() };
     user.savedSearches = user.savedSearches || [];
 
     user.savedSearches.unshift(newSearch);

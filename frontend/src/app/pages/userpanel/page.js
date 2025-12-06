@@ -87,7 +87,14 @@ export default function UserPanel() {
     setCountError("");
     setError(null);
     setLoading(true);
-    setShowSaveModal(true);
+    // Don't show save modal here immediately, triggered after success/processing or separate button?
+    // User request: "The UI must show a message 'Your job is under processing...' while n8n runs."
+    // Actually, normally we trigger the job, then go to results page.
+
+    // Generate a fresh runId for this specific run
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    const runId = `run_${Date.now()}_${array[0].toString(16)}`;
 
     try {
       if (!(await checkPlanAndCredits(num))) return;
@@ -100,11 +107,20 @@ export default function UserPanel() {
         Count: ${num}
       `;
 
-      await submitJob(prompt, sessionId);
+      // Show processing message
+      setResponse({ message: "Your job is under processing...", runId });
+
+      await submitJob(prompt, runId);
+
+      // Navigate to Job Found with runId
+      // Wait a moment for UX
+      setTimeout(() => {
+        router.push(`/pages/job-found?runId=${runId}`);
+      }, 2000);
+
     } catch (err) {
       console.error("❌ Error submitting job:", err);
       setError(err.message);
-    } finally {
       setLoading(false);
     }
   };
@@ -147,24 +163,20 @@ export default function UserPanel() {
     return true;
   };
 
-  const submitJob = async (prompt, sessionId) => {
+  const submitJob = async (prompt, runId) => {
+    // We send 'sessionId' as the key because backend expects it, but we pass our fresh runId
     const res = await fetch(`${API_BASE_URL}/userjobs/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ prompt, sessionId }),
+      body: JSON.stringify({ prompt, sessionId: runId, runId }), // Send both for compatibility
     });
 
     if (!res.ok) throw new Error("Server error while enqueuing job");
 
     const data = await res.json();
-    setResponse(data);
-
-    if (user?.userId) {
-      const jobRes = await fetch(`${API_BASE_URL}/userjobs/${user.userId}`, { credentials: "include" });
-      const jobData = await jobRes.json();
-      setUserJobs(jobData.jobs || []);
-    }
+    // data should contain acknowledgement
+    return data;
   };
 
   return (
@@ -279,6 +291,17 @@ export default function UserPanel() {
           </button>
         </form>
       </div>
+
+      {/* Response Message */}
+      {response && (
+        <div className="mt-6 w-full max-w-lg p-4 bg-green-900/40 border border-green-500/50 rounded-xl text-green-300 text-center shadow-[0_0_15px_#00ff9d22] animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="animate-spin text-green-400" size={24} />
+            <p className="font-semibold text-lg">{response.message}</p>
+            {response.runId && <p className="text-xs text-green-500/70 font-mono tracking-wider">Run ID: {response.runId}</p>}
+          </div>
+        </div>
+      )}
 
       {/* Save Search Modal */}
       {showSaveModal && (

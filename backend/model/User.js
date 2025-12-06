@@ -56,6 +56,7 @@ const userSchema = new mongoose.Schema(
       {
         name: String,
         jobs: Array,
+        runId: String, // ✅ Added runId
         createdAt: { type: Date, default: Date.now },
       },
     ],

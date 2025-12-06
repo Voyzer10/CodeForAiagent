@@ -28,8 +28,8 @@ const createJob = async (req, res) => {
       });
     }
 
-    // ✅ Generate unique session ID
-    const sessionId = `${userId}-${Date.now()}-${Math.random()
+    // ✅ Use provided Session ID / Run ID or Generate unique one
+    const sessionId = req.body.sessionId || req.body.runId || `${userId}-${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 9)}`;
 
