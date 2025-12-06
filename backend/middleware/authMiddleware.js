@@ -22,3 +22,4 @@ const auth = (req, res, next) => {
 };
 
 module.exports = auth;
+module.exports.protect = auth; // Alias for backward compatibility

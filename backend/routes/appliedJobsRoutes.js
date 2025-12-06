@@ -6,15 +6,15 @@ const {
     markJobAsApplied,
     checkJobApplied,
 } = require("../controllers/appliedJobsController");
-const { protect } = require("../middleware/authMiddleware");
+const auth = require("../middleware/authMiddleware");
 
 // Get all applied jobs for a user
-router.get("/user/:userId", protect, getAppliedJobs);
+router.get("/user/:userId", auth, getAppliedJobs);
 
 // Mark a job as applied
-router.post("/mark-applied", protect, markJobAsApplied);
+router.post("/mark-applied", auth, markJobAsApplied);
 
 // Check if a job has been applied to
-router.get("/check/:jobid", protect, checkJobApplied);
+router.get("/check/:jobid", auth, checkJobApplied);
 
 module.exports = router;

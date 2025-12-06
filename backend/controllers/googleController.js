@@ -185,6 +185,15 @@ exports.gmailCallback = async (req, res) => {
 
     const user = await User.findOne({ userId });
 
+    if (!user) {
+      console.error("❌ User not found for userId:", userId);
+      let frontend = process.env.FRONTEND_URL;
+      if (frontend.endsWith("/")) {
+        frontend = frontend.slice(0, -1);
+      }
+      return res.redirect(`${frontend}/gmail-connected?success=0`);
+    }
+
     user.gmailEmail = gmailEmail;
 
     // Update profile picture if available
