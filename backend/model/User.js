@@ -10,7 +10,6 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: false, default: "" },
-    profilePicture: { type: String, default: null }, // Google profile picture URL
 
 
     // Custom numeric userId
@@ -85,6 +84,8 @@ const userSchema = new mongoose.Schema(
     gmailTokenExpiry: { type: Date, default: null }, // when access token expires
 
     gmailConnectedAt: { type: Date, default: null }, // when user connected email
+
+    googlePicture: { type: String, default: null }, // Google profile picture URL
   },
   { timestamps: true }
 );

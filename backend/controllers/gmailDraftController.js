@@ -150,6 +150,12 @@ exports.createGmailDraft = async (req, res) => {
     });
 
     const draftId = draft?.data?.id;
+
+    // Mark job as applied (sent = true)
+    job.sent = true;
+    job.trackingId = String(userId);
+    await job.save();
+
     return res.json({
       success: true,
       draftId,

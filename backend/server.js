@@ -50,7 +50,8 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const logRoutes = require("./routes/logRoutes");
 const creditsRoutes = require("./routes/creditsRoutes");
 const n8nCallbackRoutes = require("./routes/n8nCallback");
-const createGmailDraft = require ("./routes/authRoutes")
+const createGmailDraft = require("./routes/authRoutes");
+const appliedJobsRoutes = require("./routes/appliedJobsRoutes");
 
 
 app.use(["/api/auth"], authRoutes);
@@ -61,7 +62,8 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/logs", logRoutes);
 app.use("/api/credits", creditsRoutes);
 app.use("/api/n8n-callback", n8nCallbackRoutes);
-app.use("/api",createGmailDraft);
+app.use("/api", createGmailDraft);
+app.use("/api/applied-jobs", appliedJobsRoutes);
 
 console.log("✅ Apify routes registered");
 

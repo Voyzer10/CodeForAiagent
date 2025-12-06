@@ -190,19 +190,20 @@ export default function Profile() {
               </button>
 
               <div className="w-[92px] h-[92px] bg-gradient-to-br from-[#002b1f] to-[#083126] rounded-xl flex items-center justify-center p-1">
-                {/* Avatar from Google account */}
+                {/* Avatar using Google profile picture */}
                 <div className="rounded-lg overflow-hidden w-[84px] h-[84px]">
-                  {user.profilePicture ? (
+                  {user.googlePicture ? (
                     <Image
-                      src={user.profilePicture}
+                      src={user.googlePicture}
                       width={84}
                       height={84}
                       alt="avatar"
-                      className="object-cover w-full h-full"
+                      className="object-cover"
+                      unoptimized
                     />
                   ) : (
-                    <div className="w-full h-full bg-[#0a3d2e] flex items-center justify-center text-2xl font-bold text-green-300">
-                      {user.name?.charAt(0).toUpperCase()}
+                    <div className="w-full h-full bg-gradient-to-br from-[#00fa92] to-[#4ade80] flex items-center justify-center text-[#030604] font-bold text-3xl">
+                      {user.name?.charAt(0) || 'U'}
                     </div>
                   )}
                 </div>
@@ -267,17 +268,18 @@ export default function Profile() {
                   {/* Avatar + change photo on right of this section (small) */}
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-20 h-20 rounded-lg overflow-hidden border border-[#113126]">
-                      {user.profilePicture ? (
+                      {user.googlePicture ? (
                         <Image
-                          src={user.profilePicture}
+                          src={user.googlePicture}
                           alt="avatar"
                           width={80}
                           height={80}
-                          className="object-cover w-full h-full"
+                          className="object-cover"
+                          unoptimized
                         />
                       ) : (
-                        <div className="w-full h-full bg-[#0a3d2e] flex items-center justify-center text-xl font-bold text-green-300">
-                          {user.name?.charAt(0).toUpperCase()}
+                        <div className="w-full h-full bg-gradient-to-br from-[#00fa92] to-[#4ade80] flex items-center justify-center text-[#030604] font-bold text-2xl">
+                          {user.name?.charAt(0) || 'U'}
                         </div>
                       )}
                     </div>

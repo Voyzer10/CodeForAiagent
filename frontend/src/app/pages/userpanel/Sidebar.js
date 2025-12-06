@@ -46,7 +46,7 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
     fetchSearches();
   }, [propRecentSearches]); // Run when prop changes or on mount
 
-  // Fetch user data
+  // Fetch user data for profile picture
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -88,18 +88,18 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
               boxShadow: '0 6px 24px rgba(0,250,146,0.08), 0 0 0 2px rgba(0,0,0,0.35) inset',
             }}
           >
-            {/* Avatar from Google account */}
-            {user?.profilePicture ? (
+            {user?.googlePicture ? (
               <Image
-                src={user.profilePicture}
+                src={user.googlePicture}
                 alt="User Avatar"
                 width={48}
                 height={48}
                 className="w-full h-full object-cover"
+                unoptimized
               />
             ) : (
-              <div className="w-full h-full bg-[#0a3d2e] flex items-center justify-center text-lg font-bold text-green-300">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              <div className="w-full h-full bg-gradient-to-br from-[#00fa92] to-[#4ade80] flex items-center justify-center text-[#030604] font-bold">
+                {user?.name?.charAt(0) || 'U'}
               </div>
             )}
           </div>
@@ -168,20 +168,24 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
             </Link>
           </li>
 
-          {/* Job Applied (button, no route) */}
+          {/* Job Applied */}
           <li>
-            <button
-              type="button"
-              onClick={() => {
-                /* keep existing UX: simply a button (no route) */
-              }}
-              className={`group w-full flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative ${pathname === '/job-applied' ? '' : 'hover:bg-[#062217]'}`}
+            <Link
+              href="/pages/applied-jobs"
+              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative ${isActive('/pages/applied-jobs') ? '' : 'hover:bg-[#062217]'}`}
             >
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-md">
-                <Send className="w-4 h-4 text-[#7b8f86]" />
+              <span className={`inline-flex items-center justify-center w-9 h-9 rounded-md ${isActive('/pages/applied-jobs') ? 'bg-gradient-to-r from-[#00fa92] to-[#4ade80] shadow-[0_8px_40px_rgba(0,250,146,0.12)]' : ''}`}>
+                <Send className={`w-4 h-4 ${isActive('/pages/applied-jobs') ? 'text-[#04220e]' : 'text-[#7b8f86]'}`} />
               </span>
-              <span className="flex text-sm text-[#dfe9e5]">Job Applied</span>
-            </button>
+              <span className={`flex-1 text-sm ${isActive('/pages/applied-jobs') ? 'text-[#eafff0] font-semibold' : 'text-[#dfe9e5]'}`}>Job Applied</span>
+              {isActive('/pages/applied-jobs') && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 rounded-r-md"
+                  style={{ background: 'linear-gradient(180deg,#00fa92,#4ade80)' }}
+                />
+              )}
+            </Link>
           </li>
 
 

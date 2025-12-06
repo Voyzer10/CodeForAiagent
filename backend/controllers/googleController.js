@@ -97,7 +97,7 @@ exports.googleLoginCallback = async (req, res) => {
 
     const email = googleUser.data.email;
     const name = googleUser.data.name || "New User";
-    const profilePicture = googleUser.data.picture || null; // Get Google profile picture
+    const picture = googleUser.data.picture || null;
 
     let user = await User.findOne({ email });
     if (!user) {
@@ -106,12 +106,14 @@ exports.googleLoginCallback = async (req, res) => {
         email,
         role: "user",
         password: crypto.randomBytes(32).toString("hex"),
-        profilePicture, // Save profile picture
+        googlePicture: picture,
       });
     } else {
-      // Update profile picture if user already exists
-      user.profilePicture = profilePicture;
-      await user.save();
+      // Update picture if user already exists
+      if (picture && user.googlePicture !== picture) {
+        user.googlePicture = picture;
+        await user.save();
+      }
     }
 
     const token = jwt.sign(
@@ -179,10 +181,16 @@ exports.gmailCallback = async (req, res) => {
     const oauth2 = google.oauth2({ auth: gmailClient, version: "v2" });
     const profile = await oauth2.userinfo.get();
     const gmailEmail = profile.data.email;
+    const picture = profile.data.picture || null;
 
     const user = await User.findOne({ userId });
 
     user.gmailEmail = gmailEmail;
+
+    // Update profile picture if available
+    if (picture) {
+      user.googlePicture = picture;
+    }
 
     // Only update access token if Google sent it
     if (tokens.access_token) {
