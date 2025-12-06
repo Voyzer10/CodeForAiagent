@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
 
 
-export default function JobFound() {
+function JobFoundContent() {
   const [user, setUser] = useState(null);
   const [userJobs, setUserJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -41,9 +41,9 @@ export default function JobFound() {
 
     pollingRef.current = false; // Reset polling on mount/change
 
-    const fetchUserAndJobs = async () => {
+    const fetchUserAndJobs = async (isPoll = false) => {
       try {
-        if (!isPolling) setLoading(true);
+        if (!isPoll) setLoading(true);
         // setError(""); // Keep error visible if polling fails?
 
         // 1️⃣ Get user
@@ -104,7 +104,7 @@ export default function JobFound() {
               setIsPolling(true);
               // Trigger re-fetch in 5s
               if (!pollingRef.current) {
-                pollingRef.current = setTimeout(fetchUserAndJobs, 5000);
+                pollingRef.current = setTimeout(() => fetchUserAndJobs(true), 5000);
               }
               return; // Exit here to avoid overriding loading state too early
             }
@@ -113,7 +113,9 @@ export default function JobFound() {
           }
         }
 
-        if (jobsData.jobs?.length > 0 && !selectedJob) setSelectedJob(jobsData.jobs[0]);
+        if (jobsData.jobs?.length > 0) {
+          setSelectedJob(prev => prev || jobsData.jobs[0]);
+        }
 
         // 3️⃣ Get saved searches
         const searchesRes = await fetch(
@@ -127,7 +129,7 @@ export default function JobFound() {
         setError(err.message || "Unknown error");
         setIsPolling(false);
       } finally {
-        if (!isPolling) setLoading(false);
+        if (!isPoll) setLoading(false);
       }
     };
 
@@ -595,5 +597,13 @@ export default function JobFound() {
         </div>
       </div>
     </div >
+  );
+}
+
+export default function JobFound() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0a0f0d] text-green-500">Loading search parameters...</div>}>
+      <JobFoundContent />
+    </Suspense>
   );
 }
