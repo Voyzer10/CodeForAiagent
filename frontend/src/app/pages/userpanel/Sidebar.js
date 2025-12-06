@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
@@ -20,6 +21,7 @@ while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRecentSearches }) {
   const pathname = usePathname() || '/';
   const [recentSearches, setRecentSearches] = useState([]);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     if (propRecentSearches) {
@@ -44,6 +46,25 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
     fetchSearches();
   }, [propRecentSearches]); // Run when prop changes or on mount
 
+  // Fetch user data
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        if (!API_BASE_URL) return;
+        const res = await fetch(`${API_BASE_URL}/auth/me`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (res.ok) setUser(data.user);
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   // Helper to check active route
   const isActive = (href) => {
     if (!href) return false;
@@ -67,18 +88,24 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
               boxShadow: '0 6px 24px rgba(0,250,146,0.08), 0 0 0 2px rgba(0,0,0,0.35) inset',
             }}
           >
-            {/* avatar - using local uploaded path (you will transform this in your tooling) */}
-            {/* <Image
-              src="/mnt/data/0d104d51-7131-450b-a3cc-498f77dbdcef.png"
-              alt="User Avatar"
-              width={48}
-              height={48}
-              className="w-full h-full object-cover"
-            /> */}
+            {/* Avatar from Google account */}
+            {user?.profilePicture ? (
+              <Image
+                src={user.profilePicture}
+                alt="User Avatar"
+                width={48}
+                height={48}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-[#0a3d2e] flex items-center justify-center text-lg font-bold text-green-300">
+                {user?.name?.charAt(0).toUpperCase() || 'U'}
+              </div>
+            )}
           </div>
 
           <div>
-            <div className="text-sm font-semibold text-[#ffffff] leading-tight">Alex Johnson</div>
+            <div className="text-sm font-semibold text-[#ffffff] leading-tight">{user?.name || 'Loading...'}</div>
             <div className="text-xs text-[#9ca3af]">Premium Member</div>
           </div>
         </div>

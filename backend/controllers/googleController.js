@@ -97,6 +97,7 @@ exports.googleLoginCallback = async (req, res) => {
 
     const email = googleUser.data.email;
     const name = googleUser.data.name || "New User";
+    const profilePicture = googleUser.data.picture || null; // Get Google profile picture
 
     let user = await User.findOne({ email });
     if (!user) {
@@ -105,7 +106,12 @@ exports.googleLoginCallback = async (req, res) => {
         email,
         role: "user",
         password: crypto.randomBytes(32).toString("hex"),
+        profilePicture, // Save profile picture
       });
+    } else {
+      // Update profile picture if user already exists
+      user.profilePicture = profilePicture;
+      await user.save();
     }
 
     const token = jwt.sign(

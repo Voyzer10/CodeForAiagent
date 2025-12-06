@@ -168,7 +168,7 @@ export default function Profile() {
   return (
     <div className="min-h-screen w-full bg-[#09110f] text-white font-['Inter']">
       <UserNavbar onSidebarToggle={toggleSidebar} />
-      <Sidebar isOpen={sidebarOpen} onSelectSearch={() => {}} />
+      <Sidebar isOpen={sidebarOpen} onSelectSearch={() => { }} />
 
       <main className="max-w-[1100px] mx-auto px-6 py-10">
         {/* Card wrapper */}
@@ -190,15 +190,21 @@ export default function Profile() {
               </button>
 
               <div className="w-[92px] h-[92px] bg-gradient-to-br from-[#002b1f] to-[#083126] rounded-xl flex items-center justify-center p-1">
-                {/* Avatar using uploaded local path (tool will transform) */}
+                {/* Avatar from Google account */}
                 <div className="rounded-lg overflow-hidden w-[84px] h-[84px]">
-                  <Image
-                    src="/mnt/data/4935fa87-22b3-4720-ac28-0ebfffa1bcb8.png"
-                    width={84}
-                    height={84}
-                    alt="avatar"
-                    className="object-cover"
-                  />
+                  {user.profilePicture ? (
+                    <Image
+                      src={user.profilePicture}
+                      width={84}
+                      height={84}
+                      alt="avatar"
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-[#0a3d2e] flex items-center justify-center text-2xl font-bold text-green-300">
+                      {user.name?.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -261,13 +267,19 @@ export default function Profile() {
                   {/* Avatar + change photo on right of this section (small) */}
                   <div className="flex flex-col items-center gap-2">
                     <div className="w-20 h-20 rounded-lg overflow-hidden border border-[#113126]">
-                      <Image
-                        src="/mnt/data/4935fa87-22b3-4720-ac28-0ebfffa1bcb8.png"
-                        alt="avatar"
-                        width={80}
-                        height={80}
-                        className="object-cover"
-                      />
+                      {user.profilePicture ? (
+                        <Image
+                          src={user.profilePicture}
+                          alt="avatar"
+                          width={80}
+                          height={80}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-[#0a3d2e] flex items-center justify-center text-xl font-bold text-green-300">
+                          {user.name?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
                     <label className="inline-flex items-center gap-2 px-3 py-1 rounded-md text-sm bg-[#063022] cursor-pointer">
                       Change Photo

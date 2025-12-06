@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     password: { type: String, required: false, default: "" },
+    profilePicture: { type: String, default: null }, // Google profile picture URL
 
 
     // Custom numeric userId
