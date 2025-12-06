@@ -202,20 +202,42 @@ export default function JobFound() {
 
 
   const handleSearchSelect = (search) => {
+    console.log("🔍 [handleSearchSelect] Called with:", search);
+
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
       setActiveSearch("All Jobs");
       setCurrentSession(null); // Clear session when switching to saved search
+      console.log("✅ Showing all jobs:", userJobs.length);
     } else if (search?.jobs) {
-      const flatJobs = search.jobs.flatMap((j) => j.jobs || [j]);
-      setFilteredJobs(flatJobs);
+      // Handle saved searches - jobs might be nested or flat
+      let jobsToShow = [];
+
+      if (Array.isArray(search.jobs)) {
+        // Check if jobs are nested (array of arrays) or flat
+        jobsToShow = search.jobs.flatMap((j) => {
+          // If j has a jobs property, it's nested
+          if (j.jobs && Array.isArray(j.jobs)) {
+            return j.jobs;
+          }
+          // Otherwise it's a flat job object
+          return j;
+        });
+      }
+
+      console.log("✅ Filtered jobs for search:", search.name, "Count:", jobsToShow.length);
+      setFilteredJobs(jobsToShow);
       setActiveSearch(search.name);
       setCurrentSession(null); // Clear session when switching to saved search
+    } else {
+      console.warn("⚠️ Unknown search format:", search);
     }
   };
 
   // ✅ Handle Session Selection with Fallback
   const handleSessionSelect = (session) => {
+    console.log("🕒 [handleSessionSelect] Called with session:", session);
+
     const sessionId = session.sessionId;
     const sessionTime = new Date(session.timestamp).getTime();
 
@@ -224,6 +246,7 @@ export default function JobFound() {
 
     // 1️⃣ Try exact ID match
     let sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
+    console.log(`🔍 Exact ID match for sessionId="${sessionId}": ${sessionJobs.length} jobs`);
 
     // 2️⃣ Fallback: Time-based matching (within 10 minutes) if ID match fails
     if (sessionJobs.length === 0) {
@@ -236,12 +259,14 @@ export default function JobFound() {
         const diff = Math.abs(jobTime - sessionTime);
         return diff < 10 * 60 * 1000; // 10 minutes window
       });
+      console.log(`🕐 Time-based match: ${sessionJobs.length} jobs found`);
     }
 
     setFilteredJobs(sessionJobs);
     // Use sessionName if available, otherwise use timestamp
     const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
     setActiveSearch(`Session: ${displayName}`);
+    console.log(`✅ Session "${displayName}" selected, showing ${sessionJobs.length} jobs`);
   };
 
   if (loading)
