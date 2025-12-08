@@ -60,10 +60,21 @@ const getUserJobs = async (req, res) => {
   try {
     console.log("📡 Fetching jobs for UserID:", userId);
 
-    // ✅ Build query
+    // ✅ Build query with robust ID matching
     const query = { UserID: userId };
-    if (req.query.sessionId) query.sessionId = req.query.sessionId;
-    if (req.query.runId) query.runId = req.query.runId;
+
+    if (req.query.runId) {
+      query.$or = [
+        { runId: req.query.runId },
+        { sessionId: req.query.runId },
+        { sessionid: req.query.runId }
+      ];
+    } else if (req.query.sessionId) {
+      query.$or = [
+        { sessionId: req.query.sessionId },
+        { sessionid: req.query.sessionId }
+      ];
+    }
 
     // ✅ Use correct DB field name
     const jobs = await Job.find(query).sort({ Posted_At: -1 });

@@ -88,7 +88,9 @@ function JobFoundContent() {
             console.log("🏃 [JobFound] Filtering by runId:", runIdParam);
             // Find matching session
             const sessionMatch = currentSessions.find(s => s.sessionId === runIdParam);
-            const jobsMatch = jobsData.jobs.filter(j => j.sessionId === runIdParam);
+            const jobsMatch = jobsData.jobs.filter(j =>
+              j.sessionId === runIdParam || j.runId === runIdParam || j.sessionid === runIdParam
+            );
 
             if (jobsMatch.length > 0 || sessionMatch) {
               // Found!
