@@ -6,14 +6,14 @@ const redisConnection = require("../config/redis");
 const { logToFile, logErrorToFile } = require("../logger");
 
 const BACKEND_URL = process.env.BACKEND_URL || "https://techm.work.gd/api/";
-const N8N_WEBHOOK_URL ="https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
+const N8N_WEBHOOK_URL = "https://n8n.techm.work.gd/webhook/c6ca6392-48e4-4e44-86b9-2f436894d108";
 
 const jobWorker = new Worker(
   "jobQueue",
   async (job) => {
-    const { prompt, userId, sessionId } = job.data;
-    console.log(`🧑‍💻 [Worker] Processing job: ${job.id} for user ${userId}`);
-    logToFile(`[Worker] Job ${job.id} started for user ${userId}`);
+    const { prompt, userId, sessionId, runId } = job.data;
+    console.log(`🧑‍💻 [Worker] Processing job: ${job.id} for user ${userId}, runId: ${runId}`);
+    logToFile(`[Worker] Job ${job.id} started for user ${userId}, runId: ${runId}`);
 
     // ✅ Step 1: Trigger N8N Workflow
     let parsed = {};
@@ -23,7 +23,7 @@ const jobWorker = new Worker(
       const n8nResponse = await fetch(N8N_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, sessionId, userId }),
+        body: JSON.stringify({ prompt, sessionId, userId, runId }), // ✅ Pass runId
       });
 
       if (!n8nResponse.ok) {
@@ -39,10 +39,11 @@ const jobWorker = new Worker(
       throw err;
     }
 
-    // ✅ Step 2: Extract jobCount, datasetId, sessionId
+    // ✅ Step 2: Extract jobCount, datasetId, sessionId, runId
     let jobCount = 0;
     let datasetId = "unknown";
     let sessionIdFromN8n = sessionId;
+    let runIdFromN8n = runId;
 
     try {
       if (Array.isArray(parsed)) {
@@ -52,10 +53,12 @@ const jobWorker = new Worker(
         jobCount = Number(jobInfo?.json?.jobCount || 0);
         datasetId = jobInfo?.json?.datasetId || "unknown";
         sessionIdFromN8n = jobInfo?.json?.sessionId || sessionId;
+        runIdFromN8n = jobInfo?.json?.runId || runId;
       } else if (parsed?.jobCount) {
         jobCount = Number(parsed.jobCount);
         datasetId = parsed.datasetId || "unknown";
         sessionIdFromN8n = parsed.sessionId || sessionId;
+        runIdFromN8n = parsed.runId || runId;
       }
 
       console.log("====================================================");
@@ -65,6 +68,7 @@ const jobWorker = new Worker(
       console.log(`👉 jobCount: ${jobCount}`);
       console.log(`👉 datasetId: ${datasetId}`);
       console.log(`👉 sessionId: ${sessionIdFromN8n}`);
+      console.log(`👉 runId: ${runIdFromN8n}`);
       console.log("====================================================");
     } catch (e) {
       console.error("⚠️ [Worker] Error parsing N8N response:", e.message);
@@ -92,7 +96,7 @@ const jobWorker = new Worker(
       const creditResponse = await fetch(`${BACKEND_URL}/api/credits/deduct`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, jobCount, sessionId: sessionIdFromN8n }),
+        body: JSON.stringify({ userId, jobCount, sessionId: sessionIdFromN8n, runId: runIdFromN8n }), // ✅ Pass runId
       });
 
       const creditData = await creditResponse.json();

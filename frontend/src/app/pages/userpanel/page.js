@@ -26,6 +26,7 @@ export default function UserPanel() {
   const [countError, setCountError] = useState("");
   const [sessionId, setSessionId] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [jobFinished, setJobFinished] = useState(false); // ✅ Track job completion
 
   let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
@@ -76,6 +77,36 @@ export default function UserPanel() {
     fetchUser();
   }, [API_BASE_URL]);
 
+  // ✅ Poll for Job Completion
+  useEffect(() => {
+    let interval;
+    if (response?.runId && !jobFinished) {
+      interval = setInterval(async () => {
+        try {
+          // Poll getUserJobs with runId
+          if (!user?.userId) return;
+
+          const res = await fetch(
+            `${API_BASE_URL}/userjobs/${user.userId}?runId=${response.runId}`,
+            { credentials: "include" }
+          );
+          const data = await res.json();
+
+          if (data.jobs && data.jobs.length > 0) {
+            setJobFinished(true);
+            setLoading(false);
+            setResponse(prev => ({ ...prev, message: "Job completed successfully!" }));
+            setUserJobs(data.jobs); // ✅ Store jobs
+            clearInterval(interval);
+          }
+        } catch (err) {
+          console.error("Polling error:", err);
+        }
+      }, 3000); // Poll every 3s
+    }
+    return () => clearInterval(interval);
+  }, [response, jobFinished, user, API_BASE_URL]);
+
   // Handle Submit
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -109,14 +140,11 @@ export default function UserPanel() {
 
       // Show processing message
       setResponse({ message: "Your job is under processing...", runId });
+      setJobFinished(false);
 
       await submitJob(prompt, runId);
 
-      // Navigate to Job Found with runId
-      // Wait a moment for UX
-      setTimeout(() => {
-        router.push(`/pages/job-found?runId=${runId}`);
-      }, 2000);
+      // ✅ Removed auto-redirect. Polling will handle UI update.
 
     } catch (err) {
       console.error("❌ Error submitting job:", err);
@@ -296,9 +324,30 @@ export default function UserPanel() {
       {response && (
         <div className="mt-6 w-full max-w-lg p-4 bg-green-900/40 border border-green-500/50 rounded-xl text-green-300 text-center shadow-[0_0_15px_#00ff9d22] animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="flex flex-col items-center gap-2">
-            <Loader2 className="animate-spin text-green-400" size={24} />
+            {!jobFinished ? (
+              <Loader2 className="animate-spin text-green-400" size={24} />
+            ) : (
+              <div className="text-2xl">🎉</div>
+            )}
             <p className="font-semibold text-lg">{response.message}</p>
             {response.runId && <p className="text-xs text-green-500/70 font-mono tracking-wider">Run ID: {response.runId}</p>}
+
+            {jobFinished && (
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => router.push(`/pages/job-found?runId=${response.runId}`)}
+                  className="bg-green-600 hover:bg-green-500 text-black px-4 py-2 rounded-md font-semibold text-sm transition"
+                >
+                  View Jobs
+                </button>
+                <button
+                  onClick={() => setShowSaveModal(true)}
+                  className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-semibold text-sm transition"
+                >
+                  Save Search
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -354,8 +403,9 @@ export default function UserPanel() {
                         credentials: "include",
                         body: JSON.stringify({
                           name: searchName,
-                          jobs: userJobs,
-                          sessionId,
+                          jobs: userJobs, // ✅ Now populated from polling
+                          runId: response?.runId,
+                          sessionId: sessionId,
                         }),
                       }
                     );

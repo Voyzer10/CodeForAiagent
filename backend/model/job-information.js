@@ -18,7 +18,8 @@ const JobSchema = new mongoose.Schema({
   inputUrl: { type: String },
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
   jobPosterId: { type: mongoose.Schema.Types.ObjectId, ref: 'JobPoster', required: true },
-  sessionId: { type: String } // ✅ Added sessionId for filtering
+  sessionId: { type: String }, // ✅ Added sessionId for filtering
+  runId: { type: String } // ✅ Added distinct runId
 }, { collection: "Job-Information", timestamps: true });
 
 module.exports = mongoose.models.Job || mongoose.model("Job", JobSchema);

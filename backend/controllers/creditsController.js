@@ -2,7 +2,7 @@
 const User = require("../model/User");
 const { logToFile, logErrorToFile } = require("../logger");
 
-exports.deductCredits = async (userId, jobCount, sessionId = null, sessionName = null) => {
+exports.deductCredits = async (userId, jobCount, sessionId = null, sessionName = null, runId = null) => {
   try {
     const user = await User.findOne({ userId }); // ✅ find by your numeric userId
     if (!user) throw new Error(`User not found: ${userId}`);
@@ -14,12 +14,12 @@ exports.deductCredits = async (userId, jobCount, sessionId = null, sessionName =
     const beforeCredits = user.plan.remainingJobs;
     const numericJobCount = Number(jobCount) || 0;
 
-    // Prevent duplicate deductions for same session
+    // Prevent duplicate deductions for same session/run
     const alreadyDeducted = user.plan.history.some(
-      (h) => h.sessionId === sessionId
+      (h) => (runId && h.runId === runId) || (sessionId && h.sessionId === sessionId)
     );
     if (alreadyDeducted) {
-      logToFile(`[CreditsController] Session ${sessionId} already processed.`);
+      logToFile(`[CreditsController] Session ${sessionId} / Run ${runId} already processed.`);
       return {
         success: true,
         message: "Session already processed",
@@ -52,6 +52,7 @@ exports.deductCredits = async (userId, jobCount, sessionId = null, sessionName =
     user.plan.lowBalance = afterCredits < 100;
     user.plan.history.push({
       sessionId,
+      runId, // ✅ Store runId
       sessionName, // ✅ Store session name
       deducted: numericJobCount,
       timestamp: new Date(),

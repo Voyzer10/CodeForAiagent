@@ -8,7 +8,7 @@ console.log("🔄 jobController loaded with debugging");
 // controller/createJob.js
 const createJob = async (req, res) => {
   const userId = req.user?.id || null;
-  const { prompt } = req.body;
+  const { prompt, sessionId, runId } = req.body;
 
   if (!userId) {
     return res.status(401).json({ message: "Unauthorized: Please log in" });
@@ -28,19 +28,19 @@ const createJob = async (req, res) => {
       });
     }
 
-    // ✅ Use provided Session ID / Run ID or Generate unique one
-    const sessionId = req.body.sessionId || req.body.runId || `${userId}-${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}`;
+    // ✅ Ensure we have valid IDs
+    const finalSessionId = sessionId || `${userId}-${Date.now()}`;
+    const finalRunId = runId || finalSessionId;
 
     // ✅ Queue the single job properly  
-    await jobQueue.add("processJob", { userId, prompt, sessionId });
+    await jobQueue.add("processJob", { userId, prompt, sessionId: finalSessionId, runId: finalRunId });
 
-    console.log("🧩 [createJob] Queued job for user:", userId, "session:", sessionId);
+    console.log("🧩 [createJob] Queued job for user:", userId, "session:", finalSessionId, "runId:", finalRunId);
 
     return res.status(202).json({
       message: "Job queued successfully",
-      sessionId,
+      sessionId: finalSessionId,
+      runId: finalRunId,
       userId,
     });
   } catch (err) {
@@ -62,9 +62,8 @@ const getUserJobs = async (req, res) => {
 
     // ✅ Build query
     const query = { UserID: userId };
-    if (req.query.sessionId) {
-      query.sessionId = req.query.sessionId;
-    }
+    if (req.query.sessionId) query.sessionId = req.query.sessionId;
+    if (req.query.runId) query.runId = req.query.runId;
 
     // ✅ Use correct DB field name
     const jobs = await Job.find(query).sort({ Posted_At: -1 });
