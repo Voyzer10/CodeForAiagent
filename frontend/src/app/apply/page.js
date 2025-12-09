@@ -76,11 +76,11 @@ function ApplyPageContent() {
 
       } catch (err) {
         // Check if 404
+        // Check if 404 (Job Not Found - Retry)
         if (err.response && err.response.status === 404) {
           const errorMsg = err.response.data?.error || "";
 
           // Case 1: Job not found (Expected during polling)
-          // If message is empty, we assume it might be job not found or just not ready
           if (!errorMsg || errorMsg === "Job not found" || errorMsg.includes("Job")) {
             if (retryCount.current < MAX_RETRIES && pollingActive.current) {
               console.log(`⏳ Job not found yet (Attempt ${retryCount.current + 1}/${MAX_RETRIES}). Retrying in 3s...`);
@@ -99,6 +99,16 @@ function ApplyPageContent() {
             console.error("❌ Critical: User not found during draft creation.");
             setLoading(false);
             setAlertState({ severity: "error", message: "User session invalid. Please log in again." });
+            return;
+          }
+        }
+
+        // Check if 400 (Invalid Data)
+        if (err.response && err.response.status === 400) {
+          const errorKey = err.response.data?.error;
+          if (errorKey === "Invalid email address") {
+            setLoading(false);
+            setAlertState({ severity: "error", message: "Couldn't find HR/jobPoster Email. This job can't be applied." });
             return;
           }
         }

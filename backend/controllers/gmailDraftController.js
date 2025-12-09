@@ -146,8 +146,17 @@ exports.createGmailDraft = async (req, res) => {
     const oAuthClient = new google.auth.OAuth2(clientId, clientSecret);
     oAuthClient.setCredentials({ access_token: tokens.accessToken, refresh_token: tokens.refreshTokenPlain });
 
+    // Validate Email
+    let toEmail = (job.email_to || "").trim();
+    console.log(`📧 Draft Details -> To: '${toEmail}', Subject: '${job.email_subject}'`);
+
+    if (!toEmail || !toEmail.includes("@")) {
+      console.error("❌ Invalid 'To' address:", toEmail);
+      return res.status(400).json({ error: "Invalid email address", details: "The job has no valid HR email found." });
+    }
+
     // 5. Create Draft
-    const rawEncoded = buildRawEmail(job.email_to, job.email_subject, job.email_content || "", attachmentName, attachmentBase64);
+    const rawEncoded = buildRawEmail(toEmail, job.email_subject, job.email_content || "", attachmentName, attachmentBase64);
     const gmail = google.gmail({ version: "v1", auth: oAuthClient });
 
     const draft = await gmail.users.drafts.create({
