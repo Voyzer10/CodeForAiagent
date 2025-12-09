@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useRouter } from "next/navigation";
+import Alert from "../../components/Alert";
 
 export default function UserPanel() {
   const router = useRouter();
@@ -28,6 +29,16 @@ export default function UserPanel() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [jobFinished, setJobFinished] = useState(false); // ✅ Track job completion
 
+  const [alertState, setAlertState] = useState(null);
+
+  // Auto-dismiss alert after 5 seconds
+  useEffect(() => {
+    if (alertState) {
+      const timer = setTimeout(() => setAlertState(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [alertState]);
+
   let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
   while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
@@ -39,7 +50,6 @@ export default function UserPanel() {
     const newSessionId = `session_${Date.now()}_${array[0].toString(16)}`;
     setSessionId(newSessionId);
   }, []);
-
 
   // Auto-close Save Search Modal after 2 minutes
   useEffect(() => {
@@ -118,9 +128,6 @@ export default function UserPanel() {
     setCountError("");
     setError(null);
     setLoading(true);
-    // Don't show save modal here immediately, triggered after success/processing or separate button?
-    // User request: "The UI must show a message 'Your job is under processing...' while n8n runs."
-    // Actually, normally we trigger the job, then go to results page.
 
     // Generate a fresh runId for this specific run
     const array = new Uint32Array(1);
@@ -143,8 +150,6 @@ export default function UserPanel() {
       setJobFinished(false);
 
       await submitJob(prompt, runId);
-
-      // ✅ Removed auto-redirect. Polling will handle UI update.
 
     } catch (err) {
       console.error("❌ Error submitting job:", err);
@@ -184,7 +189,7 @@ export default function UserPanel() {
 
     if (creditData.credits < 100) {
       setLoading(false);
-      alert(`Not enough credits! You have ${creditData.credits}. Buy credits first.`);
+      setAlertState({ severity: "error", message: `Not enough credits! You have ${creditData.credits}. Buy credits first.` });
       router.push("/pages/price");
       return false;
     }
@@ -211,6 +216,15 @@ export default function UserPanel() {
     <div className="relative min-h-screen bg-[#0a0f0d] text-white flex flex-col items-center px-4 pb-20">
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} />
+
+      {/* ALERT CONTAINER */}
+      {alertState && (
+        <div className="fixed top-24 z-50 w-full max-w-lg px-4">
+          <Alert severity={alertState.severity} onClose={() => setAlertState(null)}>
+            {alertState.message}
+          </Alert>
+        </div>
+      )}
 
       {/* Header */}
       <div className="text-center mt-24 mb-10">
@@ -390,7 +404,7 @@ export default function UserPanel() {
                   const searchName =
                     document.getElementById("searchNameInput")?.value.trim();
                   if (!searchName) {
-                    alert("Please enter a search name.");
+                    setAlertState({ severity: "warning", message: "Please enter a search name." });
                     return;
                   }
 
@@ -403,7 +417,7 @@ export default function UserPanel() {
                         credentials: "include",
                         body: JSON.stringify({
                           name: searchName,
-                          jobs: userJobs, // ✅ Now populated from polling
+                          jobs: userJobs,
                           runId: response?.runId,
                           sessionId: sessionId,
                         }),
@@ -412,11 +426,11 @@ export default function UserPanel() {
                     const data = await res.json();
                     if (!res.ok)
                       throw new Error(data.error || "Failed to save search");
-                    alert("Search saved successfully!");
+                    setAlertState({ severity: "success", message: "Search saved successfully!" });
                     setShowSaveModal(false);
                     router.push("/pages/job-found");
                   } catch (err) {
-                    alert(err.message || "Error saving search");
+                    setAlertState({ severity: "error", message: err.message || "Error saving search" });
                   }
                 }}
                 className="px-4 py-2 bg-green-600 text-black rounded-md hover:bg-green-500"

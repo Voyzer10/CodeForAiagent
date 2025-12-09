@@ -2,10 +2,10 @@
 'use client'
 
 import { Lock, Mail, User, ArrowRight, Eye, EyeOff } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-
+import Alert from '../../components/Alert'
 
 export default function RegisterPage() {
 
@@ -18,6 +18,15 @@ export default function RegisterPage() {
     })
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [alertState, setAlertState] = useState(null)
+
+    // Auto-dismiss alert after 5 seconds
+    useEffect(() => {
+        if (alertState) {
+            const timer = setTimeout(() => setAlertState(null), 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [alertState]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target
@@ -33,7 +42,7 @@ export default function RegisterPage() {
         while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
         e.preventDefault()
         if (formData.password !== formData.confirmPassword) {
-            alert('Passwords do not match')
+            setAlertState({ severity: 'warning', message: 'Passwords do not match' })
             return
         }
         // Terms text is shown below; no checkbox gate per UI spec
@@ -44,16 +53,27 @@ export default function RegisterPage() {
                 email: formData.email,
                 password: formData.password,
             })
-            alert('Registration successful! Please log in.')
-            router.push('/auth/login')
+            setAlertState({ severity: 'success', message: 'Registration successful! Please log in.' })
+            // Delay redirect slightly to show success message
+            setTimeout(() => router.push('/auth/login'), 1500)
         } catch (error) {
             console.error(error)
-            alert(error?.response?.data?.message || 'Registration failed')
+            setAlertState({ severity: 'error', message: error?.response?.data?.message || 'Registration failed' })
         }
     }
 
     return (
         <div className="min-h-screen md:min-h-[1150px] w-full relative flex items-center justify-center bg-[#030604] px-4 pb-12">
+
+            {/* Alert Container */}
+            {alertState && (
+                <div className="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+                    <Alert severity={alertState.severity} onClose={() => setAlertState(null)}>
+                        {alertState.message}
+                    </Alert>
+                </div>
+            )}
+
             {/* Figma background dots and soft circles */}
             <div className="pointer-events-none absolute inset-0 hidden md:flex items-center justify-center">
                 <div className="relative" style={{ width: 1440, height: 1440 }}>

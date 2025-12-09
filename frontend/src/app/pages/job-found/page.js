@@ -3,14 +3,14 @@ import { useState, useEffect, useRef, Suspense } from "react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
-
+import Alert from "../../components/Alert"; // Imported Alert
 
 function JobFoundContent() {
   const [user, setUser] = useState(null);
   const [userJobs, setUserJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
   const [recentSearches, setRecentSearches] = useState([]);
-  const [sessions, setSessions] = useState([]); // ✅ Store user sessions
+  const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -21,11 +21,14 @@ function JobFoundContent() {
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [newSearchName, setNewSearchName] = useState("");
 
+  // New Alert State
+  const [alertState, setAlertState] = useState(null);
+
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
   // Track which recent search is active
   const [activeSearch, setActiveSearch] = useState("All Jobs");
-  const [currentSession, setCurrentSession] = useState(null); // ✅ Track current session for renaming
+  const [currentSession, setCurrentSession] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
 
   const router = useRouter();
@@ -33,20 +36,25 @@ function JobFoundContent() {
   const runIdParam = searchParams.get("runId");
   const pollingRef = useRef(null);
 
+  // Auto-dismiss alert
+  useEffect(() => {
+    if (alertState) {
+      const timer = setTimeout(() => setAlertState(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [alertState]);
 
   useEffect(() => {
     let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
     while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
-    pollingRef.current = false; // Reset polling on mount/change
+    pollingRef.current = false;
 
     const fetchUserAndJobs = async (isPoll = false) => {
       try {
         if (!isPoll) setLoading(true);
-        // setError(""); // Keep error visible if polling fails?
 
-        // 1️⃣ Get user
         const userRes = await fetch(`${API_BASE_URL}/auth/me`, {
           method: "GET",
           credentials: "include",
@@ -57,7 +65,6 @@ function JobFoundContent() {
         const userId = userData.user?.userId;
         if (!userId) throw new Error("User info missing");
 
-        // ✅ Extract sessions from history
         let currentSessions = [];
         if (userData.user?.plan?.history) {
           const sortedSessions = userData.user.plan.history.sort(
@@ -66,12 +73,6 @@ function JobFoundContent() {
           setSessions(sortedSessions);
           currentSessions = sortedSessions;
         }
-
-        // 2️⃣ Get user jobs (All jobs)
-        // If runIdParam is present, maybe we can filter server side? 
-        // But getUserJobs filters by query params.
-        // Let's fetch ALL for now to handle "Recent Sessions" UI correctly.
-        // Or if polling, we might want to be more specific.
 
         const jobsRes = await fetch(`${API_BASE_URL}/userjobs/${userId}`, {
           method: "GET",
@@ -83,35 +84,30 @@ function JobFoundContent() {
         if (Array.isArray(jobsData.jobs)) {
           setUserJobs(jobsData.jobs);
 
-          // ✨ Handle Run ID Logic
           if (runIdParam) {
             console.log("🏃 [JobFound] Filtering by runId:", runIdParam);
-            // Find matching session
             const sessionMatch = currentSessions.find(s => s.sessionId === runIdParam);
             const jobsMatch = jobsData.jobs.filter(j =>
               j.sessionId === runIdParam || j.runId === runIdParam || j.sessionid === runIdParam
             );
 
             if (jobsMatch.length > 0 || sessionMatch) {
-              // Found!
               setFilteredJobs(jobsMatch);
               setActiveSearch(`Session: ${sessionMatch?.sessionName || runIdParam}`);
               if (sessionMatch) setCurrentSession(sessionMatch);
-              setIsPolling(false); // Stop polling
+              setIsPolling(false);
             } else {
-              // Not found yet... Poll?
               console.log("⏳ [JobFound] Run ID not found in jobs yet. Polling...");
               setFilteredJobs([]);
               setActiveSearch(`Processing Run: ${runIdParam}...`);
               setIsPolling(true);
-              // Trigger re-fetch in 5s
               if (!pollingRef.current) {
                 pollingRef.current = setTimeout(() => fetchUserAndJobs(true), 5000);
               }
-              return; // Exit here to avoid overriding loading state too early
+              return;
             }
           } else {
-            setFilteredJobs(jobsData.jobs); // Default: show all
+            setFilteredJobs(jobsData.jobs);
           }
         }
 
@@ -119,7 +115,6 @@ function JobFoundContent() {
           setSelectedJob(prev => prev || jobsData.jobs[0]);
         }
 
-        // 3️⃣ Get saved searches
         const searchesRes = await fetch(
           `${API_BASE_URL}/userjobs/searches/${userId}`,
           { method: "GET", credentials: "include" }
@@ -138,24 +133,17 @@ function JobFoundContent() {
     fetchUserAndJobs();
 
     return () => clearTimeout(pollingRef.current);
-  }, [runIdParam]); // Re-run if runId changes
+  }, [runIdParam]);
 
-  // Save current search OR Rename Session
   const saveCurrentSearch = async () => {
     if (!newSearchName.trim()) {
-      alert("Please enter a name.");
+      setAlertState({ severity: "warning", message: "Please enter a name." });
       return;
     }
 
     // Check if we are renaming a session
     if (activeSearch.startsWith("Session: ")) {
-      // Find the current session object
-      // We need to store the current session object in state or derived
-      // But for now, let's assume we can find it in sessions array
-      // Actually, activeSearch string is "Session: <Date>" or "Session: <Name>"
-      // This is brittle. Let's rely on selectedSession state if we add it, or parse.
-
-      // Better approach: When clicking a session, store `currentSession` state.
+      // logic handled below
     }
 
     const jobsPayload = filteredJobs.map((job) => ({
@@ -167,8 +155,11 @@ function JobFoundContent() {
       link: job.link || job.applyUrl || "",
     }));
 
+    let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
     try {
-      // If it's a session rename
       if (currentSession) {
         const res = await fetch(`${API_BASE_URL}/userjobs/sessions/rename`, {
           method: "PUT",
@@ -179,16 +170,14 @@ function JobFoundContent() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Failed to rename session");
 
-        // Update local state
         setSessions(prev => prev.map(s => s.sessionId === currentSession.sessionId ? { ...s, sessionName: newSearchName } : s));
         setActiveSearch(`Session: ${newSearchName}`);
         setSaveModalOpen(false);
         setNewSearchName("");
-        alert("Session renamed successfully!");
+        setAlertState({ severity: "success", message: "Session renamed successfully!" });
         return;
       }
 
-      // Normal Save Search
       const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -202,10 +191,10 @@ function JobFoundContent() {
       setRecentSearches((prev) => [data.savedSearch, ...prev.slice(0, 9)]);
       setSaveModalOpen(false);
       setNewSearchName("");
-      alert("Search saved successfully!");
+      setAlertState({ severity: "success", message: "Search saved successfully!" });
     } catch (err) {
       console.error("[JobFound] saveCurrentSearch error:", err);
-      alert(err.message || "Error saving search");
+      setAlertState({ severity: "error", message: err.message || "Error saving search" });
     }
   };
 
@@ -218,9 +207,15 @@ function JobFoundContent() {
   };
 
   const applyJobs = async (jobsToApply) => {
-    if (!jobsToApply.length) return alert("No jobs selected!");
+    if (!jobsToApply.length) {
+      setAlertState({ severity: "warning", message: "No jobs selected!" });
+      return;
+    }
 
     const webhookUrl = "https://n8n.techm.work.gd/webhook/apply-jobs";
+    let lastJobId = null;
+    let successCount = 0;
+    let noEmailCount = 0;
 
     try {
       for (let i = 0; i < jobsToApply.length; i++) {
@@ -229,26 +224,56 @@ function JobFoundContent() {
         const res = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ job }), // 👈 send one job at a time
+          body: JSON.stringify({ job }),
         });
 
+        // Try to parse JSON response
+        const result = await res.json().catch(() => ({}));
+
         if (!res.ok) {
-          console.error(`Failed to send job ${i + 1}`, await res.text());
+          console.error(`Failed to send job ${i + 1}`, result);
           continue;
         }
 
-        console.log(`✅ Sent job ${i + 1}/${jobsToApply.length}`);
-        await new Promise((resolve) => setTimeout(resolve, 500)); // small delay (optional)
+        if (result.sent === "no_email_found") {
+          if (jobsToApply.length === 1) {
+            setAlertState({
+              severity: "error",
+              message: "Coudn't find HR/ jobPoster Email .This job can't be applied."
+            });
+            return;
+          }
+          noEmailCount++;
+        } else {
+          successCount++;
+          lastJobId = job._id || job.id || job.jobId;
+        }
+
+        console.log(`✅ Processed job ${i + 1}/${jobsToApply.length}`);
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      alert(`Successfully triggered apply for ${jobsToApply.length} job(s) one by one!`);
-      router.push(`/apply?jobid=${jobid}`);
+      if (successCount > 0) {
+        setAlertState({
+          severity: "success",
+          message: `Application started for ${successCount} job(s). Please check your drafts.`
+        });
+
+        if (lastJobId) {
+          router.push(`/apply?jobid=${lastJobId}`);
+        }
+      } else if (noEmailCount > 0) {
+        setAlertState({
+          severity: "error",
+          message: "Coudn't find HR/ jobPoster Email for selected job(s). These jobs can't be applied."
+        });
+      }
+
     } catch (err) {
       console.error("Error applying:", err);
-      alert("Error applying: " + err.message);
+      setAlertState({ severity: "error", message: "Error applying: " + err.message });
     }
   };
-
 
   const handleSearchSelect = (search) => {
     console.log("🔍 [handleSearchSelect] Called with:", search);
@@ -256,20 +281,16 @@ function JobFoundContent() {
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
       setActiveSearch("All Jobs");
-      setCurrentSession(null); // Clear session when switching to saved search
+      setCurrentSession(null);
       console.log("✅ Showing all jobs:", userJobs.length);
     } else if (search?.jobs) {
-      // Handle saved searches - jobs might be nested or flat
       let jobsToShow = [];
 
       if (Array.isArray(search.jobs)) {
-        // Check if jobs are nested (array of arrays) or flat
         jobsToShow = search.jobs.flatMap((j) => {
-          // If j has a jobs property, it's nested
           if (j.jobs && Array.isArray(j.jobs)) {
             return j.jobs;
           }
-          // Otherwise it's a flat job object
           return j;
         });
       }
@@ -277,42 +298,36 @@ function JobFoundContent() {
       console.log("✅ Filtered jobs for search:", search.name, "Count:", jobsToShow.length);
       setFilteredJobs(jobsToShow);
       setActiveSearch(search.name);
-      setCurrentSession(null); // Clear session when switching to saved search
+      setCurrentSession(null);
     } else {
       console.warn("⚠️ Unknown search format:", search);
     }
   };
 
-  // ✅ Handle Session Selection with Fallback
   const handleSessionSelect = (session) => {
     console.log("🕒 [handleSessionSelect] Called with session:", session);
 
     const sessionId = session.sessionId;
     const sessionTime = new Date(session.timestamp).getTime();
 
-    // Store the current session for potential renaming
     setCurrentSession(session);
 
-    // 1️⃣ Try exact ID match
     let sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
     console.log(`🔍 Exact ID match for sessionId="${sessionId}": ${sessionJobs.length} jobs`);
 
-    // 2️⃣ Fallback: Time-based matching (within 10 minutes) if ID match fails
     if (sessionJobs.length === 0) {
       console.warn("⚠️ No jobs found by Session ID. Trying time-based matching...");
       sessionJobs = userJobs.filter((job) => {
-        // Use postedAt or createdAt (if available)
         const jobTime = new Date(job.postedAt || job.createdAt || job.datePosted).getTime();
         if (isNaN(jobTime)) return false;
 
         const diff = Math.abs(jobTime - sessionTime);
-        return diff < 10 * 60 * 1000; // 10 minutes window
+        return diff < 10 * 60 * 1000;
       });
       console.log(`🕐 Time-based match: ${sessionJobs.length} jobs found`);
     }
 
     setFilteredJobs(sessionJobs);
-    // Use sessionName if available, otherwise use timestamp
     const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
     setActiveSearch(`Session: ${displayName}`);
     console.log(`✅ Session "${displayName}" selected, showing ${sessionJobs.length} jobs`);
@@ -341,16 +356,22 @@ function JobFoundContent() {
         onSelectSearch={handleSearchSelect}
       />
 
+      {/* ALERT CONTAINER */}
+      {alertState && (
+        <div className="fixed top-20 right-5 z-50 w-full max-w-md">
+          <Alert severity={alertState.severity} onClose={() => setAlertState(null)}>
+            {alertState.message}
+          </Alert>
+        </div>
+      )}
+
       <div className="flex-1 p-6 md:p-10">
-        {/* HEADER */}
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
-          {/* 🔍 Recent Searches */}
           <div className="flex ">
             <h2 className="text-md font-bold text-green-400 mb-2  px-3 pt-1.5">
               Saved Searches
             </h2>
             <div className="flex flex-wrap gap-2">
-              {/* All Jobs button */}
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
                 className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === "All Jobs"
@@ -361,7 +382,6 @@ function JobFoundContent() {
                 All Jobs ({userJobs.length})
               </button>
 
-              {/* Recent searches list */}
               {recentSearches.length > 0 ? (
                 recentSearches.map((search, idx) => (
                   <button
@@ -382,7 +402,6 @@ function JobFoundContent() {
           </div>
         </div>
 
-        {/* 🕒 Recent Sessions (New) */}
         <div className="flex flex-col mt-4 w-full">
           <h2 className="text-md font-bold text-green-400 mb-2 px-3">
             Recent Sessions
@@ -412,7 +431,6 @@ function JobFoundContent() {
           </div>
         </div>
 
-        {/* 🧩 Action Buttons */}
         <div className="flex gap-3 mt-6 md:mt-0">
           <button
             onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
@@ -440,7 +458,6 @@ function JobFoundContent() {
           </button>
         </div>
 
-        {/* ✅ Save Search Modal */}
         {saveModalOpen && (
           <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
             <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg">
@@ -472,9 +489,7 @@ function JobFoundContent() {
           </div>
         )}
 
-        {/* JOBS GRID + DETAIL PANEL */}
         <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
-          {/* Left: Job list */}
           <div className="w-1/3 m-2 grid gap-4 grid-cols-1 lg:grid-cols-1 overflow-y-auto no-scrollbar">
             {filteredJobs.length > 0 ? (
               filteredJobs.map((job, idx) => {
@@ -546,7 +561,6 @@ function JobFoundContent() {
             )}
           </div>
 
-          {/* Right: Job detail */}
           <div className="w-3/4 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e]">
             {selectedJob ? (
               <div>
