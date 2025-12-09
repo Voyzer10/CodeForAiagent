@@ -75,20 +75,35 @@ function ApplyPageContent() {
         pollingActive.current = false;
 
       } catch (err) {
-        console.error("❌ Draft creation attempt failed:", err.message);
-
-        // Check if 404 (Job Not Found likely)
+        // Check if 404
         if (err.response && err.response.status === 404) {
-          if (retryCount.current < MAX_RETRIES && pollingActive.current) {
-            retryCount.current += 1;
-            setTimeout(createDraft, 3000); // Retry after 3s
-            return;
-          } else {
+          const errorMsg = err.response.data?.error || "";
+
+          // Case 1: Job not found (Expected during polling)
+          // If message is empty, we assume it might be job not found or just not ready
+          if (!errorMsg || errorMsg === "Job not found" || errorMsg.includes("Job")) {
+            if (retryCount.current < MAX_RETRIES && pollingActive.current) {
+              console.log(`⏳ Job not found yet (Attempt ${retryCount.current + 1}/${MAX_RETRIES}). Retrying in 3s...`);
+              retryCount.current += 1;
+              setTimeout(createDraft, 3000);
+              return;
+            } else {
+              setLoading(false);
+              setAlertState({ severity: "error", message: "Job data not found after waiting. Please try again later." });
+              return;
+            }
+          }
+
+          // Case 2: User not found (Critical)
+          if (errorMsg === "User not found") {
+            console.error("❌ Critical: User not found during draft creation.");
             setLoading(false);
-            setAlertState({ severity: "error", message: "Job data not found after waiting. Please try again later." });
+            setAlertState({ severity: "error", message: "User session invalid. Please log in again." });
             return;
           }
         }
+
+        console.error("❌ Draft creation attempt failed:", err.message, err.response?.data);
 
         // Other errors
         setLoading(false);
