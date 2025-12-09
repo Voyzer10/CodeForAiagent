@@ -246,7 +246,8 @@ function JobFoundContent() {
           noEmailCount++;
         } else {
           successCount++;
-          lastJobId = job._id || job.id || job.jobId;
+          // Prioritize UUID (jobid/id) over Mongo _id
+          lastJobId = job.jobid || job.jobId || job.id || job._id;
         }
 
         console.log(`✅ Processed job ${i + 1}/${jobsToApply.length}`);

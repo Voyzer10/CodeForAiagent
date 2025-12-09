@@ -158,7 +158,7 @@ export default function AppliedJobs() {
 
                                         {/* Job ID */}
                                         <div className="text-xs text-[#7b8f86] font-mono">
-                                            Job ID: {job.jobid || job.id || 'N/A'}
+                                            Job ID: {job.jobid || job.jobId || job.id || 'N/A'}
                                         </div>
                                     </div>
 
