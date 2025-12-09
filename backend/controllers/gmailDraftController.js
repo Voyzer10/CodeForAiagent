@@ -116,8 +116,14 @@ exports.createGmailDraft = async (req, res) => {
     }
 
     // 1. Find Job
+    console.log(`🔎 Searching for job with ID: ${jobid}`);
     const job = await findJob(jobid);
-    if (!job) return res.status(404).json({ error: "Job not found" });
+
+    if (!job) {
+      console.log("❌ Job not found in DB.");
+      return res.status(404).json({ error: "Job not found" });
+    }
+    console.log(`✅ Job found: ${job._id}`);
 
     // 2. Find User
     const user = await User.findOne({ userId });
