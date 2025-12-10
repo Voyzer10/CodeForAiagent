@@ -237,6 +237,20 @@ function JobFoundContent() {
     return false;
   };
 
+  const fetchWithRetry = async (url, options, retries = 3, backoff = 1000) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fetch(url, options);
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res;
+      } catch (err) {
+        console.warn(`Attempt ${i + 1} failed: ${err.message}`);
+        if (i === retries - 1) throw err;
+        await new Promise(r => setTimeout(r, backoff));
+      }
+    }
+  };
+
   const applyJobs = async (jobsToApply) => {
     if (!jobsToApply.length) {
       setAlertState({ severity: "warning", message: "No jobs selected!" });
@@ -244,7 +258,7 @@ function JobFoundContent() {
     }
 
     setApplying(true);
-    const webhookUrl = "https://n8n.techm.work.gd/webhook/apply-jobs";
+    const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://n8n.techm.work.gd/webhook/apply-jobs";
     let lastJobId = null;
     let successCount = 0;
     let noEmailCount = 0;
@@ -262,7 +276,7 @@ function JobFoundContent() {
           trackingId: user?.userId
         };
 
-        const res = await fetch(webhookUrl, {
+        const res = await fetchWithRetry(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
