@@ -210,7 +210,7 @@ function JobFoundContent() {
 
   const pollForConfirmation = async (jobId) => {
     let attempts = 0;
-    const maxAttempts = 60; // 60 * 2s = 120 seconds wait time
+    const maxAttempts = 50; // 50 * 3s = 150 seconds wait time
     let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
     while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
@@ -222,14 +222,16 @@ function JobFoundContent() {
           credentials: "include",
         });
         const data = await res.json();
-        // Check if job exists in DB (meaning N8N processed it)
-        if (data.exists) {
+
+        // Strict Check: Ensure job exists AND has critical email data
+        if (data.exists && data.job?.email_to && data.job?.email_subject) {
+          console.log("✅ Polling confirmed: Job data ready:", data.job);
           return true;
         }
       } catch (e) {
-        // Silent catch for polling
+        // Silent catch
       }
-      await new Promise(r => setTimeout(r, 2000));
+      await new Promise(r => setTimeout(r, 3000)); // Increase interval to 3s
       attempts++;
     }
     return false;
@@ -275,24 +277,20 @@ function JobFoundContent() {
           continue;
         }
 
-        if (result.sent === "no_email_found") {
-          noEmailCount++;
-        } else {
-          successCount++;
-          // Prioritize UUID (jobid/id) over Mongo _id
-          const currentJobId = job.jobid || job.jobId || job.id || job._id;
-          lastJobId = currentJobId;
-        }
+        // TRUST POLLING: Treat 200 OK as "Application Process Started"
+        successCount++;
+        // Prioritize UUID (jobid/id) over Mongo _id
+        const currentJobId = job.jobid || job.jobId || job.id || job._id;
+        lastJobId = currentJobId;
 
         console.log(`✅ Processed job ${i + 1}/${jobsToApply.length}`);
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      if (failCount > 0 && successCount === 0 && noEmailCount === 0) {
-        // If everything failed on N8N side
+      if (failCount > 0 && successCount === 0) {
         setAlertState({
           severity: "error",
-          message: "Something went wrong on the server while applying. Please try again."
+          message: "Network error. Server could not be reached. Please try again."
         });
         setApplying(false);
         return;
@@ -300,34 +298,25 @@ function JobFoundContent() {
 
       if (successCount > 0) {
         if (lastJobId) {
-          // Poll for confirmation
-          console.log("⏳ Waiting for backend confirmation...");
+          console.log("⏳ Jobs sent to N8N. Polling for completion...");
           const confirmed = await pollForConfirmation(lastJobId);
 
           if (confirmed) {
             setAlertState({
               severity: "success",
-              message: `Application successful! Redirecting...`
+              message: `Draft ready! Redirecting...`
             });
-            router.push(`/apply?jobid=${lastJobId}`); // User requested redirect to apply-page (assuming apply view)
-            // Note: User said "apply-page where we ca see the draft". 
-            // If the apply page is /apply/page.js, this route seems correct based on previous knowledge.
+            router.push(`/apply?jobid=${lastJobId}`);
           } else {
             setAlertState({
               severity: "warning",
-              message: `Jobs sent for application, but confirmation is pending. Check your drafts shortly.`
+              message: `Processing is taking longer than expected. Please check 'Applied Jobs' later.`
             });
             setApplying(false);
           }
         } else {
           setApplying(false);
         }
-      } else if (noEmailCount > 0) {
-        setAlertState({
-          severity: "error",
-          message: "Couldn't find HR email for selected job(s). Cannot apply."
-        });
-        setApplying(false);
       } else {
         setApplying(false);
       }
