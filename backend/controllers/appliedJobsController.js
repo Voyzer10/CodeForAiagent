@@ -87,16 +87,19 @@ exports.checkJobApplied = async (req, res) => {
     try {
         const jobid = req.params.jobid;
 
-        let job = await Job.findOne({ jobid, sent: true });
+        // Check for job existence (processed by N8N)
+        // We do NOT require 'sent: true' here because 'sent' is often set AFTER draft creation
+        let job = await Job.findOne({ jobid });
         if (!job) {
-            job = await Job.findOne({ jobId: jobid, sent: true });
+            job = await Job.findOne({ jobId: jobid });
         }
         if (!job) {
-            job = await Job.findOne({ id: jobid, sent: true });
+            job = await Job.findOne({ id: jobid });
         }
 
         return res.json({
-            applied: !!job,
+            exists: !!job,
+            applied: !!job?.sent,
             job: job || null,
         });
     } catch (err) {

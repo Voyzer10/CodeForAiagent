@@ -222,7 +222,8 @@ function JobFoundContent() {
           credentials: "include",
         });
         const data = await res.json();
-        if (data.applied) {
+        // Check if job exists in DB (meaning N8N processed it)
+        if (data.exists) {
           return true;
         }
       } catch (e) {
@@ -252,9 +253,11 @@ function JobFoundContent() {
         const job = jobsToApply[i];
 
         // Send userId so backend can track it
+        // Flatten payload for N8N compatibility
         const payload = {
-          job,
-          userId: user?.userId
+          ...job,
+          userId: user?.userId,
+          trackingId: user?.userId
         };
 
         const res = await fetch(webhookUrl, {
