@@ -210,7 +210,7 @@ function JobFoundContent() {
 
   const pollForConfirmation = async (jobId) => {
     let attempts = 0;
-    const maxAttempts = 30; // 60 seconds (2s interval)
+    const maxAttempts = 60; // 60 * 2s = 120 seconds wait time
     let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
     while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
@@ -227,7 +227,7 @@ function JobFoundContent() {
           return true;
         }
       } catch (e) {
-        console.warn("Polling error:", e);
+        // Silent catch for polling
       }
       await new Promise(r => setTimeout(r, 2000));
       attempts++;
@@ -433,8 +433,8 @@ function JobFoundContent() {
         {applying && (
           <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center rounded-lg">
             <Loader2 className="w-12 h-12 text-green-400 animate-spin mb-4" />
-            <h3 className="text-xl font-bold text-green-400">Applying...</h3>
-            <p className="text-gray-400 mt-2">Waiting for confirmation from backend.</p>
+            <h3 className="text-xl font-bold text-green-400">Creating draft is under process...</h3>
+            <p className="text-gray-400 mt-2">This may take up to a minute or two. Please do not close.</p>
           </div>
         )}
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">

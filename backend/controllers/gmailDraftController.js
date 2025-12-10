@@ -169,6 +169,7 @@ exports.createGmailDraft = async (req, res) => {
     // Mark job as applied (sent = true)
     job.sent = true;
     job.trackingId = String(userId);
+    job.draftId = draftId; // Save draft ID
     await job.save();
 
     return res.json({
