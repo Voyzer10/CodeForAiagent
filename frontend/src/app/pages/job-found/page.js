@@ -46,6 +46,36 @@ function JobFoundContent() {
     }
   }, [alertState]);
 
+  // Check for pending application after reload
+  useEffect(() => {
+    const checkPending = async () => {
+      const pendingId = localStorage.getItem("pendingJobApplication");
+      if (!pendingId) return;
+
+      console.log("Checking pending job from reload:", pendingId);
+      let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+      while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/applied-jobs/check/${pendingId}`, { method: "GET", credentials: "include" });
+        const data = await res.json();
+
+        if (data.exists && data.job?.email_to && data.job?.email_subject) {
+          console.log("✅ Pending job is ready! Redirecting...");
+          localStorage.removeItem("pendingJobApplication");
+          router.push(`/apply?jobid=${pendingId}`);
+        } else {
+          console.log("❌ Pending job details still missing or job not found.");
+          localStorage.removeItem("pendingJobApplication");
+        }
+      } catch (e) {
+        console.error("Error checking pending job:", e);
+      }
+    };
+    checkPending();
+  }, [router]);
+
   useEffect(() => {
     let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
@@ -312,22 +342,17 @@ function JobFoundContent() {
 
       if (successCount > 0) {
         if (lastJobId) {
-          console.log("⏳ Jobs sent to N8N. Polling for completion...");
-          const confirmed = await pollForConfirmation(lastJobId);
+          console.log("⏳ Jobs sent to N8N. Waiting 55s for backend processing...");
 
-          if (confirmed) {
-            setAlertState({
-              severity: "success",
-              message: `Draft ready! Redirecting...`
-            });
-            router.push(`/apply?jobid=${lastJobId}`);
-          } else {
-            setAlertState({
-              severity: "warning",
-              message: `Processing is taking longer than expected. Please check 'Applied Jobs' later.`
-            });
-            setApplying(false);
-          }
+          // Store ID for post-reload check
+          localStorage.setItem("pendingJobApplication", lastJobId);
+
+          // Wait 55 seconds
+          await new Promise((resolve) => setTimeout(resolve, 55000));
+
+          // Reload page
+          window.location.reload();
+          return;
         } else {
           setApplying(false);
         }

@@ -87,6 +87,8 @@ exports.checkJobApplied = async (req, res) => {
     try {
         const jobid = req.params.jobid;
 
+        console.log(`🔎 Searching for job with ID: ${jobid}`);
+
         // Check for job existence (processed by N8N)
         // We do NOT require 'sent: true' here because 'sent' is often set AFTER draft creation
         let job = await Job.findOne({ jobid });
@@ -95,6 +97,13 @@ exports.checkJobApplied = async (req, res) => {
         }
         if (!job) {
             job = await Job.findOne({ id: jobid });
+        }
+
+        if (job) {
+            console.log(`[${new Date().toISOString()}] ✅ Job found: ${job._id}`);
+            console.log(`[${new Date().toISOString()}] 📧 Draft Details -> To: '${job.email_to}', Subject: '${job.email_subject}'`);
+        } else {
+            console.log(`[${new Date().toISOString()}] ❌ Job NOT found in Application-Tracking yet.`);
         }
 
         return res.json({
