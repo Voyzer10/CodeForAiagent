@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
+import { Loader2 } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -12,6 +13,7 @@ function JobFoundContent() {
   const [recentSearches, setRecentSearches] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [applying, setApplying] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -206,25 +208,59 @@ function JobFoundContent() {
     );
   };
 
+  const pollForConfirmation = async (jobId) => {
+    let attempts = 0;
+    const maxAttempts = 30; // 60 seconds (2s interval)
+    let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+    while (attempts < maxAttempts) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/applied-jobs/check/${jobId}`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.applied) {
+          return true;
+        }
+      } catch (e) {
+        console.warn("Polling error:", e);
+      }
+      await new Promise(r => setTimeout(r, 2000));
+      attempts++;
+    }
+    return false;
+  };
+
   const applyJobs = async (jobsToApply) => {
     if (!jobsToApply.length) {
       setAlertState({ severity: "warning", message: "No jobs selected!" });
       return;
     }
 
+    setApplying(true);
     const webhookUrl = "https://n8n.techm.work.gd/webhook/apply-jobs";
     let lastJobId = null;
     let successCount = 0;
     let noEmailCount = 0;
+    let failCount = 0;
 
     try {
       for (let i = 0; i < jobsToApply.length; i++) {
         const job = jobsToApply[i];
 
+        // Send userId so backend can track it
+        const payload = {
+          job,
+          userId: user?.userId
+        };
+
         const res = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ job }),
+          body: JSON.stringify(payload),
         });
 
         // Try to parse JSON response
@@ -232,47 +268,71 @@ function JobFoundContent() {
 
         if (!res.ok) {
           console.error(`Failed to send job ${i + 1}`, result);
+          failCount++;
           continue;
         }
 
         if (result.sent === "no_email_found") {
-          if (jobsToApply.length === 1) {
-            setAlertState({
-              severity: "error",
-              message: "Coudn't find HR/ jobPoster Email .This job can't be applied."
-            });
-            return;
-          }
           noEmailCount++;
         } else {
           successCount++;
           // Prioritize UUID (jobid/id) over Mongo _id
-          lastJobId = job.jobid || job.jobId || job.id || job._id;
+          const currentJobId = job.jobid || job.jobId || job.id || job._id;
+          lastJobId = currentJobId;
         }
 
         console.log(`✅ Processed job ${i + 1}/${jobsToApply.length}`);
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      if (successCount > 0) {
+      if (failCount > 0 && successCount === 0 && noEmailCount === 0) {
+        // If everything failed on N8N side
         setAlertState({
-          severity: "success",
-          message: `Application started for ${successCount} job(s). Please check your drafts.`
+          severity: "error",
+          message: "Something went wrong on the server while applying. Please try again."
         });
+        setApplying(false);
+        return;
+      }
 
+      if (successCount > 0) {
         if (lastJobId) {
-          router.push(`/apply?jobid=${lastJobId}`);
+          // Poll for confirmation
+          console.log("⏳ Waiting for backend confirmation...");
+          const confirmed = await pollForConfirmation(lastJobId);
+
+          if (confirmed) {
+            setAlertState({
+              severity: "success",
+              message: `Application successful! Redirecting...`
+            });
+            router.push(`/apply?jobid=${lastJobId}`); // User requested redirect to apply-page (assuming apply view)
+            // Note: User said "apply-page where we ca see the draft". 
+            // If the apply page is /apply/page.js, this route seems correct based on previous knowledge.
+          } else {
+            setAlertState({
+              severity: "warning",
+              message: `Jobs sent for application, but confirmation is pending. Check your drafts shortly.`
+            });
+            setApplying(false);
+          }
+        } else {
+          setApplying(false);
         }
       } else if (noEmailCount > 0) {
         setAlertState({
           severity: "error",
-          message: "Coudn't find HR/ jobPoster Email for selected job(s). These jobs can't be applied."
+          message: "Couldn't find HR email for selected job(s). Cannot apply."
         });
+        setApplying(false);
+      } else {
+        setApplying(false);
       }
 
     } catch (err) {
       console.error("Error applying:", err);
-      setAlertState({ severity: "error", message: "Error applying: " + err.message });
+      setAlertState({ severity: "error", message: "Network error or server unavailable. Please try again." });
+      setApplying(false);
     }
   };
 
@@ -366,7 +426,14 @@ function JobFoundContent() {
         </div>
       )}
 
-      <div className="flex-1 p-6 md:p-10">
+      <div className="flex-1 p-6 md:p-10 relative">
+        {applying && (
+          <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center rounded-lg">
+            <Loader2 className="w-12 h-12 text-green-400 animate-spin mb-4" />
+            <h3 className="text-xl font-bold text-green-400">Applying...</h3>
+            <p className="text-gray-400 mt-2">Waiting for confirmation from backend.</p>
+          </div>
+        )}
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
           <div className="flex ">
             <h2 className="text-md font-bold text-green-400 mb-2  px-3 pt-1.5">

@@ -2,12 +2,29 @@ const express = require("express");
 //const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 
 const connectDB = require("./config/db");
 require("./logger");
 
 const app = express();
+
+// ✅ Security Headers
+app.use(helmet());
+
+// ✅ Rate Limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+  message: "Too many requests from this IP, please try again later."
+});
+
+// Apply rate limiting to all requests (or specific routes if preferred)
+app.use(limiter);
 
 // ✅ CORS FIRST — must be before any routes
 const allowedOrigins = [
