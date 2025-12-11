@@ -20,8 +20,8 @@ function JobFoundContent() {
   const [selectedJob, setSelectedJob] = useState(null);
   const [selectedJobs, setSelectedJobs] = useState([]);
 
-  const [saveModalOpen, setSaveModalOpen] = useState(false);
-  const [newSearchName, setNewSearchName] = useState("");
+
+  const [responseMessage, setResponseMessage] = useState(""); // For status box text
 
   // New Alert State
   const [alertState, setAlertState] = useState(null);
@@ -167,68 +167,7 @@ function JobFoundContent() {
     return () => clearTimeout(pollingRef.current);
   }, [runIdParam]);
 
-  const saveCurrentSearch = async () => {
-    if (!newSearchName.trim()) {
-      setAlertState({ severity: "warning", message: "Please enter a name." });
-      return;
-    }
 
-    // Check if we are renaming a session
-    if (activeSearch.startsWith("Session: ")) {
-      // logic handled below
-    }
-
-    const jobsPayload = filteredJobs.map((job) => ({
-      title: job.Title || job.title || "(No title)",
-      company: job.Company || job.CompanyName || job.organization || "Unknown Company",
-      description:
-        job.Description || job.descriptionText || job.descriptionHtml || "No description available",
-      location: job.Location || job.location || "",
-      link: job.link || job.applyUrl || "",
-    }));
-
-    let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-    if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
-
-    try {
-      if (currentSession) {
-        const res = await fetch(`${API_BASE_URL}/userjobs/sessions/rename`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ sessionId: currentSession.sessionId, newName: newSearchName }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to rename session");
-
-        setSessions(prev => prev.map(s => s.sessionId === currentSession.sessionId ? { ...s, sessionName: newSearchName } : s));
-        setActiveSearch(`Session: ${newSearchName}`);
-        setSaveModalOpen(false);
-        setNewSearchName("");
-        setAlertState({ severity: "success", message: "Session renamed successfully!" });
-        return;
-      }
-
-      const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ name: newSearchName, jobs: jobsPayload }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save search");
-
-      setRecentSearches((prev) => [data.savedSearch, ...prev.slice(0, 9)]);
-      setSaveModalOpen(false);
-      setNewSearchName("");
-      setAlertState({ severity: "success", message: "Search saved successfully!" });
-    } catch (err) {
-      console.error("[JobFound] saveCurrentSearch error:", err);
-      setAlertState({ severity: "error", message: err.message || "Error saving search" });
-    }
-  };
 
   const toggleJobSelection = (jobId) => {
     setSelectedJobs((prev) =>
@@ -288,10 +227,11 @@ function JobFoundContent() {
     }
 
     setApplying(true);
+    setResponseMessage("Your job is under processing...");
+
     const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://n8n.techm.work.gd/webhook/apply-jobs";
     let lastJobId = null;
     let successCount = 0;
-    let noEmailCount = 0;
     let failCount = 0;
 
     try {
@@ -299,7 +239,6 @@ function JobFoundContent() {
         const job = jobsToApply[i];
 
         // Send userId so backend can track it
-        // Flatten payload for N8N compatibility
         const payload = {
           ...job,
           userId: user?.userId,
@@ -321,7 +260,6 @@ function JobFoundContent() {
           continue;
         }
 
-        // TRUST POLLING: Treat 200 OK as "Application Process Started"
         successCount++;
         // Prioritize UUID (jobid/id) over Mongo _id
         const currentJobId = job.jobid || job.jobId || job.id || job._id;
@@ -337,33 +275,42 @@ function JobFoundContent() {
           message: "Network error. Server could not be reached. Please try again."
         });
         setApplying(false);
+        setResponseMessage("");
         return;
       }
 
       if (successCount > 0) {
         if (lastJobId) {
-          console.log("⏳ Jobs sent to N8N. Waiting 55s for backend processing...");
+          console.log("⏳ Jobs sent to N8N. Waiting 60s for backend processing...");
 
           // Store ID for post-reload check
           localStorage.setItem("pendingJobApplication", lastJobId);
 
-          // Wait 55 seconds
-          await new Promise((resolve) => setTimeout(resolve, 55000));
+          // Wait 60 seconds (1 minute as requested)
+          await new Promise((resolve) => setTimeout(resolve, 60000));
 
-          // Reload page
-          window.location.reload();
+          // success state
+          setResponseMessage("Redirecting to application...");
+          // Short delay to let user see the message
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+
+          // Direct redirect instead of reload
+          router.push(`/apply?jobid=${lastJobId}`);
           return;
         } else {
           setApplying(false);
+          setResponseMessage("");
         }
       } else {
         setApplying(false);
+        setResponseMessage("");
       }
 
     } catch (err) {
       console.error("Error applying:", err);
       setAlertState({ severity: "error", message: "Network error or server unavailable. Please try again." });
       setApplying(false);
+      setResponseMessage("");
     }
   };
 
@@ -458,13 +405,7 @@ function JobFoundContent() {
       )}
 
       <div className="flex-1 p-6 md:p-10 relative">
-        {applying && (
-          <div className="absolute inset-0 z-[60] bg-black/80 flex flex-col items-center justify-center rounded-lg">
-            <Loader2 className="w-12 h-12 text-green-400 animate-spin mb-4" />
-            <h3 className="text-xl font-bold text-green-400">Creating draft is under process...</h3>
-            <p className="text-gray-400 mt-2">This may take up to a minute or two. Please do not close.</p>
-          </div>
-        )}
+
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
           <div className="flex ">
             <h2 className="text-md font-bold text-green-400 mb-2  px-3 pt-1.5">
@@ -533,60 +474,47 @@ function JobFoundContent() {
         <div className="flex gap-3 mt-6 md:mt-0">
           <button
             onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
-            disabled={!selectedJobs.length}
-            className={`px-3 py-2 text-sm rounded-md border transition ${selectedJobs.length
+            disabled={!selectedJobs.length || applying}
+            className={`px-3 py-2 text-sm rounded-md border transition flex items-center gap-2 ${selectedJobs.length && !applying
               ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
               : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
               }`}
           >
-            Apply Now ({selectedJobs.length})
+            {applying ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                Processing...
+              </>
+            ) : (
+              `Apply Now (${selectedJobs.length})`
+            )}
           </button>
 
           <button
             onClick={() => applyJobs(userJobs)}
-            className="px-3 py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition"
+            disabled={applying}
+            className="px-3 py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center gap-2 disabled:bg-gray-700/20 disabled:text-gray-500 disabled:border-gray-600 cursor-pointer disabled:cursor-not-allowed"
           >
-            Apply All
-          </button>
-
-          <button
-            onClick={() => setSaveModalOpen(true)}
-            className="px-3 py-2 text-sm rounded-md bg-green-700/30 border border-green-700 text-green-300 hover:bg-green-700/50 transition"
-          >
-            Save This Search
+            {applying ? (
+              <>
+                <Loader2 className="animate-spin" size={16} />
+                Processing...
+              </>
+            ) : (
+              "Apply All"
+            )}
           </button>
         </div>
 
-        {saveModalOpen && (
-          <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
-            <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg">
-              <h3 className="text-lg font-bold text-green-400 mb-4">Save This Search</h3>
-
-              <input
-                type="text"
-                placeholder="Enter search name"
-                value={newSearchName}
-                onChange={(e) => setNewSearchName(e.target.value)}
-                className="w-full px-3 py-2 mb-4 text-black rounded-md"
-              />
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setSaveModalOpen(false)}
-                  className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={saveCurrentSearch}
-                  className="px-4 py-2 bg-green-600 text-black rounded-md hover:bg-green-500"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
+        {/* Status Message Area */}
+        {applying && (
+          <div className="mt-6 w-full max-w-lg p-4 bg-green-900/40 border border-green-500/50 rounded-xl text-green-300 text-center shadow-[0_0_15px_#00ff9d22] animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col items-center gap-2">
+            <Loader2 className="animate-spin text-green-400" size={24} />
+            <p className="font-semibold text-lg">{responseMessage}</p>
           </div>
         )}
+
+
 
         <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
           <div className="w-1/3 m-2 grid gap-4 grid-cols-1 lg:grid-cols-1 overflow-y-auto no-scrollbar">
