@@ -24,13 +24,12 @@ function ApplyPageContent() {
   const [jobDetails, setJobDetails] = useState(null);
   const [alertState, setAlertState] = useState(null);
 
-  const pollingActive = useRef(true); // to stop polling on unmount
+  const pollingActive = useRef(true);
 
   let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
   while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
-  // Auto-hide alerts
+  // Auto-dismiss alerts
   useEffect(() => {
     if (alertState) {
       const timer = setTimeout(() => setAlertState(null), 5000);
@@ -38,7 +37,7 @@ function ApplyPageContent() {
     }
   }, [alertState]);
 
-  // STEP 1: Fetch user session (JWT-based)
+  // STEP 1 — Load user (JWT-based)
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -51,7 +50,6 @@ function ApplyPageContent() {
           setUserId(data.user.userId);
         }
       } catch (err) {
-        console.error("❌ User fetch error:", err);
         setAlertState({
           severity: "error",
           message: "Failed to load user session.",
@@ -62,12 +60,13 @@ function ApplyPageContent() {
     fetchUser();
   }, [API_BASE_URL]);
 
-  // STEP 3: Create Gmail Draft — wrapped inside useCallback to fix ESLint warnings
+  // STEP 3 — Create Gmail Draft (useCallback fixes ESLint)
   const createDraft = useCallback(
     async (jobData) => {
       try {
         console.log("📨 Creating Gmail Draft…");
 
+        // ⬅️ IMPORTANT: OLD WORKING ROUTE
         const res = await axios.post(`${API_BASE_URL}/gmail/create-draft`, {
           userId,
           jobid,
@@ -78,11 +77,7 @@ function ApplyPageContent() {
         setLoading(false);
         pollingActive.current = false;
       } catch (err) {
-        console.error(
-          "❌ Draft creation error:",
-          err.response?.data || err.message
-        );
-
+        console.error("❌ Draft creation error:", err.response?.data || err);
         setLoading(false);
         setAlertState({
           severity: "error",
@@ -95,12 +90,12 @@ function ApplyPageContent() {
     [API_BASE_URL, userId, jobid]
   );
 
-  // STEP 2: POLL DB WAITING FOR N8N TO FILL email_to + email_subject
+  // STEP 2 — Poll DB waiting for N8N to fill email_to + email_subject
   useEffect(() => {
     if (!userId || !jobid) return;
 
-    const pollUntilJobIsReady = async () => {
-      const MAX_RETRIES = 40; // 40 * 3s = 120s
+    const pollUntilReady = async () => {
+      const MAX_RETRIES = 40;
       let attempts = 0;
 
       while (attempts < MAX_RETRIES && pollingActive.current) {
@@ -117,9 +112,8 @@ function ApplyPageContent() {
 
           const data = await res.json();
 
-          // Wait until email is fully prepared by N8N
           if (data.exists && data.job?.email_to && data.job?.email_subject) {
-            console.log("🎉 Job email fields ready → Creating Gmail Draft…");
+            console.log("🎉 Job email ready → Creating Gmail Draft…");
             return createDraft(data.job);
           }
         } catch (err) {
@@ -127,7 +121,7 @@ function ApplyPageContent() {
         }
 
         attempts++;
-        await new Promise((r) => setTimeout(r, 3000)); // 3 sec interval
+        await new Promise((r) => setTimeout(r, 3000));
       }
 
       setLoading(false);
@@ -137,26 +131,25 @@ function ApplyPageContent() {
       });
     };
 
-    pollUntilJobIsReady();
+    pollUntilReady();
 
     return () => {
-      pollingActive.current = false; // stop polling on unmount
+      pollingActive.current = false;
     };
   }, [userId, jobid, API_BASE_URL, createDraft]);
 
-  // UI STATES
+  // LOADING UI
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-green-400 gap-4">
         <Loader2 className="animate-spin w-10 h-10" />
-        <div className="text-lg font-semibold">Processing Application…</div>
-        <p className="text-sm text-gray-400">
-          Waiting for job details from N8N
-        </p>
+        <div className="text-lg font-semibold">Processing Application...</div>
+        <p className="text-sm text-gray-400">Waiting for N8N to prepare email</p>
       </div>
     );
   }
 
+  // ERROR UI
   if (alertState && !jobDetails) {
     return (
       <div className="flex items-center justify-center h-screen flex-col gap-4">
