@@ -238,77 +238,87 @@ function JobFoundContent() {
       for (let i = 0; i < jobsToApply.length; i++) {
         const job = jobsToApply[i];
 
-        // Send userId so backend can track it
         const payload = {
           ...job,
           userId: user?.userId,
           trackingId: user?.userId
         };
 
-        const res = await fetchWithRetry(webhookUrl, {
+        const res = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
 
-        // Try to parse JSON response
         const result = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          console.error(`Failed to send job ${i + 1}`, result);
+          console.error(`Failed job ${i + 1}`, result);
           failCount++;
           continue;
         }
 
         successCount++;
-        // Prioritize UUID (jobid/id) over Mongo _id
+
         const currentJobId = job.jobid || job.jobId || job.id || job._id;
         lastJobId = currentJobId;
 
-        console.log(`✅ Processed job ${i + 1}/${jobsToApply.length}`);
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      if (failCount > 0 && successCount === 0) {
+      if (successCount === 0) {
         setAlertState({
           severity: "error",
-          message: "Network error. Server could not be reached. Please try again."
+          message: "No jobs could be processed. Please try again."
         });
         setApplying(false);
         setResponseMessage("");
         return;
       }
 
-      if (successCount > 0) {
-        if (lastJobId) {
-          console.log("⏳ Jobs sent to N8N. Waiting 60s for backend processing...");
+      if (lastJobId) {
+        console.log("⏳ Waiting for N8N to prepare job email...");
 
-          // Store ID for post-reload check
-          localStorage.setItem("pendingJobApplication", lastJobId);
+        let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+        API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
 
-          // Wait 60 seconds (1 minute as requested)
-          await new Promise((resolve) => setTimeout(resolve, 60000));
+        let attempts = 0;
+        const MAX_ATTEMPTS = 40; // 40 * 3s = 2 minutes
 
-          // success state
-          setResponseMessage("Redirecting to application...");
-          // Short delay to let user see the message
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+        while (attempts < MAX_ATTEMPTS) {
+          const check = await fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobId}`, {
+            method: "GET",
+            credentials: "include",
+          });
 
-          // Direct redirect instead of reload
-          router.push(`/apply?jobid=${lastJobId}`);
-          return;
-        } else {
-          setApplying(false);
-          setResponseMessage("");
+          const data = await check.json();
+
+          if (data.exists && data.job?.email_to && data.job?.email_subject) {
+            console.log("🎉 Email details ready — redirecting…");
+            setResponseMessage("Redirecting to application…");
+
+            await new Promise(res => setTimeout(res, 1500));
+
+            router.push(`/apply?jobid=${lastJobId}`);
+            return;
+          }
+
+          await new Promise(res => setTimeout(res, 3000));
+          attempts++;
         }
-      } else {
+
+        setAlertState({
+          severity: "error",
+          message: "Job email could not be prepared in time. Try again."
+        });
         setApplying(false);
         setResponseMessage("");
+        return;
       }
 
     } catch (err) {
       console.error("Error applying:", err);
-      setAlertState({ severity: "error", message: "Network error or server unavailable. Please try again." });
+      setAlertState({ severity: "error", message: "Unexpected error. Try again." });
       setApplying(false);
       setResponseMessage("");
     }
