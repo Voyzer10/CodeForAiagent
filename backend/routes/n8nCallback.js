@@ -23,6 +23,7 @@ router.post("/", async (req, res) => {
     if (!jobid) {
       console.warn("⚠️ [n8nCallback] Missing jobid/jobId in payload. Generating fallback ID.");
       jobid = `fallback-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+      // Forces update
     }
 
     const updateData = {
