@@ -1,6 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useState, useRef } from "react";
+import {
+  Suspense,
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { Mail, Loader2 } from "lucide-react";
@@ -8,8 +14,9 @@ import Alert from "../components/Alert";
 
 function ApplyPageContent() {
   const params = useSearchParams();
-  const jobid = params.get("jobid");
   const router = useRouter();
+
+  const jobid = params.get("jobid");
 
   const [userId, setUserId] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,16 +24,13 @@ function ApplyPageContent() {
   const [jobDetails, setJobDetails] = useState(null);
   const [alertState, setAlertState] = useState(null);
 
-  // Use ref to control polling
-  const pollingActive = useRef(true);
-  const retryCount = useRef(0);
-  const MAX_RETRIES = 20; // 20 * 3s = 60s max wait
+  const pollingActive = useRef(true); // to stop polling on unmount
 
   let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-  while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+  while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
-  // Auto-dismiss alert
+  // Auto-hide alerts
   useEffect(() => {
     if (alertState) {
       const timer = setTimeout(() => setAlertState(null), 5000);
@@ -34,7 +38,7 @@ function ApplyPageContent() {
     }
   }, [alertState]);
 
-  // STEP 1 — Load User
+  // STEP 1: Fetch user session (JWT-based)
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -43,117 +47,124 @@ function ApplyPageContent() {
         });
 
         const data = await res.json();
-
         if (data?.user?.userId) {
           setUserId(data.user.userId);
         }
       } catch (err) {
         console.error("❌ User fetch error:", err);
-        setAlertState({ severity: "error", message: "Failed to load user session." });
+        setAlertState({
+          severity: "error",
+          message: "Failed to load user session.",
+        });
       }
     };
 
     fetchUser();
   }, [API_BASE_URL]);
 
-  // STEP 2 — Poll Create Gmail Draft
-  useEffect(() => {
-    if (!userId || !jobid) return;
-
-    const createDraft = async () => {
+  // STEP 3: Create Gmail Draft — wrapped inside useCallback to fix ESLint warnings
+  const createDraft = useCallback(
+    async (jobData) => {
       try {
-        console.log(`Polling draft creation... Attempt ${retryCount.current + 1}`);
+        console.log("📨 Creating Gmail Draft…");
+
         const res = await axios.post(`${API_BASE_URL}/gmail/create-draft`, {
           userId,
           jobid,
         });
 
-        // ✅ Success
         setDraftUrl(res.data.gmailUrl);
         setJobDetails(res.data.job);
         setLoading(false);
         pollingActive.current = false;
-
       } catch (err) {
-        // Check if 404
-        // Check if 404 (Job Not Found - Retry)
-        if (err.response && err.response.status === 404) {
-          const errorMsg = err.response.data?.error || "";
+        console.error(
+          "❌ Draft creation error:",
+          err.response?.data || err.message
+        );
 
-          // Case 1: Job not found (Expected during polling)
-          if (!errorMsg || errorMsg === "Job not found" || errorMsg.includes("Job")) {
-            if (retryCount.current < MAX_RETRIES && pollingActive.current) {
-              console.log(`⏳ Job not found yet (Attempt ${retryCount.current + 1}/${MAX_RETRIES}). Retrying in 3s...`);
-              retryCount.current += 1;
-              setTimeout(createDraft, 3000);
-              return;
-            } else {
-              setLoading(false);
-              setAlertState({ severity: "error", message: "Job data not found after waiting. Please try again later." });
-              return;
-            }
-          }
-
-          // Case 2: User not found (Critical)
-          if (errorMsg === "User not found") {
-            console.error("❌ Critical: User not found during draft creation.");
-            setLoading(false);
-            setAlertState({ severity: "error", message: "User session invalid. Please log in again." });
-            return;
-          }
-        }
-
-        // Check if 400 (Invalid Data)
-        if (err.response && err.response.status === 400) {
-          const errorKey = err.response.data?.error;
-          if (errorKey === "Invalid email address") {
-            setLoading(false);
-            setAlertState({ severity: "error", message: "Couldn't find HR/jobPoster Email. This job can't be applied." });
-            return;
-          }
-        }
-
-        console.error("❌ Draft creation attempt failed:", err.message, err.response?.data);
-
-        // Other errors
         setLoading(false);
         setAlertState({
           severity: "error",
-          message: err.response?.data?.error || err.message || "Failed to create draft."
+          message:
+            err.response?.data?.error ||
+            "Failed to create Gmail draft. Try again.",
         });
       }
+    },
+    [API_BASE_URL, userId, jobid]
+  );
+
+  // STEP 2: POLL DB WAITING FOR N8N TO FILL email_to + email_subject
+  useEffect(() => {
+    if (!userId || !jobid) return;
+
+    const pollUntilJobIsReady = async () => {
+      const MAX_RETRIES = 40; // 40 * 3s = 120s
+      let attempts = 0;
+
+      while (attempts < MAX_RETRIES && pollingActive.current) {
+        try {
+          console.log(`⏳ Checking job status... Attempt ${attempts + 1}`);
+
+          const res = await fetch(
+            `${API_BASE_URL}/applied-jobs/check/${jobid}`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+
+          const data = await res.json();
+
+          // Wait until email is fully prepared by N8N
+          if (data.exists && data.job?.email_to && data.job?.email_subject) {
+            console.log("🎉 Job email fields ready → Creating Gmail Draft…");
+            return createDraft(data.job);
+          }
+        } catch (err) {
+          console.warn("Polling error:", err.message);
+        }
+
+        attempts++;
+        await new Promise((r) => setTimeout(r, 3000)); // 3 sec interval
+      }
+
+      setLoading(false);
+      setAlertState({
+        severity: "error",
+        message: "Job email could not be prepared in time. Try again later.",
+      });
     };
 
-    if (pollingActive.current) {
-      createDraft();
-    }
+    pollUntilJobIsReady();
 
     return () => {
-      pollingActive.current = false;
+      pollingActive.current = false; // stop polling on unmount
     };
-  }, [userId, jobid, API_BASE_URL]);
+  }, [userId, jobid, API_BASE_URL, createDraft]);
 
+  // UI STATES
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-screen text-green-400 gap-4">
         <Loader2 className="animate-spin w-10 h-10" />
-        <div className="text-lg font-semibold">
-          Processing Application...
-        </div>
-        <p className="text-sm text-gray-400">Waiting for job details processing</p>
+        <div className="text-lg font-semibold">Processing Application…</div>
+        <p className="text-sm text-gray-400">
+          Waiting for job details from N8N
+        </p>
       </div>
     );
   }
 
   if (alertState && !jobDetails) {
-    // Show alert if failed loading
     return (
       <div className="flex items-center justify-center h-screen flex-col gap-4">
         <div className="w-full max-w-md px-4">
           <Alert severity={alertState.severity}>{alertState.message}</Alert>
         </div>
         <button
-          onClick={() => router.push('/pages/job-found')}
+          onClick={() => router.push("/pages/job-found")}
           className="text-green-400 hover:underline"
         >
           Go back
@@ -162,17 +173,19 @@ function ApplyPageContent() {
     );
   }
 
-  if (!jobDetails) {
-    return null; // Should be handled by loading or alert
-  }
+  if (!jobDetails) return null;
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative">
       <div className="bg-[#0e1614] border border-green-900 rounded-xl p-8 shadow-2xl w-full max-w-3xl">
-
         {alertState && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-full max-w-md">
-            <Alert severity={alertState.severity} onClose={() => setAlertState(null)}>{alertState.message}</Alert>
+            <Alert
+              severity={alertState.severity}
+              onClose={() => setAlertState(null)}
+            >
+              {alertState.message}
+            </Alert>
           </div>
         )}
 
@@ -196,7 +209,6 @@ function ApplyPageContent() {
           <Mail size={26} />
           Open Gmail Draft
         </button>
-
       </div>
     </div>
   );
