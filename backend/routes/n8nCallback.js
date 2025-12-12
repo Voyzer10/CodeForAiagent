@@ -17,12 +17,12 @@ router.post("/", async (req, res) => {
 
   try {
     // Standardize fields
-    const jobid = data.jobid || data.jobId || data.id;
+    let jobid = data.jobid || data.jobId || data.id || data.job_id;
     const trackingId = data.userId || data.trackingId || "unknown"; // trackingId is often userId
 
     if (!jobid) {
-      console.error("❌ [n8nCallback] Missing jobid/jobId in payload");
-      return res.status(400).json({ error: "Missing jobid" });
+      console.warn("⚠️ [n8nCallback] Missing jobid/jobId in payload. Generating fallback ID.");
+      jobid = `fallback-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
     }
 
     const updateData = {
