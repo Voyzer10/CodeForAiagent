@@ -1,53 +1,48 @@
-// routes/n8nCallback.js
 const express = require("express");
 const router = express.Router();
-const { logToFile } = require("../logger");
 const Job = require("../model/application-tracking");
+const { logToFile } = require("../logger");
 
 router.post("/", async (req, res) => {
-  console.log("✅ [n8nCallback] Raw body:", req.body);
+  console.log("📩 [n8nCallback] Raw body:", req.body);
 
-  if (!req.body || Object.keys(req.body).length === 0) {
-    console.log("⚠️ [n8nCallback] Empty body received");
-    return res.status(400).json({ message: "Empty body" });
-  }
+  if (!req.body) return res.status(400).json({ message: "Empty body" });
 
   const data = req.body;
-  logToFile(`[n8nCallback] Data received: ${JSON.stringify(data, null, 2)}`);
+
+  // Extract consistent UUID
+  let jobid =
+    data.jobid ||
+    data.jobId ||
+    data.id ||
+    data.job_id;
+
+  if (!jobid) {
+    jobid = `fallback-${Date.now()}`;
+    console.warn("⚠️ Missing jobid. Using fallback:", jobid);
+  }
+
+  const updateData = {
+    jobid,
+    trackingId: data.userId || data.trackingId,
+    refId: data.refId,
+    sent: data.sent || false,
+    email_to: data.email_to || data.email,
+    email_subject: data.email_subject || data.subject,
+    email_content: data.email_content || data.content || data.body,
+  };
 
   try {
-    // Standardize fields
-    let jobid = data.jobid || data.jobId || data.id || data.job_id;
-    const trackingId = data.userId || data.trackingId || "unknown"; // trackingId is often userId
-
-    if (!jobid) {
-      console.warn("⚠️ [n8nCallback] Missing jobid/jobId in payload. Generating fallback ID.");
-      jobid = `fallback-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-      // Forces update
-    }
-
-    const updateData = {
-      jobid: jobid,
-      trackingId: trackingId,
-      refId: data.refId,
-      sent: data.sent || false, // or handle 'no_email_found' logic if needed
-      email_to: data.email_to || data.email,
-      email_subject: data.email_subject || data.subject,
-      email_content: data.email_content || data.content || data.body,
-    };
-
-    // Upsert: Find by jobid, update if exists, insert if not
     const job = await Job.findOneAndUpdate(
-      { jobid: jobid },
+      { jobid },
       updateData,
       { new: true, upsert: true }
     );
 
-    console.log(`💾 [n8nCallback] Saved job ${jobid} to DB. Object ID: ${job._id}`);
+    console.log("💾 Saved N8N job:", job);
     res.json({ success: true, job });
-
   } catch (err) {
-    console.error("❌ [n8nCallback] Save Error:", err);
+    console.error("❌ Callback Error:", err);
     res.status(500).json({ error: "Failed to save data" });
   }
 });

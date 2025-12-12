@@ -18,17 +18,14 @@ function JobFoundContent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [selectedJob, setSelectedJob] = useState(null);
+  // NOTE: selectedJobs now stores UUIDs (jobid) — consistent with n8n & DB
   const [selectedJobs, setSelectedJobs] = useState([]);
 
-
   const [responseMessage, setResponseMessage] = useState(""); // For status box text
-
-  // New Alert State
   const [alertState, setAlertState] = useState(null);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
-  // Track which recent search is active
   const [activeSearch, setActiveSearch] = useState("All Jobs");
   const [currentSession, setCurrentSession] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
@@ -46,40 +43,13 @@ function JobFoundContent() {
     }
   }, [alertState]);
 
-  // Check for pending application after reload
-  useEffect(() => {
-    const checkPending = async () => {
-      const pendingId = localStorage.getItem("pendingJobApplication");
-      if (!pendingId) return;
-
-      console.log("Checking pending job from reload:", pendingId);
-      let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-      while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/applied-jobs/check/${pendingId}`, { method: "GET", credentials: "include" });
-        const data = await res.json();
-
-        if (data.exists && data.job?.email_to && data.job?.email_subject) {
-          console.log("✅ Pending job is ready! Redirecting...");
-          localStorage.removeItem("pendingJobApplication");
-          router.push(`/apply?jobid=${pendingId}`);
-        } else {
-          console.log("❌ Pending job details still missing or job not found.");
-          localStorage.removeItem("pendingJobApplication");
-        }
-      } catch (e) {
-        console.error("Error checking pending job:", e);
-      }
-    };
-    checkPending();
-  }, [router]);
+  // NOTE: removed localStorage-based pending-recovery (JWT-only approach)
+  // If you want recovery on refresh, we can re-add it separately.
 
   useEffect(() => {
     let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+    while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
     pollingRef.current = false;
 
@@ -118,9 +88,13 @@ function JobFoundContent() {
 
           if (runIdParam) {
             console.log("🏃 [JobFound] Filtering by runId:", runIdParam);
-            const sessionMatch = currentSessions.find(s => s.sessionId === runIdParam);
-            const jobsMatch = jobsData.jobs.filter(j =>
-              j.sessionId === runIdParam || j.runId === runIdParam || j.sessionid === runIdParam
+            const sessionMatch = currentSessions.find((s) => s.sessionId === runIdParam);
+
+            const jobsMatch = jobsData.jobs.filter(
+              (j) =>
+                j.sessionId === runIdParam ||
+                j.runId === runIdParam ||
+                j.sessionid === runIdParam
             );
 
             if (jobsMatch.length > 0 || sessionMatch) {
@@ -144,13 +118,13 @@ function JobFoundContent() {
         }
 
         if (jobsData.jobs?.length > 0) {
-          setSelectedJob(prev => prev || jobsData.jobs[0]);
+          setSelectedJob((prev) => prev || jobsData.jobs[0]);
         }
 
-        const searchesRes = await fetch(
-          `${API_BASE_URL}/userjobs/searches/${userId}`,
-          { method: "GET", credentials: "include" }
-        );
+        const searchesRes = await fetch(`${API_BASE_URL}/userjobs/searches/${userId}`, {
+          method: "GET",
+          credentials: "include",
+        });
         const searchesData = await searchesRes.json();
         if (searchesRes.ok) setRecentSearches(searchesData.savedSearches || []);
       } catch (err) {
@@ -167,40 +141,36 @@ function JobFoundContent() {
     return () => clearTimeout(pollingRef.current);
   }, [runIdParam]);
 
-
-
+  // toggle selection stores/removes the job UUID (job.jobid || job.jobId)
   const toggleJobSelection = (jobId) => {
     setSelectedJobs((prev) =>
-      prev.includes(jobId)
-        ? prev.filter((id) => id !== jobId)
-        : [...prev, jobId]
+      prev.includes(jobId) ? prev.filter((id) => id !== jobId) : [...prev, jobId]
     );
   };
 
-  const pollForConfirmation = async (jobId) => {
+  const pollForConfirmation = async (jobUUID) => {
     let attempts = 0;
-    const maxAttempts = 50; // 50 * 3s = 150 seconds wait time
+    const maxAttempts = 50; // 50 * 3s = 150 seconds
     let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
     if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+    while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
     while (attempts < maxAttempts) {
       try {
-        const res = await fetch(`${API_BASE_URL}/applied-jobs/check/${jobId}`, {
+        const res = await fetch(`${API_BASE_URL}/applied-jobs/check/${jobUUID}`, {
           method: "GET",
           credentials: "include",
         });
         const data = await res.json();
 
-        // Strict Check: Ensure job exists AND has critical email data
         if (data.exists && data.job?.email_to && data.job?.email_subject) {
           console.log("✅ Polling confirmed: Job data ready:", data.job);
           return true;
         }
       } catch (e) {
-        // Silent catch
+        // ignore transient errors
       }
-      await new Promise(r => setTimeout(r, 3000)); // Increase interval to 3s
+      await new Promise((r) => setTimeout(r, 3000));
       attempts++;
     }
     return false;
@@ -215,11 +185,12 @@ function JobFoundContent() {
       } catch (err) {
         console.warn(`Attempt ${i + 1} failed: ${err.message}`);
         if (i === retries - 1) throw err;
-        await new Promise(r => setTimeout(r, backoff));
+        await new Promise((r) => setTimeout(r, backoff));
       }
     }
   };
 
+  // FULL updated applyJobs: always send job.jobid (UUID) to n8n, poll until DB has email_to & email_subject, then redirect
   const applyJobs = async (jobsToApply) => {
     if (!jobsToApply.length) {
       setAlertState({ severity: "warning", message: "No jobs selected!" });
@@ -230,18 +201,28 @@ function JobFoundContent() {
     setResponseMessage("Your job is under processing...");
 
     const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL || "https://n8n.techm.work.gd/webhook/apply-jobs";
-    let lastJobId = null;
+    let lastJobUUID = null;
     let successCount = 0;
     let failCount = 0;
 
     try {
+      // Send each selected job to n8n, but ensure we send the UUID field only (jobid/jobId/id)
       for (let i = 0; i < jobsToApply.length; i++) {
         const job = jobsToApply[i];
 
+        // Prefer the UUID-style field — jobid is the canonical field in your setup
+        const jobUUID = job.jobid || job.jobId || job.id;
+        if (!jobUUID) {
+          console.error("❌ Job missing UUID (jobid/jobId/id):", job);
+          failCount++;
+          continue;
+        }
+
         const payload = {
-          ...job,
+          jobid: jobUUID, // ensure the UUID is present and named jobid
+          ...job, // include rest but explicit jobid above ensures consistency
           userId: user?.userId,
-          trackingId: user?.userId
+          trackingId: user?.userId,
         };
 
         const res = await fetch(webhookUrl, {
@@ -253,69 +234,68 @@ function JobFoundContent() {
         const result = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-          console.error(`Failed job ${i + 1}`, result);
+          console.error(`Failed to send job ${i + 1}`, result);
           failCount++;
           continue;
         }
 
         successCount++;
+        lastJobUUID = jobUUID;
 
-        const currentJobId = job.jobid || job.jobId || job.id || job._id;
-        lastJobId = currentJobId;
-
+        // small delay to avoid burst
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       if (successCount === 0) {
         setAlertState({
           severity: "error",
-          message: "No jobs could be processed. Please try again."
+          message: "No jobs could be processed. Please try again.",
         });
         setApplying(false);
         setResponseMessage("");
         return;
       }
 
-      if (lastJobId) {
-        console.log("⏳ Waiting for N8N to prepare job email...");
+      if (lastJobUUID) {
+        setResponseMessage("Waiting for N8N to prepare job email...");
 
+        // Poll the backend until the job (identified by jobid UUID) has email_to & email_subject
+        let attempts = 0;
+        const MAX_ATTEMPTS = 60; // 60 * 2s = 120s
         let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
         API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
 
-        let attempts = 0;
-        const MAX_ATTEMPTS = 40; // 40 * 3s = 2 minutes
-
         while (attempts < MAX_ATTEMPTS) {
-          const check = await fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobId}`, {
-            method: "GET",
-            credentials: "include",
-          });
+          try {
+            const check = await fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobUUID}`, {
+              method: "GET",
+              credentials: "include",
+            });
+            const data = await check.json();
 
-          const data = await check.json();
-
-          if (data.exists && data.job?.email_to && data.job?.email_subject) {
-            console.log("🎉 Email details ready — redirecting…");
-            setResponseMessage("Redirecting to application…");
-
-            await new Promise(res => setTimeout(res, 1500));
-
-            router.push(`/apply?jobid=${lastJobId}`);
-            return;
+            if (data.exists && data.job?.email_to && data.job?.email_subject) {
+              console.log("🎉 Email details ready — redirecting…");
+              setResponseMessage("Redirecting to application…");
+              await new Promise((r) => setTimeout(r, 1200));
+              router.push(`/apply?jobid=${lastJobUUID}`);
+              return;
+            }
+          } catch (err) {
+            console.warn("Polling error:", err.message || err);
           }
 
-          await new Promise(res => setTimeout(res, 3000));
+          await new Promise((r) => setTimeout(r, 2000));
           attempts++;
         }
 
         setAlertState({
           severity: "error",
-          message: "Job email could not be prepared in time. Try again."
+          message: "Job email could not be prepared in time. Try again.",
         });
         setApplying(false);
         setResponseMessage("");
         return;
       }
-
     } catch (err) {
       console.error("Error applying:", err);
       setAlertState({ severity: "error", message: "Unexpected error. Try again." });
@@ -399,11 +379,7 @@ function JobFoundContent() {
   return (
     <div className="flex min-h-screen bg-[#0b0f0e] text-white">
       <UserNavbar onSidebarToggle={toggleSidebar} />
-      <Sidebar
-        isOpen={sidebarOpen}
-        recentSearches={recentSearches}
-        onSelectSearch={handleSearchSelect}
-      />
+      <Sidebar isOpen={sidebarOpen} recentSearches={recentSearches} onSelectSearch={handleSearchSelect} />
 
       {/* ALERT CONTAINER */}
       {alertState && (
@@ -415,19 +391,17 @@ function JobFoundContent() {
       )}
 
       <div className="flex-1 p-6 md:p-10 relative">
-
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
           <div className="flex ">
-            <h2 className="text-md font-bold text-green-400 mb-2  px-3 pt-1.5">
-              Saved Searches
-            </h2>
+            <h2 className="text-md font-bold text-green-400 mb-2  px-3 pt-1.5">Saved Searches</h2>
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
-                className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === "All Jobs"
-                  ? "bg-green-700/50 border-green-600 text-green-200"
-                  : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
-                  }`}
+                className={`px-4 py-2 rounded-md text-sm border transition ${
+                  activeSearch === "All Jobs"
+                    ? "bg-green-700/50 border-green-600 text-green-200"
+                    : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                }`}
               >
                 All Jobs ({userJobs.length})
               </button>
@@ -437,10 +411,11 @@ function JobFoundContent() {
                   <button
                     key={idx}
                     onClick={() => handleSearchSelect(search)}
-                    className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === search.name
-                      ? "bg-green-700/50 border-green-600 text-green-200"
-                      : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
-                      }`}
+                    className={`px-4 py-2 rounded-md text-sm border transition ${
+                      activeSearch === search.name
+                        ? "bg-green-700/50 border-green-600 text-green-200"
+                        : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                    }`}
                   >
                     {search.name} ({search.jobs?.length || 0})
                   </button>
@@ -453,9 +428,7 @@ function JobFoundContent() {
         </div>
 
         <div className="flex flex-col mt-4 w-full">
-          <h2 className="text-md font-bold text-green-400 mb-2 px-3">
-            Recent Sessions
-          </h2>
+          <h2 className="text-md font-bold text-green-400 mb-2 px-3">Recent Sessions</h2>
           <div className="flex flex-wrap gap-2 px-3">
             {sessions.length > 0 ? (
               sessions.map((session, idx) => {
@@ -465,10 +438,9 @@ function JobFoundContent() {
                   <button
                     key={idx}
                     onClick={() => handleSessionSelect(session)}
-                    className={`px-3 py-1 rounded-md text-xs border transition ${isActive
-                      ? "bg-green-700/50 border-green-600 text-green-200"
-                      : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
-                      }`}
+                    className={`px-3 py-1 rounded-md text-xs border transition ${
+                      isActive ? "bg-green-700/50 border-green-600 text-green-200" : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
+                    }`}
                   >
                     {displayName}
                     <span className="ml-1 opacity-70">({session.deducted} jobs)</span>
@@ -483,12 +455,19 @@ function JobFoundContent() {
 
         <div className="flex gap-3 mt-6 md:mt-0">
           <button
-            onClick={() => applyJobs(userJobs.filter((j) => selectedJobs.includes(j._id)))}
+            onClick={() =>
+              applyJobs(
+                // map selected UUIDs back to job objects
+                userJobs.filter((j) => {
+                  const uuid = j.jobid || j.jobId || j.id;
+                  return selectedJobs.includes(uuid);
+                })
+              )
+            }
             disabled={!selectedJobs.length || applying}
-            className={`px-3 py-2 text-sm rounded-md border transition flex items-center gap-2 ${selectedJobs.length && !applying
-              ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50"
-              : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
-              }`}
+            className={`px-3 py-2 text-sm rounded-md border transition flex items-center gap-2 ${
+              selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+            }`}
           >
             {applying ? (
               <>
@@ -524,59 +503,44 @@ function JobFoundContent() {
           </div>
         )}
 
-
-
         <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
           <div className="w-1/3 m-2 grid gap-4 grid-cols-1 lg:grid-cols-1 overflow-y-auto no-scrollbar">
             {filteredJobs.length > 0 ? (
               filteredJobs.map((job, idx) => {
-                const jobId = job._id || job.id || job.jobId || idx;
-                const isSelected = selectedJobs.includes(jobId);
+                // Use job.jobid (UUID) as primary identifier for selection
+                const jobUUID = job.jobid || job.jobId || job.id || job._id || idx;
+                const isSelected = selectedJobs.includes(jobUUID);
                 const title = job.Title || job.title || "(No title)";
-                const description =
-                  job.Description || job.descriptionText || job.descriptionHtml || "No description available.";
+                const description = job.Description || job.descriptionText || job.descriptionHtml || "No description available.";
                 const location = job.Location || job.location || "";
                 const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
 
                 return (
                   <div
-                    key={job._id || idx}
-                    className={`p-4 border rounded-xl shadow-md transition cursor-pointer ${isSelected
-                      ? "bg-green-900/20 border-green-500"
-                      : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
-                      }`}
-                    onClick={() => toggleJobSelection(jobId)}
+                    key={jobUUID}
+                    className={`p-4 border rounded-xl shadow-md transition cursor-pointer ${isSelected ? "bg-green-900/20 border-green-500" : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"}`}
+                    onClick={() => toggleJobSelection(jobUUID)}
                   >
                     <div className="flex justify-between items-start">
                       <h3 className="text-lg font-semibold text-green-400 truncate">{title}</h3>
                       <input
                         type="checkbox"
                         checked={isSelected}
-                        onChange={() => toggleJobSelection(jobId)}
+                        onChange={() => toggleJobSelection(jobUUID)}
                         className="accent-green-500 cursor-pointer"
                         onClick={(e) => e.stopPropagation()}
                       />
                     </div>
 
-                    <p
-                      className="text-sm text-gray-500 mt-2 line-clamp-3"
-                      dangerouslySetInnerHTML={{ __html: description }}
-                    ></p>
+                    <p className="text-sm text-gray-500 mt-2 line-clamp-3" dangerouslySetInnerHTML={{ __html: description }}></p>
 
                     <div className="mt-3 text-xs text-green-300 space-y-1">
                       <div className="text-gray-400 text-sm mb-2">{location}</div>
-                      <div className="text-gray-400 text-sm mb-2">
-                        Posted: {postedAt ? new Date(postedAt).toLocaleDateString() : "Unknown date"}
-                      </div>
+                      <div className="text-gray-400 text-sm mb-2">Posted: {postedAt ? new Date(postedAt).toLocaleDateString() : "Unknown date"}</div>
                     </div>
 
                     {job.link && (
-                      <a
-                        href={job.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block mt-3 text-green-400 hover:text-green-300 text-sm"
-                      >
+                      <a href={job.link} target="_blank" rel="noopener noreferrer" className="block mt-3 text-green-400 hover:text-green-300 text-sm">
                         View / Apply →
                       </a>
                     )}
@@ -601,9 +565,7 @@ function JobFoundContent() {
           <div className="w-3/4 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e]">
             {selectedJob ? (
               <div>
-                <h3 className="text-2xl font-bold text-green-400 mb-3">
-                  {selectedJob.Title || selectedJob.title}
-                </h3>
+                <h3 className="text-2xl font-bold text-green-400 mb-3">{selectedJob.Title || selectedJob.title}</h3>
 
                 <div className="space-y-2 text-sm max-h-[65vh] overflow-y-auto">
                   {Object.keys(selectedJob).map((key) => {
@@ -612,12 +574,7 @@ function JobFoundContent() {
                       <div key={key}>
                         <span className="font-semibold text-green-300">{key}: </span>
                         {key === "link" || key === "applyUrl" ? (
-                          <a
-                            href={selectedJob[key]}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-400 underline"
-                          >
+                          <a href={selectedJob[key]} target="_blank" rel="noopener noreferrer" className="text-green-400 underline">
                             {selectedJob[key]}
                           </a>
                         ) : (
@@ -630,26 +587,19 @@ function JobFoundContent() {
 
                 {selectedJob.link && (
                   <div className="mt-6">
-                    <a
-                      href={selectedJob.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block bg-green-600 text-black px-5 py-2 rounded-md hover:bg-green-500 transition font-semibold"
-                    >
+                    <a href={selectedJob.link} target="_blank" rel="noopener noreferrer" className="inline-block bg-green-600 text-black px-5 py-2 rounded-md hover:bg-green-500 transition font-semibold">
                       Go to Job
                     </a>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="text-gray-500 text-center mt-10">
-                Select a job to view details.
-              </div>
+              <div className="text-gray-500 text-center mt-10">Select a job to view details.</div>
             )}
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 }
 
