@@ -66,8 +66,8 @@ function ApplyPageContent() {
       try {
         console.log("📨 Creating Gmail Draft…");
 
-        // ⬅️ IMPORTANT: OLD WORKING ROUTE
-        const res = await axios.post(`${API_BASE_URL}/gmail/create-draft`, {
+        // Corrected route based on backend/routes/authRoutes.js
+        const res = await axios.post(`${API_BASE_URL}/auth/gmail/create-draft`, {
           userId,
           jobid,
         });
