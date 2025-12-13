@@ -133,38 +133,38 @@ export default function AppliedJobs() {
                                 key={job._id || index}
                                 className="bg-[#0b1512] border border-[#11221b] rounded-xl p-6 hover:border-[#00fa92]/30 transition-all duration-300"
                             >
-                                <div className="flex items-start justify-between gap-4">
-                                    <div className="flex-1">
+                                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                                    <div className="flex-1 w-full">
                                         {/* Job Title/Subject */}
-                                        <h3 className="text-lg font-semibold text-white mb-2">
+                                        <h3 className="text-lg font-semibold text-white mb-2 break-words">
                                             {job.email_subject || 'Application Draft'}
                                         </h3>
 
                                         {/* Recipient Email */}
-                                        <div className="flex items-center gap-2 mb-3">
-                                            <Mail className="w-4 h-4 text-[#00fa92]" />
-                                            <span className="text-sm text-[#9ca3af]">
+                                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                                            <Mail className="w-4 h-4 text-[#00fa92] shrink-0" />
+                                            <span className="text-sm text-[#9ca3af] break-all">
                                                 To: <span className="text-[#c7d7cf]">{job.email_to || 'N/A'}</span>
                                             </span>
                                         </div>
 
                                         {/* Date */}
                                         <div className="flex items-center gap-2 mb-3">
-                                            <Calendar className="w-4 h-4 text-[#00fa92]" />
+                                            <Calendar className="w-4 h-4 text-[#00fa92] shrink-0" />
                                             <span className="text-sm text-[#9ca3af]">
                                                 Applied: <span className="text-[#c7d7cf]">{formatDate(job.createdAt)}</span>
                                             </span>
                                         </div>
 
                                         {/* Job ID */}
-                                        <div className="text-xs text-[#7b8f86] font-mono">
+                                        <div className="text-xs text-[#7b8f86] font-mono break-all">
                                             Job ID: {job.jobid || job.jobId || job.id || 'N/A'}
                                         </div>
                                     </div>
 
                                     {/* Status Badge */}
-                                    <div className="flex flex-col items-end gap-3">
-                                        <div className="px-4 py-2 rounded-full bg-gradient-to-r from-[#00fa92] to-[#4ade80] text-[#030604] text-sm font-semibold flex items-center gap-2">
+                                    <div className="flex flex-row sm:flex-col items-center sm:items-end gap-3 w-full sm:w-auto justify-between sm:justify-start mt-2 sm:mt-0">
+                                        <div className="px-4 py-2 rounded-full bg-gradient-to-r from-[#00fa92] to-[#4ade80] text-[#030604] text-sm font-semibold flex items-center gap-2 shrink-0">
                                             <CheckCircle2 className="w-4 h-4" />
                                             Draft Created
                                         </div>
@@ -175,7 +175,7 @@ export default function AppliedJobs() {
                                                 href={`https://mail.google.com/mail/u/0/#drafts/${job.draftId}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#062217] border border-[#11221b] text-[#00fa92] hover:bg-[#083126] transition-colors"
+                                                className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#062217] border border-[#11221b] text-[#00fa92] hover:bg-[#083126] transition-colors shrink-0"
                                             >
                                                 <ExternalLink className="w-4 h-4" />
                                                 View in Gmail

@@ -520,8 +520,9 @@ function JobFoundContent() {
           </div>
         )}
 
-        <div className="flex h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
-          <div className="w-1/3 m-2 grid gap-4 grid-cols-1 lg:grid-cols-1 overflow-y-auto no-scrollbar">
+        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
+          {/* Job List */}
+          <div className="w-full lg:w-1/3 m-0 lg:m-2 grid gap-4 grid-cols-1 overflow-y-auto no-scrollbar p-4 lg:p-0 max-h-[40vh] lg:max-h-full border-b lg:border-b-0 lg:border-r border-green-800/50">
             {filteredJobs.length > 0 ? (
               filteredJobs.map((job, idx) => {
                 // Use job.jobid (UUID) as primary identifier for selection
@@ -587,7 +588,8 @@ function JobFoundContent() {
             )}
           </div>
 
-          <div className="w-3/4 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e]">
+          {/* Job Details */}
+          <div className="w-full lg:w-2/3 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e] min-h-[50vh] lg:min-h-auto">
             {selectedJob ? (
               <div>
                 <h3 className="text-2xl font-bold text-green-400 mb-3">{selectedJob.Title || selectedJob.title}</h3>
