@@ -2,10 +2,14 @@ const Job = require("../model/job-information");
 const fetch = require("node-fetch");
 const User = require("../model/User");
 const { jobQueue } = require("../queues/jobQueue");
+const redis = require("../config/redis"); // ✅ Redis client
+const { getCache, setCache } = require("../utils/cache"); // ✅ cache helper
 
 console.log("🔄 jobController loaded with debugging");
 
-// controller/createJob.js
+/* ======================================================
+   CREATE JOB  (NO CACHING HERE – WRITE PATH)
+====================================================== */
 const createJob = async (req, res) => {
   const userId = req.user?.id || null;
   const { prompt, sessionId, runId } = req.body;
@@ -28,14 +32,18 @@ const createJob = async (req, res) => {
       });
     }
 
-    // ✅ Ensure we have valid IDs
     const finalSessionId = sessionId || `${userId}-${Date.now()}`;
     const finalRunId = runId || finalSessionId;
 
-    // ✅ Queue the single job properly  
-    await jobQueue.add("processJob", { userId, prompt, sessionId: finalSessionId, runId: finalRunId });
+    await jobQueue.add("processJob", {
+      userId,
+      prompt,
+      sessionId: finalSessionId,
+      runId: finalRunId,
+    });
 
-    console.log("🧩 [createJob] Queued job for user:", userId, "session:", finalSessionId, "runId:", finalRunId);
+    // ✅ IMPORTANT: invalidate cached jobs for this user
+    await redis.del(`jobs:user:${userId}`);
 
     return res.status(202).json({
       message: "Job queued successfully",
@@ -49,7 +57,9 @@ const createJob = async (req, res) => {
   }
 };
 
-// ✅ Get jobs by authenticated user or specific userId
+/* ======================================================
+   GET USER JOBS  (READ PATH + REDIS CACHING)
+====================================================== */
 const getUserJobs = async (req, res) => {
   const userId = Number(req.params.userId || req.user?.id);
 
@@ -57,39 +67,57 @@ const getUserJobs = async (req, res) => {
     return res.status(401).json({ error: "Unauthorized: Missing user ID" });
   }
 
-  try {
-    console.log("📡 Fetching jobs for UserID:", userId);
+  const cacheKey = `jobs:user:${userId}`;
 
-    // ✅ Build query with robust ID matching
+  try {
+    // 1️⃣ TRY REDIS CACHE
+    const cachedJobs = await getCache(cacheKey);
+    if (cachedJobs) {
+      return res.status(200).json({
+        jobs: cachedJobs,
+        cached: true,
+      });
+    }
+
+    console.log("📡 Cache MISS → Fetching jobs from DB for UserID:", userId);
+
+    // 2️⃣ BUILD QUERY (same logic as before)
     const query = { UserID: userId };
 
     if (req.query.runId) {
       query.$or = [
         { runId: req.query.runId },
         { sessionId: req.query.runId },
-        { sessionid: req.query.runId }
+        { sessionid: req.query.runId },
       ];
     } else if (req.query.sessionId) {
       query.$or = [
         { sessionId: req.query.sessionId },
-        { sessionid: req.query.sessionId }
+        { sessionid: req.query.sessionId },
       ];
     }
 
-    // ✅ Use correct DB field name
-    const jobs = await Job.find(query).sort({ Posted_At: -1 });
+    // 3️⃣ DB QUERY (LEAN = FAST)
+    const jobs = await Job.find(query)
+      .sort({ postedAt: -1 })
+      .lean(); // 🔥 BIG PERFORMANCE BOOST
 
-    // ✅ No normalization — send directly
-    res.status(200).json({ jobs });
+    // 4️⃣ SAVE TO REDIS (5 MIN TTL)
+    await setCache(cacheKey, jobs, 300);
+
+    return res.status(200).json({
+      jobs,
+      cached: false,
+    });
   } catch (error) {
     console.error("[getUserJobs] Error:", error);
     res.status(500).json({ message: "Server error fetching user jobs" });
   }
 };
 
-module.exports = { getUserJobs };
-
-// ✅ Admin only: Get all jobs from all users
+/* ======================================================
+   ADMIN: GET ALL USER JOBS (NO CACHE FOR NOW)
+====================================================== */
 const getAllUserJobs = async (req, res) => {
   if (req.user?.role !== "admin") {
     console.warn("⛔ Unauthorized access attempt to admin route");
@@ -100,9 +128,9 @@ const getAllUserJobs = async (req, res) => {
     console.log("👑 Admin fetching all jobs with user details...");
     const jobs = await Job.find()
       .populate("userId", "name email")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
-    console.log(`✅ Admin fetched ${jobs.length} total jobs`);
     return res.json(jobs);
   } catch (err) {
     console.error("🔥 Error in getAllUserJobs:", err);
@@ -110,11 +138,8 @@ const getAllUserJobs = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   createJob,
   getUserJobs,
   getAllUserJobs,
-  // updateJobCredits,
 };

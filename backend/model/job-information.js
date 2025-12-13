@@ -18,9 +18,21 @@ const JobSchema = new mongoose.Schema({
   inputUrl: { type: String },
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
   jobPosterId: { type: mongoose.Schema.Types.ObjectId, ref: 'JobPoster', required: true },
-  sessionId: { type: String }, // ✅ Added sessionId for filtering
-  sessionid: { type: String }, // ✅ Added lowercase backup
-  runId: { type: String } // ✅ Added distinct runId
+  sessionId: { type: String },
+  sessionid: { type: String },
+  runId: { type: String }
 }, { collection: "Job-Information", timestamps: true });
+
+/* ============================
+   🔥 INDEXES (STEP-4)
+============================ */
+
+// User dashboard main index (MOST IMPORTANT)
+JobSchema.index({ UserID: 1, postedAt: -1 });
+
+// Filtering indexes
+JobSchema.index({ sessionId: 1 });
+JobSchema.index({ sessionid: 1 });
+JobSchema.index({ runId: 1 });
 
 module.exports = mongoose.models.Job || mongoose.model("Job", JobSchema);
