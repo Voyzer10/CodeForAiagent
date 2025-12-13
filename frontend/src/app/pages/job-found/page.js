@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, CheckCircle } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,6 +20,7 @@ function JobFoundContent() {
   const [selectedJob, setSelectedJob] = useState(null);
   // NOTE: selectedJobs now stores UUIDs (jobid) — consistent with n8n & DB
   const [selectedJobs, setSelectedJobs] = useState([]);
+  const [appliedJobIds, setAppliedJobIds] = useState(new Set());
 
   const [responseMessage, setResponseMessage] = useState(""); // For status box text
   const [alertState, setAlertState] = useState(null);
@@ -127,6 +128,26 @@ function JobFoundContent() {
         });
         const searchesData = await searchesRes.json();
         if (searchesRes.ok) setRecentSearches(searchesData.savedSearches || []);
+
+        // FETCH APPLIED JOBS
+        try {
+          const appliedRes = await fetch(`${API_BASE_URL}/applied-jobs/user/${userId}`, {
+            method: "GET",
+            credentials: "include",
+          });
+          const appliedData = await appliedRes.json();
+          if (appliedData.success && Array.isArray(appliedData.jobs)) {
+            // Collect all possible IDs to ensure matching works
+            const ids = new Set(
+              appliedData.jobs
+                .map((j) => j.jobid || j.jobId || j.id)
+                .filter(Boolean)
+            );
+            setAppliedJobIds(ids);
+          }
+        } catch (err) {
+          console.warn("[JobFound] Failed to fetch applied jobs:", err);
+        }
       } catch (err) {
         console.error("[JobFound] fetch error:", err);
         setError(err.message || "Unknown error");
@@ -397,11 +418,10 @@ function JobFoundContent() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
-                className={`px-4 py-2 rounded-md text-sm border transition ${
-                  activeSearch === "All Jobs"
-                    ? "bg-green-700/50 border-green-600 text-green-200"
-                    : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
-                }`}
+                className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === "All Jobs"
+                  ? "bg-green-700/50 border-green-600 text-green-200"
+                  : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                  }`}
               >
                 All Jobs ({userJobs.length})
               </button>
@@ -411,11 +431,10 @@ function JobFoundContent() {
                   <button
                     key={idx}
                     onClick={() => handleSearchSelect(search)}
-                    className={`px-4 py-2 rounded-md text-sm border transition ${
-                      activeSearch === search.name
-                        ? "bg-green-700/50 border-green-600 text-green-200"
-                        : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
-                    }`}
+                    className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === search.name
+                      ? "bg-green-700/50 border-green-600 text-green-200"
+                      : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                      }`}
                   >
                     {search.name} ({search.jobs?.length || 0})
                   </button>
@@ -438,9 +457,8 @@ function JobFoundContent() {
                   <button
                     key={idx}
                     onClick={() => handleSessionSelect(session)}
-                    className={`px-3 py-1 rounded-md text-xs border transition ${
-                      isActive ? "bg-green-700/50 border-green-600 text-green-200" : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
-                    }`}
+                    className={`px-3 py-1 rounded-md text-xs border transition ${isActive ? "bg-green-700/50 border-green-600 text-green-200" : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
+                      }`}
                   >
                     {displayName}
                     <span className="ml-1 opacity-70">({session.deducted} jobs)</span>
@@ -465,9 +483,8 @@ function JobFoundContent() {
               )
             }
             disabled={!selectedJobs.length || applying}
-            className={`px-3 py-2 text-sm rounded-md border transition flex items-center gap-2 ${
-              selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
-            }`}
+            className={`px-3 py-2 text-sm rounded-md border transition flex items-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+              }`}
           >
             {applying ? (
               <>
@@ -510,6 +527,7 @@ function JobFoundContent() {
                 // Use job.jobid (UUID) as primary identifier for selection
                 const jobUUID = job.jobid || job.jobId || job.id || job._id || idx;
                 const isSelected = selectedJobs.includes(jobUUID);
+                const isApplied = appliedJobIds.has(jobUUID);
                 const title = job.Title || job.title || "(No title)";
                 const description = job.Description || job.descriptionText || job.descriptionHtml || "No description available.";
                 const location = job.Location || job.location || "";
@@ -519,17 +537,24 @@ function JobFoundContent() {
                   <div
                     key={jobUUID}
                     className={`p-4 border rounded-xl shadow-md transition cursor-pointer ${isSelected ? "bg-green-900/20 border-green-500" : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"}`}
-                    onClick={() => toggleJobSelection(jobUUID)}
+                    onClick={() => !isApplied && toggleJobSelection(jobUUID)}
                   >
                     <div className="flex justify-between items-start">
                       <h3 className="text-lg font-semibold text-green-400 truncate">{title}</h3>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleJobSelection(jobUUID)}
-                        className="accent-green-500 cursor-pointer"
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                      {isApplied ? (
+                        <div className="flex items-center gap-1 text-green-500 bg-green-900/30 px-2 py-1 rounded text-xs border border-green-800">
+                          <CheckCircle size={14} />
+                          <span>Already Applied</span>
+                        </div>
+                      ) : (
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleJobSelection(jobUUID)}
+                          className="accent-green-500 cursor-pointer"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
                     </div>
 
                     <p className="text-sm text-gray-500 mt-2 line-clamp-3" dangerouslySetInnerHTML={{ __html: description }}></p>
