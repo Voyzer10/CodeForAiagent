@@ -172,7 +172,7 @@ export default function AppliedJobs() {
                                         {/* View in Gmail button (if we had draft ID) */}
                                         {job.draftId && (
                                             <a
-                                                href={`https://mail.google.com/mail/u/0/?fs=1&drafts=${job.draftId}`}
+                                                href={`https://mail.google.com/mail/u/0/#drafts/${job.draftId}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-[#062217] border border-[#11221b] text-[#00fa92] hover:bg-[#083126] transition-colors"
