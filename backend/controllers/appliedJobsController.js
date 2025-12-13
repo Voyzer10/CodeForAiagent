@@ -14,18 +14,25 @@ exports.getAppliedJobs = async (req, res) => {
             return res.status(400).json({ error: "Invalid userId" });
         }
 
+        console.log(`\n🔍 getAppliedJobs called for userId: ${userId}`);
+
         // Find user to verify they exist
         const user = await User.findOne({ userId });
         if (!user) {
+            console.warn(`❌ User not found for userId: ${userId}`);
             return res.status(404).json({ error: "User not found" });
         }
+        console.log(`✅ User found: ${user.email} (${user._id})`);
 
         // Find all jobs where drafts were created (sent = true indicates draft was created)
-        // You can adjust this query based on your tracking logic
-        const appliedJobs = await Job.find({
+        const query = {
             trackingId: String(userId),
-            sent: true
-        }).sort({ createdAt: -1 });
+            sent: { $in: [true, "true"] }
+        };
+        console.log("🔎 MongoDB Query:", JSON.stringify(query));
+
+        const appliedJobs = await Job.find(query).sort({ createdAt: -1 });
+        console.log(`📦 Found ${appliedJobs.length} applied jobs.`);
 
         return res.json({
             success: true,
