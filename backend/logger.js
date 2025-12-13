@@ -15,6 +15,7 @@ const queueLogFile = path.join(logsDir, "queueLogs.txt");
 function timestamp() {
   const d = new Date();
   return d.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -27,7 +28,7 @@ function timestamp() {
 // ========== FILE APPEND ==========
 function write(file, msg) {
   const line = `[${timestamp()}] ${msg}\n`;
-  fs.appendFile(file, line, () => {});
+  fs.appendFile(file, line, () => { });
 }
 
 // ========== CUSTOM LOG FUNCTIONS ==========
