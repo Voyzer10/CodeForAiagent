@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import LocationDropdown from "../../components/LocationDropdown";
 import { Loader2 } from "lucide-react";
 import UserNavbar from "./Navbar";
@@ -8,8 +8,17 @@ import Sidebar from "./Sidebar";
 import { useRouter } from "next/navigation";
 import Alert from "../../components/Alert";
 
+const PROGRESS_MESSAGES = [
+  "Scanning LinkedIn & job boards…",
+  "Analyzing your profile match…",
+  "Filtering best-fit opportunities…",
+  "Finalizing results…",
+];
+
 export default function UserPanel() {
   const router = useRouter();
+  const pollRef = useRef(null);
+
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -17,52 +26,44 @@ export default function UserPanel() {
   const [location, setLocation] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [github, setGithub] = useState("");
+
   const [response, setResponse] = useState(null);
   const [userJobs, setUserJobs] = useState([]);
+
   const [loading, setLoading] = useState(false);
+  const [jobFinished, setJobFinished] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [progressMessage, setProgressMessage] = useState(PROGRESS_MESSAGES[0]);
+
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
-  const [isOpen, setIsOpen] = useState(false);
+
   const [count, setCount] = useState(100);
   const [countError, setCountError] = useState("");
+
   const [sessionId, setSessionId] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [jobFinished, setJobFinished] = useState(false); // ✅ Track job completion
-  const [loadingProgress, setLoadingProgress] = useState(0);
-
   const [alertState, setAlertState] = useState(null);
 
-  // Auto-dismiss alert after 5 seconds
+  let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+  /* ---------------- ALERT AUTO DISMISS ---------------- */
   useEffect(() => {
     if (alertState) {
-      const timer = setTimeout(() => setAlertState(null), 5000);
-      return () => clearTimeout(timer);
+      const t = setTimeout(() => setAlertState(null), 5000);
+      return () => clearTimeout(t);
     }
   }, [alertState]);
 
-  let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-  while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
-
-  // Generate unique session ID when page loads
+  /* ---------------- SESSION ID ---------------- */
   useEffect(() => {
-    const array = new Uint32Array(1);
-    crypto.getRandomValues(array);
-    const newSessionId = `session_${Date.now()}_${array[0].toString(16)}`;
-    setSessionId(newSessionId);
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    setSessionId(`session_${Date.now()}_${arr[0].toString(16)}`);
   }, []);
 
-  // Auto-close Save Search Modal after 2 minutes
-  useEffect(() => {
-    if (showSaveModal) {
-      const timer = setTimeout(() => {
-        setShowSaveModal(false);
-      }, 2 * 60 * 1000); // 2 minutes
-      return () => clearTimeout(timer);
-    }
-  }, [showSaveModal]);
-
-  // Fetch user and jobs
+  /* ---------------- FETCH USER ---------------- */
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -70,7 +71,7 @@ export default function UserPanel() {
           credentials: "include",
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Failed to fetch user");
+        if (!res.ok) throw new Error(data.message);
         setUser(data.user);
 
         if (data.user?.userId) {
@@ -88,163 +89,125 @@ export default function UserPanel() {
     fetchUser();
   }, [API_BASE_URL]);
 
-  // ✅ Poll for Job Completion
+  /* ---------------- PROGRESS BAR ANIMATION ---------------- */
   useEffect(() => {
-    let interval;
-    if (response?.runId && !jobFinished) {
-      interval = setInterval(async () => {
-        try {
-          // Poll getUserJobs with runId
-          if (!user?.userId) return;
+    if (!loading) return;
 
-          const res = await fetch(
-            `${API_BASE_URL}/userjobs/${user.userId}?runId=${response.runId}`,
-            { credentials: "include" }
-          );
+    const interval = setInterval(() => {
+      setLoadingProgress((prev) => {
+        if (prev >= 95) return prev; // HARD STOP till backend confirms
+        return prev + 1;
+      });
+    }, 600);
 
-          if (!res.ok) {
-            // If we hit a rate limit or server error, just skip this poll cycle
-            console.warn(`Polling skipped: ${res.status}`);
-            return;
-          }
+    return () => clearInterval(interval);
+  }, [loading]);
 
-          const data = await res.json();
+  /* ---------------- PROGRESS MESSAGE ROTATION ---------------- */
+  useEffect(() => {
+    const idx = Math.min(
+      Math.floor(loadingProgress / 25),
+      PROGRESS_MESSAGES.length - 1
+    );
+    setProgressMessage(PROGRESS_MESSAGES[idx]);
+  }, [loadingProgress]);
 
-          if (data.jobs && data.jobs.length > 0) {
-            setJobFinished(true);
-            setLoading(false);
-            setResponse(prev => ({ ...prev, message: "Job completed successfully!" }));
-            setUserJobs(data.jobs); // ✅ Store jobs
-            clearInterval(interval);
-          }
-        } catch (err) {
-          console.error("Polling error:", err);
+  /* ---------------- POLLING JOB COMPLETION ---------------- */
+  useEffect(() => {
+    if (!response?.runId || !user?.userId || jobFinished) return;
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/userjobs/${user.userId}?runId=${response.runId}`,
+          { credentials: "include" }
+        );
+
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        const completed =
+          data.finished === true ||
+          data.status === "completed" ||
+          data.success === true ||
+          (Array.isArray(data.jobs) && data.jobs.length > 0);
+
+        if (completed) {
+          clearInterval(pollRef.current);
+          setUserJobs(data.jobs || []);
+          setJobFinished(true);
+          setLoading(false);
+          setLoadingProgress(100);
+          setResponse({
+            message: "🎉 Jobs found successfully!",
+            runId: response.runId,
+          });
         }
-      }, 3000); // Poll every 3s
-    }
-    return () => clearInterval(interval);
-  }, [response, jobFinished, user, API_BASE_URL]);
+      } catch (e) {
+        console.error("Polling error", e);
+      }
+    }, 3000);
 
-  // Animated Progress Simulation
-  useEffect(() => {
-    let interval;
-    if (loading) {
-      setLoadingProgress(0);
-      interval = setInterval(() => {
-        setLoadingProgress((prev) => {
-          if (prev >= 95) return prev; // Cap at 95% until finished
-          return prev + 1;
-        });
-      }, 600); // Increments steadily
-    } else if (jobFinished) {
-      setLoadingProgress(100);
-    } else {
-      setLoadingProgress(0);
-    }
-    return () => clearInterval(interval);
-  }, [loading, jobFinished]);
+    return () => clearInterval(pollRef.current);
+  }, [response, user, jobFinished, API_BASE_URL]);
 
-  // Handle Submit
+  /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
 
     const num = Number(count);
-    if (!validateCount(num)) return;
-
+    if (!num || num < 100 || num > 1000) {
+      setCountError("Count must be between 100–1000");
+      return;
+    }
     setCountError("");
+
     setError(null);
     setLoading(true);
+    setJobFinished(false);
+    setLoadingProgress(0);
 
-    // Generate a fresh runId for this specific run
-    const array = new Uint32Array(1);
-    crypto.getRandomValues(array);
-    const runId = `run_${Date.now()}_${array[0].toString(16)}`;
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    const runId = `run_${Date.now()}_${arr[0].toString(16)}`;
 
-    try {
-      if (!(await checkPlanAndCredits(num))) return;
-
-      const prompt = `
-        Job Title: ${jobTitle}
-        Location: ${location}
-        LinkedIn: ${linkedin}
-        GitHub: ${github}
-        Count: ${num}
-      `;
-
-      // Show processing message
-      setResponse({ message: "Your job is under processing...", runId });
-      setJobFinished(false);
-
-      await submitJob(prompt, runId);
-
-    } catch (err) {
-      console.error("❌ Error submitting job:", err);
-      setError(err.message);
-      setLoading(false);
-    }
-  };
-
-  const validateCount = (num) => {
-    if (!Number.isFinite(num) || num < 100 || num > 1000) {
-      setCountError("Count must be between 100–1000");
-      return false;
-    }
-    return true;
-  };
-
-  const checkPlanAndCredits = async (num) => {
-    // Check active plan
-    const planRes = await fetch(`${API_BASE_URL}/payment/check`, { credentials: "include" });
-    const planData = await planRes.json();
-
-    if (!planData.hasPlan) {
-      setLoading(false);
-      router.push("/pages/price");
-      return false;
-    }
-
-    // Check actual credit balance
-    const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${user.userId}`, { credentials: "include" });
-    const creditData = await creditRes.json();
-
-    if (!creditRes.ok) {
-      setLoading(false);
-      setError(creditData.message || "Failed to check credits");
-      return false;
-    }
-
-    if (creditData.credits < 100) {
-      setLoading(false);
-      setAlertState({ severity: "error", message: `Not enough credits! You have ${creditData.credits}. Buy credits first.` });
-      router.push("/pages/price");
-      return false;
-    }
-    return true;
-  };
-
-  const submitJob = async (prompt, runId) => {
-    // We send 'sessionId' as the key because backend expects it, but we pass our fresh runId
-    const res = await fetch(`${API_BASE_URL}/userjobs/`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-      body: JSON.stringify({ prompt, sessionId: runId, runId }), // Send both for compatibility
+    setResponse({
+      message: "Your job is under processing…",
+      runId,
     });
 
-    if (!res.ok) throw new Error("Server error while enqueuing job");
-
-    const data = await res.json();
-    // data should contain acknowledgement
-    return data;
+    try {
+      await fetch(`${API_BASE_URL}/userjobs`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          prompt: {
+            jobTitle,
+            location,
+            linkedin,
+            github,
+            count: num,
+          },
+          sessionId: runId,
+          runId,
+        }),
+      });
+    } catch (e) {
+      console.error(e);
+      setLoading(false);
+      setAlertState({ severity: 'error', message: 'Failed to start job' });
+    }
   };
 
+  /* ---------------- UI ---------------- */
   return (
     <div className="relative min-h-screen bg-[#0a0f0d] text-white flex flex-col items-center px-4 pb-20">
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} />
 
-      {/* ALERT CONTAINER */}
       {alertState && (
         <div className="fixed top-24 z-50 w-full max-w-lg px-4">
           <Alert severity={alertState.severity} onClose={() => setAlertState(null)}>
@@ -253,7 +216,7 @@ export default function UserPanel() {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header text */}
       <div className="text-center mt-24 mb-10">
         <h2 className="text-gray-400 tracking-wide text-lg">
           Connect your profiles and let AI find the right opportunities for you
@@ -261,14 +224,11 @@ export default function UserPanel() {
         <div className="w-24 h-[2px] bg-green-500 mx-auto mt-3"></div>
       </div>
 
-      {/* Form */}
       <div className="bg-[#1F2937] shadow-[0_0_15px_#00ff9d33] border border-[#1b2b27] rounded-xl w-full max-w-lg p-6">
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Job Title */}
           <div>
             <label className="text-gray-400 text-sm mb-1 block">Job Title</label>
             <input
-              type="text"
               required
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
@@ -277,50 +237,16 @@ export default function UserPanel() {
             />
           </div>
 
-          {/* Count */}
-          <div>
-            <label className="text-gray-400 text-sm mb-1 block">Count</label>
-            <input
-              type="number"
-              value={count}
-              onChange={(e) => {
-                const raw = e.target.value;
-                setCount(raw === "" ? "" : Number(raw));
-                const num = Number(raw);
-                if (raw === "" || !Number.isFinite(num))
-                  setCountError("Please enter a number");
-                else if (num < 100) setCountError("Minimum allowed is 100");
-                else if (num > 1000) setCountError("Maximum allowed is 1000");
-                else setCountError("");
-              }}
-              min={100}
-              max={1000}
-              className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
-            />
-            {countError && (
-              <p className="mt-1 text-xs text-red-400">{countError}</p>
-            )}
-          </div>
-
-          {/* Location */}
           <div>
             <label className="text-gray-400 text-sm mb-1 block">Location</label>
             <div className="[&_*]:!text-sm py-2">
-              <LocationDropdown
-                value={location}
-                onChange={(val) => setLocation(val)}
-                placeholder="Search city, area, or PIN"
-              />
+              <LocationDropdown value={location} onChange={setLocation} placeholder="Search city, area, or PIN" />
             </div>
           </div>
 
-          {/* LinkedIn */}
           <div>
-            <label className="text-gray-400 text-sm mb-1 block">
-              LinkedIn Profile URL
-            </label>
+            <label className="text-gray-400 text-sm mb-1 block">LinkedIn Profile URL</label>
             <input
-              type="url"
               required
               value={linkedin}
               onChange={(e) => setLinkedin(e.target.value)}
@@ -329,13 +255,9 @@ export default function UserPanel() {
             />
           </div>
 
-          {/* GitHub */}
           <div>
-            <label className="text-gray-400 text-sm mb-1 block">
-              GitHub Profile URL
-            </label>
+            <label className="text-gray-400 text-sm mb-1 block">GitHub Profile URL</label>
             <input
-              type="url"
               value={github}
               onChange={(e) => setGithub(e.target.value)}
               placeholder="Paste your GitHub profile link"
@@ -343,38 +265,39 @@ export default function UserPanel() {
             />
           </div>
 
-          {/* Submit Button */}
+          <div>
+            <label className="text-gray-400 text-sm mb-1 block">Count</label>
+            <input
+              type="number"
+              value={count}
+              onChange={(e) => setCount(e.target.value)}
+              className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
+            />
+            {countError && <p className="text-red-400 text-xs mt-1">{countError}</p>}
+          </div>
+
           <button
-            type="submit"
-            //           disabled={loading || Boolean(countError) || count === ""} // Keep enabled if finished so user can click to reset? Or just display logic.
-            disabled={loading || Boolean(countError) || count === ""}
+            disabled={loading || Boolean(countError)}
             className={`mt-3 relative flex items-center justify-center gap-2 font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] overflow-hidden ${loading || jobFinished
-              ? "bg-gray-900 text-white cursor-wait"
-              : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
+                ? "bg-gray-900 text-white cursor-wait"
+                : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
               }`}
           >
             {loading || jobFinished ? (
               <>
-                {/* Waterfill Animation */}
                 <div
                   className={`absolute bottom-0 left-0 w-full transition-all duration-300 ease-out ${jobFinished ? 'bg-green-600' : 'bg-gradient-to-t from-green-600 to-emerald-500'}`}
                   style={{ height: `${loadingProgress}%` }}
                 />
-
-                {/* Wave decorative line (optional, purely for visual effect) */}
                 {!jobFinished && (
                   <div
                     className="absolute left-0 w-full h-[2px] bg-green-300 opacity-50 shadow-[0_0_10px_#ffff]"
                     style={{ bottom: `${loadingProgress}%`, transition: "bottom 300ms ease-out" }}
                   />
                 )}
-
-                {/* Content Overlay */}
                 <div className="relative z-10 flex items-center justify-center gap-2 drop-shadow-md">
                   {jobFinished ? (
-                    <>
-                      <span>Scale Up to 100% Completed!</span>
-                    </>
+                    <span>Scale Up to 100% Completed!</span>
                   ) : (
                     <>
                       <Loader2 className="animate-spin text-white" size={18} />
@@ -384,104 +307,83 @@ export default function UserPanel() {
                 </div>
               </>
             ) : (
-              <>Find Opportunities Now</>
+              "Find Opportunities Now"
             )}
           </button>
         </form>
-      </div>
 
-      {/* Response Message */}
-      {response && (
-        <div className="mt-6 w-full max-w-lg p-4 bg-green-900/40 border border-green-500/50 rounded-xl text-green-300 text-center shadow-[0_0_15px_#00ff9d22] animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <div className="flex flex-col items-center gap-2">
-            {!jobFinished ? (
-              <Loader2 className="animate-spin text-green-400" size={24} />
-            ) : (
-              <div className="text-2xl">🎉</div>
-            )}
-            <p className="font-semibold text-lg">{response.message}</p>
-            {response.runId && <p className="text-xs text-green-500/70 font-mono tracking-wider">Run ID: {response.runId}</p>}
-
-            {jobFinished && (
-              <div className="flex gap-3 mt-4">
-                <button
-                  onClick={() => router.push(`/pages/job-found?runId=${response.runId}`)}
-                  className="bg-green-600 hover:bg-green-500 text-black px-4 py-2 rounded-md font-semibold text-sm transition"
-                >
-                  View Jobs
-                </button>
-                <button
-                  onClick={() => setShowSaveModal(true)}
-                  className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-md font-semibold text-sm transition"
-                >
-                  Save Search
-                </button>
-              </div>
-            )}
+        {loading && !jobFinished && (
+          <div className="mt-4 text-center">
+            <p className="text-sm text-green-300 animate-pulse">{progressMessage}</p>
           </div>
-        </div>
-      )}
+        )}
+
+        {jobFinished && (
+          <div className="mt-6 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4">
+            <div className="text-center text-green-400 font-bold text-lg mb-2">🎉 Jobs Found!</div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => router.push(`/pages/job-found?runId=${response.runId}`)}
+                className="flex-1 bg-green-600 hover:bg-green-500 text-black py-2 rounded font-semibold shadow-lg transition-all"
+              >
+                View Jobs
+              </button>
+              <button
+                onClick={() => setShowSaveModal(true)}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 rounded font-semibold shadow-lg transition-all"
+              >
+                Save Search
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Save Search Modal */}
       {showSaveModal && (
         <div className="fixed inset-0 bg-black/70 flex justify-center items-center z-50">
           <div className="bg-[#13201c] border border-green-900 rounded-xl w-11/12 md:w-1/3 p-6 shadow-lg relative">
-
-            {/* Close (X) Button */}
             <button
               className="absolute top-3 right-3 text-gray-400 hover:text-white text-xl"
               onClick={() => setShowSaveModal(false)}
-              disabled={loading}
             >
               ✕
             </button>
-
-            <h3 className="text-lg font-bold text-green-400 mb-4">
-              Save This Search
-            </h3>
-
+            <h3 className="text-lg font-bold text-green-400 mb-4">Save This Search</h3>
             <input
               type="text"
               placeholder="Enter search name"
               className="w-full px-3 py-2 mb-4 text-black rounded-md"
               id="searchNameInput"
             />
-
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setShowSaveModal(false)}
                 className="px-4 py-2 bg-gray-700 text-gray-300 rounded-md hover:bg-gray-600"
-                disabled={loading}
               >
                 Cancel
               </button>
               <button
                 onClick={async () => {
-                  const searchName =
-                    document.getElementById("searchNameInput")?.value.trim();
+                  const searchName = document.getElementById("searchNameInput")?.value.trim();
                   if (!searchName) {
                     setAlertState({ severity: "warning", message: "Please enter a search name." });
                     return;
                   }
-
                   try {
-                    const res = await fetch(
-                      `${API_BASE_URL}/userjobs/searches/save`,
-                      {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        credentials: "include",
-                        body: JSON.stringify({
-                          name: searchName,
-                          jobs: userJobs,
-                          runId: response?.runId,
-                          sessionId: sessionId,
-                        }),
-                      }
+                    const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      credentials: "include",
+                      body: JSON.stringify({
+                        name: searchName,
+                        jobs: userJobs,
+                        runId: response?.runId,
+                        sessionId: sessionId,
+                      }),
+                    }
                     );
-                    const data = await res.json();
-                    if (!res.ok)
-                      throw new Error(data.error || "Failed to save search");
+                    if (!res.ok) throw new Error("Failed to save search");
                     setAlertState({ severity: "success", message: "Search saved successfully!" });
                     setShowSaveModal(false);
                     router.push("/pages/job-found");
@@ -490,27 +392,20 @@ export default function UserPanel() {
                   }
                 }}
                 className="px-4 py-2 bg-green-600 text-black rounded-md hover:bg-green-500"
-                disabled={loading}
               >
-                {loading ? "Saving..." : "Save"}
+                Save
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* User Info */}
+      {/* Footer Info */}
       {user && (
         <div className="mt-10 p-4 bg-[#0d1512] border border-[#1b2b27] rounded-xl shadow-[0_0_10px_#00ff9d22] w-full max-w-lg text-sm text-gray-300">
-          <p>
-            <strong className="text-green-400">Name:</strong> {user.name}
-          </p>
-          <p>
-            <strong className="text-green-400">User ID:</strong> {user.userId}
-          </p>
-          <p>
-            <strong className="text-green-400">Session ID:</strong> {sessionId}
-          </p>
+          <p><strong className="text-green-400">Name:</strong> {user.name}</p>
+          <p><strong className="text-green-400">User ID:</strong> {user.userId}</p>
+          <p><strong className="text-green-400">Session ID:</strong> {sessionId}</p>
         </div>
       )}
     </div>
