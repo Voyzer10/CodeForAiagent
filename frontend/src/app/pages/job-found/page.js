@@ -4,6 +4,7 @@ import { Loader2, CheckCircle } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import Alert from "../../components/Alert"; // Imported Alert
 
 function JobFoundContent() {
@@ -161,6 +162,16 @@ function JobFoundContent() {
 
     return () => clearTimeout(pollingRef.current);
   }, [runIdParam]);
+
+  const parentRef = useRef(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: filteredJobs.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 240, // avg job card height
+    overscan: 5, // smooth scroll
+  });
+
 
   // toggle selection stores/removes the job UUID (job.jobid || job.jobId)
   const toggleJobSelection = (jobId) => {
@@ -522,71 +533,124 @@ function JobFoundContent() {
 
         <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
           {/* Job List */}
-          <div className="w-full lg:w-1/3 m-0 lg:m-2 grid gap-4 grid-cols-1 overflow-y-auto no-scrollbar p-4 lg:p-0 max-h-[40vh] lg:max-h-full border-b lg:border-b-0 lg:border-r border-green-800/50">
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job, idx) => {
-                // Use job.jobid (UUID) as primary identifier for selection
-                const jobUUID = job.jobid || job.jobId || job.id || job._id || idx;
-                const isSelected = selectedJobs.includes(jobUUID);
-                const isApplied = appliedJobIds.has(jobUUID);
-                const title = job.Title || job.title || "(No title)";
-                const description = job.Description || job.descriptionText || job.descriptionHtml || "No description available.";
-                const location = job.Location || job.location || "";
-                const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
+          <div
+            ref={parentRef}
+            className="w-full lg:w-1/3 m-0 lg:m-2 overflow-y-auto no-scrollbar
+             max-h-[40vh] lg:max-h-full p-4 lg:p-0
+             border-b lg:border-b-0 lg:border-r border-green-800/50"
+          >
+            {filteredJobs.length === 0 ? (
+              <div className="text-center text-gray-400 mt-10">No jobs found.</div>
+            ) : (
+              <div
+                style={{
+                  height: `${rowVirtualizer.getTotalSize()}px`,
+                  position: "relative",
+                }}
+              >
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const job = filteredJobs[virtualRow.index];
 
-                return (
-                  <div
-                    key={jobUUID}
-                    className={`p-4 border rounded-xl shadow-md transition cursor-pointer ${isSelected ? "bg-green-900/20 border-green-500" : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"}`}
-                    onClick={() => !isApplied && toggleJobSelection(jobUUID)}
-                  >
-                    <div className="flex justify-between items-start">
-                      <h3 className="text-lg font-semibold text-green-400 truncate">{title}</h3>
-                      {isApplied ? (
-                        <div className="flex items-center gap-1 text-green-500 bg-green-900/30 px-2 py-1 rounded text-xs border border-green-800">
-                          <CheckCircle size={14} />
-                          <span>Already Applied</span>
-                        </div>
-                      ) : (
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleJobSelection(jobUUID)}
-                          className="accent-green-500 cursor-pointer"
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      )}
-                    </div>
+                  const jobUUID =
+                    job.jobid || job.jobId || job.id || job._id || virtualRow.index;
 
-                    <p className="text-sm text-gray-500 mt-2 line-clamp-3" dangerouslySetInnerHTML={{ __html: description }}></p>
+                  const isSelected = selectedJobs.includes(jobUUID);
+                  const isApplied = appliedJobIds.has(jobUUID);
+                  const title = job.Title || job.title || "(No title)";
+                  const description =
+                    job.Description ||
+                    job.descriptionText ||
+                    job.descriptionHtml ||
+                    "No description available.";
+                  const location = job.Location || job.location || "";
+                  const postedAt =
+                    job.postedAt || job.datePosted || job.createdAt || null;
 
-                    <div className="mt-3 text-xs text-green-300 space-y-1">
-                      <div className="text-gray-400 text-sm mb-2">{location}</div>
-                      <div className="text-gray-400 text-sm mb-2">Posted: {postedAt ? new Date(postedAt).toLocaleDateString() : "Unknown date"}</div>
-                    </div>
-
-                    {job.link && (
-                      <a href={job.link} target="_blank" rel="noopener noreferrer" className="block mt-3 text-green-400 hover:text-green-300 text-sm">
-                        View / Apply →
-                      </a>
-                    )}
-
-                    <button
-                      className="mt-3 w-full px-3 py-2 bg-green-700/20 border border-green-700 text-green-300 rounded-md hover:bg-green-700/40 transition text-sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedJob(job);
+                  return (
+                    <div
+                      key={jobUUID}
+                      ref={rowVirtualizer.measureElement}
+                      style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        width: "100%",
+                        transform: `translateY(${virtualRow.start}px)`,
                       }}
                     >
-                      View Details
-                    </button>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="text-center text-gray-400 mt-10">No jobs found.</div>
+                      {/* 🔽 SAME CARD UI — UNCHANGED */}
+                      <div
+                        className={`p-4 border rounded-xl shadow-md transition cursor-pointer
+                ${isSelected
+                            ? "bg-green-900/20 border-green-500"
+                            : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
+                          }`}
+                        onClick={() => !isApplied && toggleJobSelection(jobUUID)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-lg font-semibold text-green-400 truncate">
+                            {title}
+                          </h3>
+
+                          {isApplied ? (
+                            <div className="flex items-center gap-1 text-green-500 bg-green-900/30 px-2 py-1 rounded text-xs border border-green-800">
+                              <CheckCircle size={14} />
+                              <span>Already Applied</span>
+                            </div>
+                          ) : (
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => toggleJobSelection(jobUUID)}
+                              className="accent-green-500 cursor-pointer"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
+                        </div>
+
+                        <p
+                          className="text-sm text-gray-500 mt-2 line-clamp-3"
+                          dangerouslySetInnerHTML={{ __html: description }}
+                        />
+
+                        <div className="mt-3 text-xs text-green-300 space-y-1">
+                          <div className="text-gray-400 text-sm mb-2">{location}</div>
+                          <div className="text-gray-400 text-sm mb-2">
+                            Posted:{" "}
+                            {postedAt
+                              ? new Date(postedAt).toLocaleDateString()
+                              : "Unknown date"}
+                          </div>
+                        </div>
+
+                        {job.link && (
+                          <a
+                            href={job.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block mt-3 text-green-400 hover:text-green-300 text-sm"
+                          >
+                            View / Apply →
+                          </a>
+                        )}
+
+                        <button
+                          className="mt-3 w-full px-3 py-2 bg-green-700/20 border border-green-700 text-green-300 rounded-md hover:bg-green-700/40 transition text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedJob(job);
+                          }}
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
+
 
           {/* Job Details */}
           <div className="w-full lg:w-2/3 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e] min-h-[50vh] lg:min-h-auto">
