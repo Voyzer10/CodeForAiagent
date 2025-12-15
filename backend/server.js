@@ -3,6 +3,7 @@ const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const compression = require("compression");
 require("dotenv").config();
 
 const connectDB = require("./config/db");
@@ -43,6 +44,7 @@ const limiter = rateLimit({
 });
 
 app.use(limiter);
+app.use(compression());
 
 /* =====================================================
    🌍 CORS (must be BEFORE routes)

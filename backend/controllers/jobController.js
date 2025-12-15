@@ -2,13 +2,13 @@ const Job = require("../model/job-information");
 const fetch = require("node-fetch");
 const User = require("../model/User");
 const { jobQueue } = require("../queues/jobQueue");
-const redis = require("../config/redis"); // ✅ Redis client
-const { getCache, setCache } = require("../utils/cache"); // ✅ cache helper
+const redis = require("../config/redis");
+const { getCache, setCache } = require("../utils/cache");
 
 console.log("🔄 jobController loaded with debugging");
 
 /* ======================================================
-   CREATE JOB  (NO CACHING HERE – WRITE PATH)
+   CREATE JOB  (WRITE PATH)
 ====================================================== */
 const createJob = async (req, res) => {
   const userId = req.user?.id || null;
@@ -42,8 +42,11 @@ const createJob = async (req, res) => {
       runId: finalRunId,
     });
 
-    // ✅ IMPORTANT: invalidate cached jobs for this user
+    // 🔥 invalidate both caches
     await redis.del(`jobs:user:${userId}`);
+    await redis.del(`jobs:user:${userId}:session:${finalRunId}`);
+
+    console.log("🧹 Cache invalidated for user:", userId);
 
     return res.status(202).json({
       message: "Job queued successfully",
@@ -58,7 +61,7 @@ const createJob = async (req, res) => {
 };
 
 /* ======================================================
-   GET USER JOBS  (READ PATH + REDIS CACHING)
+   GET USER JOBS (REDIS USER + SESSION CACHE)
 ====================================================== */
 const getUserJobs = async (req, res) => {
   const userId = Number(req.params.userId || req.user?.id);
@@ -68,49 +71,113 @@ const getUserJobs = async (req, res) => {
     return res.status(401).json({ error: "Unauthorized: Missing user ID" });
   }
 
-  const cacheKey = `jobs:user:${userId}`;
+  const runId = req.query.runId || req.query.sessionId || null;
+
+  const userCacheKey = `jobs:user:${userId}`;
+  const sessionCacheKey = runId
+    ? `jobs:user:${userId}:session:${runId}`
+    : null;
 
   try {
-    // 1️⃣ TRY REDIS CACHE
-    console.log("🔍 Redis GET key:", cacheKey);
-    const cachedJobs = await getCache(cacheKey);
+    /* -------------------------------
+       1️⃣ SESSION CACHE (POLLING FAST)
+    --------------------------------*/
+    if (sessionCacheKey) {
+      console.log("🔍 Redis GET (session):", sessionCacheKey);
+      const sessionCached = await getCache(sessionCacheKey);
+
+      if (sessionCached) {
+        console.log("⚡ SESSION CACHE HIT");
+        return res.status(200).json({
+          jobs: sessionCached,
+          cached: true,
+          cacheType: "session",
+        });
+      }
+    }
+
+    /* -------------------------------
+       2️⃣ USER CACHE
+    --------------------------------*/
+    console.log("🔍 Redis GET (user):", userCacheKey);
+    const cachedJobs = await getCache(userCacheKey);
+
     if (cachedJobs) {
+      console.log("⚡ USER CACHE HIT");
+
+      // If runId requested, filter & save session cache
+      if (sessionCacheKey) {
+        const filtered = cachedJobs.filter(
+          (j) =>
+            j.runId === runId ||
+            j.sessionId === runId ||
+            j.sessionid === runId
+        );
+
+        console.log(
+          "🧠 Creating SESSION CACHE from USER CACHE:",
+          filtered.length
+        );
+
+        await setCache(sessionCacheKey, filtered, 180);
+        return res.status(200).json({
+          jobs: filtered,
+          cached: true,
+          cacheType: "user→session",
+        });
+      }
+
       return res.status(200).json({
         jobs: cachedJobs,
         cached: true,
+        cacheType: "user",
       });
     }
 
-    console.log("📡 Cache MISS → Fetching jobs from DB for UserID:", userId);
+    /* -------------------------------
+       3️⃣ DB FETCH (LAST RESORT)
+    --------------------------------*/
+    console.log("📡 Cache MISS → Fetching from DB");
 
-    // 2️⃣ BUILD QUERY (same logic as before)
     const query = { UserID: userId };
 
-    if (req.query.runId) {
+    if (runId) {
       query.$or = [
-        { runId: req.query.runId },
-        { sessionId: req.query.runId },
-        { sessionid: req.query.runId },
-      ];
-    } else if (req.query.sessionId) {
-      query.$or = [
-        { sessionId: req.query.sessionId },
-        { sessionid: req.query.sessionId },
+        { runId },
+        { sessionId: runId },
+        { sessionid: runId },
       ];
     }
 
-    // 3️⃣ DB QUERY (LEAN = FAST)
     const jobs = await Job.find(query)
       .sort({ postedAt: -1 })
-      .lean(); // 🔥 BIG PERFORMANCE BOOST
+      .lean();
 
-    // 4️⃣ SAVE TO REDIS (5 MIN TTL)
-    console.log("🧠 Redis SET key:", cacheKey);
-    await setCache(cacheKey, jobs, 300);
+    console.log("🧠 Redis SET (user):", userCacheKey);
+    await setCache(userCacheKey, jobs, 300);
+
+    if (sessionCacheKey) {
+      const sessionJobs = jobs.filter(
+        (j) =>
+          j.runId === runId ||
+          j.sessionId === runId ||
+          j.sessionid === runId
+      );
+
+      console.log("🧠 Redis SET (session):", sessionCacheKey);
+      await setCache(sessionCacheKey, sessionJobs, 180);
+
+      return res.status(200).json({
+        jobs: sessionJobs,
+        cached: false,
+        cacheType: "db→session",
+      });
+    }
 
     return res.status(200).json({
       jobs,
       cached: false,
+      cacheType: "db",
     });
   } catch (error) {
     console.error("[getUserJobs] Error:", error);
@@ -119,18 +186,15 @@ const getUserJobs = async (req, res) => {
 };
 
 /* ======================================================
-   ADMIN: GET ALL USER JOBS (NO CACHE FOR NOW)
+   ADMIN: GET ALL USER JOBS (NO CACHE)
 ====================================================== */
 const getAllUserJobs = async (req, res) => {
   if (req.user?.role !== "admin") {
-    console.warn("⛔ Unauthorized access attempt to admin route");
     return res.status(403).json({ error: "Access denied. Admins only." });
   }
 
   try {
-    console.log("👑 Admin fetching all jobs with user details...");
     const jobs = await Job.find()
-      .populate("userId", "name email")
       .sort({ createdAt: -1 })
       .lean();
 
