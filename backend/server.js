@@ -23,7 +23,7 @@ const app = express();
 /* =====================================================
    🛠 FIX: Trust Proxy (Cloudflare / Hostinger / NGINX)
    ===================================================== */
-app.set("trust proxy", 1); 
+app.set("trust proxy", 1);
 // Required because your server receives X-Forwarded-For
 // and express-rate-limit MUST know the actual client IP.
 
@@ -49,26 +49,27 @@ app.use(compression());
 /* =====================================================
    🌍 CORS (must be BEFORE routes)
    ===================================================== */
+/* =====================================================
+   🌍 CORS (must be BEFORE routes)
+   ===================================================== */
+const cors = require("cors");
 const allowedOrigins = [
   "https://techm.work.gd",
   "http://localhost:3000", // dev mode
 ];
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
 
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin);
-  }
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, origin); // 👈 important
+    }
 
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-  res.setHeader("Access-Control-Allow-Credentials", "true");
-
-  if (req.method === "OPTIONS") return res.sendStatus(200);
-
-  next();
-});
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true
+}));
 
 /* =====================================================
    🧩 Parsers

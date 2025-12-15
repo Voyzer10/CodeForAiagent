@@ -9,39 +9,20 @@ import LogsWidget from '../components/LogsWidget';
 import SecurityWidget from '../components/SecurityWidget';
 
 export default function DashboardPage() {
-  const [jobs, setJobs] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  // const [jobs, setJobs] = useState([]);
+  // const [users, setUsers] = useState([]);
+  // const [loading, setLoading] = useState(true);
+  // const [error, setError] = useState("");
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        const [jobsRes, usersRes] = await Promise.all([
-          apiFetch("/jobs/all"),
-          apiFetch("/auth/users"),
-        ]);
-        setJobs(Array.isArray(jobsRes) ? jobsRes : []);
-        setUsers(Array.isArray(usersRes) ? usersRes : []);
-      } catch (e) {
-        setError(e.message || "Failed to load dashboard");
-      } finally {
-        setLoading(false);
-      }
-    };
-    run();
-  }, []);
+
 
   const stats = useMemo(() => {
-    const totalJobs = jobs.length;
-    const totalUsers = users.length;
-    const sentEmails = jobs.filter(j => j.sent === true).length;
-    const uniqueCompanies = new Set(jobs.map(j => j.companyName).filter(Boolean)).size;
+    const totalJobs = 0;
+    const totalUsers = 0;
+    const sentEmails = 0;
+    const uniqueCompanies = 0;
     return { totalJobs, totalUsers, sentEmails, uniqueCompanies };
-  }, [jobs, users]);
-
-  if (loading) return <p className="p-4">Loading dashboard...</p>;
-  if (error) return <p className="p-4 text-red-600">{error}</p>;
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -67,7 +48,7 @@ export default function DashboardPage() {
         </div>
         {/* Chart: Span 1 column */}
         <div className="lg:col-span-1 h-full">
-          <JobsPerDayChart jobs={jobs} />
+          <JobsPerDayChart jobs={[]} />
         </div>
       </div>
 
@@ -84,8 +65,8 @@ export default function DashboardPage() {
 
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentJobs jobs={jobs.slice(0, 8)} />
-        <RecentUsers users={users.slice(0, 8)} />
+        <RecentJobs jobs={[]}/>
+        <RecentUsers users={[]}/>
       </section>
     </div>
   );
