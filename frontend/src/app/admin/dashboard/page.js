@@ -6,6 +6,7 @@ import SystemHealth from '../components/SystemHealth';
 import ResourceMonitor from '../components/ResourceMonitor';
 
 import LogsWidget from '../components/LogsWidget';
+import SecurityWidget from '../components/SecurityWidget';
 
 export default function DashboardPage() {
   const [jobs, setJobs] = useState([]);
@@ -17,8 +18,8 @@ export default function DashboardPage() {
     const run = async () => {
       try {
         const [jobsRes, usersRes] = await Promise.all([
-          apiFetch("/api/jobs/all"),
-          apiFetch("/api/auth/users"),
+          apiFetch("/jobs/all"),
+          apiFetch("/auth/users"),
         ]);
         setJobs(Array.isArray(jobsRes) ? jobsRes : []);
         setUsers(Array.isArray(usersRes) ? usersRes : []);
@@ -54,11 +55,17 @@ export default function DashboardPage() {
         <ResourceMonitor />
       </div>
 
-      {/* 3️⃣ Logs & Analytics */}
+      {/* 3️⃣ Logs, 4️⃣ Analytics, 5️⃣ Security */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 h-full">
+        {/* Logs: Span 2 columns on large screens */}
+        <div className="lg:col-span-1 h-full">
           <LogsWidget />
         </div>
+        {/* Security: Span 1 column */}
+        <div className="lg:col-span-1 h-full">
+          <SecurityWidget />
+        </div>
+        {/* Chart: Span 1 column */}
         <div className="lg:col-span-1 h-full">
           <JobsPerDayChart jobs={jobs} />
         </div>

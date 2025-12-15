@@ -114,8 +114,44 @@ const loginAdmin = async (req, res) => {
     const admin = await AdminUser.findOne({ email });
     if (!admin) return res.status(400).json({ message: "Invalid credentials" });
 
+    // 🛡 Security Checks
+    const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "Unknown";
+    const userAgent = req.headers['user-agent'] || "Unknown Device";
+
+    // Check Blacklist
+    if (admin.blockedIPs?.includes(clientIP)) {
+      // Log failed attempt
+      admin.loginHistory = admin.loginHistory || [];
+      admin.loginHistory.push({ ip: clientIP, device: userAgent, status: 'Failed' });
+      await admin.save();
+      return res.status(403).json({ message: "Access denied from this IP" });
+    }
+
+    // Check Whitelist (if enabled)
+    if (admin.securitySettings?.restrictToWhitelist && admin.whitelistedIPs?.length > 0) {
+      if (!admin.whitelistedIPs.includes(clientIP)) {
+        // Log failed attempt
+        admin.loginHistory = admin.loginHistory || [];
+        admin.loginHistory.push({ ip: clientIP, device: userAgent, status: 'Failed' });
+        await admin.save();
+        return res.status(403).json({ message: "Access Not Allowed (Whitelist Enforced)" });
+      }
+    }
+
     const isMatch = await bcrypt.compare(password, admin.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      // Log failed attempt
+      admin.loginHistory = admin.loginHistory || [];
+      admin.loginHistory.push({ ip: clientIP, device: userAgent, status: 'Failed' });
+      await admin.save();
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    // Log Success
+    admin.loginHistory = admin.loginHistory || [];
+    admin.loginHistory.push({ ip: clientIP, device: userAgent, status: 'Success' });
+    // Keep only last 50 logs
+    if (admin.loginHistory.length > 50) admin.loginHistory.shift();
 
     const token = jwt.sign(
       { id: admin._id, email: admin.email, role: "admin" },
@@ -161,8 +197,65 @@ const getAdmins = async (req, res) => {
   }
 };
 
+// 🔹 Get Security Stats (History + IP Config)
+const getSecurityStats = async (req, res) => {
+  try {
+    const admin = await AdminUser.findById(req.user.id).select('loginHistory whitelistedIPs blockedIPs securitySettings');
+    if (!admin) return res.status(404).json({ message: "Admin not found" });
+
+    res.json({
+      loginHistory: admin.loginHistory.reverse().slice(0, 20), // Send latest 20
+      whitelistedIPs: admin.whitelistedIPs || [],
+      blockedIPs: admin.blockedIPs || [],
+      securitySettings: admin.securitySettings || {}
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error fetching security stats" });
+  }
+};
+
+// 🔹 Update IP Configuration
+const updateSecurityConfig = async (req, res) => {
+  try {
+    const { type, ip, action, settings } = req.body; // type: 'whitelist' | 'blacklist', action: 'add' | 'remove', settings: object
+    const admin = await AdminUser.findById(req.user.id);
+
+    if (settings) {
+      admin.securitySettings = { ...admin.securitySettings, ...settings };
+    }
+
+    if (type && ip && action) {
+      const targetArray = type === 'whitelist' ? 'whitelistedIPs' : 'blockedIPs';
+
+      if (action === 'add') {
+        if (!admin[targetArray].includes(ip)) admin[targetArray].push(ip);
+        // If adding to blacklist, make sure to remove from whitelist
+        if (type === 'blacklist') {
+          admin.whitelistedIPs = admin.whitelistedIPs.filter(i => i !== ip);
+        }
+      } else if (action === 'remove') {
+        admin[targetArray] = admin[targetArray].filter(i => i !== ip);
+      }
+    }
+
+    await admin.save();
+    res.json({
+      message: "Security settings updated",
+      whitelistedIPs: admin.whitelistedIPs,
+      blockedIPs: admin.blockedIPs,
+      securitySettings: admin.securitySettings
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating security settings" });
+  }
+};
+
 module.exports = {
   registerAdmin,
   loginAdmin,
   getAdmins,
+  getSecurityStats,
+  updateSecurityConfig
 };

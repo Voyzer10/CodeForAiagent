@@ -1,5 +1,5 @@
 const express = require("express");
-const { registerAdmin, loginAdmin, getAdmins } = require("../controllers/adminController");
+const { registerAdmin, loginAdmin, getAdmins, getSecurityStats, updateSecurityConfig } = require("../controllers/adminController");
 const auth = require("../middleware/authMiddleware");
 
 const router = express.Router();
@@ -19,5 +19,9 @@ router.use(auth, (req, res, next) => {
 router.get("/all", getAdmins);
 router.get("/health", getSystemHealth);
 router.get("/resources", getSystemResources);
+
+// 🛡 Security Routes
+router.get("/security", getSecurityStats);
+router.post("/security", updateSecurityConfig);
 
 module.exports = router;

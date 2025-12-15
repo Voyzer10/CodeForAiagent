@@ -12,7 +12,7 @@ export default function LogsWidget() {
         const fetchLogs = async () => {
             setLoading(true);
             try {
-                const endpoint = type === 'info' ? '/api/logs/logs' : '/api/logs/error-logs';
+                const endpoint = type === 'info' ? '/logs/logs' : '/logs/error-logs';
                 const data = await apiFetch(endpoint);
                 if (data.logs) {
                     // Split by newline, filter empty, reverse to show latest first, take top 20
