@@ -62,6 +62,7 @@ const createJob = async (req, res) => {
 ====================================================== */
 const getUserJobs = async (req, res) => {
   const userId = Number(req.params.userId || req.user?.id);
+  console.log("🧪 getUserJobs called for user:", userId);
 
   if (!userId) {
     return res.status(401).json({ error: "Unauthorized: Missing user ID" });
@@ -71,6 +72,7 @@ const getUserJobs = async (req, res) => {
 
   try {
     // 1️⃣ TRY REDIS CACHE
+    console.log("🔍 Redis GET key:", cacheKey);
     const cachedJobs = await getCache(cacheKey);
     if (cachedJobs) {
       return res.status(200).json({
@@ -103,6 +105,7 @@ const getUserJobs = async (req, res) => {
       .lean(); // 🔥 BIG PERFORMANCE BOOST
 
     // 4️⃣ SAVE TO REDIS (5 MIN TTL)
+    console.log("🧠 Redis SET key:", cacheKey);
     await setCache(cacheKey, jobs, 300);
 
     return res.status(200).json({
