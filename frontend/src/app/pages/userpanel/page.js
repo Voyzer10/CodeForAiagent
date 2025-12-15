@@ -28,6 +28,7 @@ export default function UserPanel() {
   const [sessionId, setSessionId] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [jobFinished, setJobFinished] = useState(false); // ✅ Track job completion
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
   const [alertState, setAlertState] = useState(null);
 
@@ -116,6 +117,23 @@ export default function UserPanel() {
     }
     return () => clearInterval(interval);
   }, [response, jobFinished, user, API_BASE_URL]);
+
+  // Animated Progress Simulation
+  useEffect(() => {
+    let interval;
+    if (loading) {
+      setLoadingProgress(0);
+      interval = setInterval(() => {
+        setLoadingProgress((prev) => {
+          if (prev >= 95) return prev; // Cap at 95% until finished
+          return prev + 1;
+        });
+      }, 600); // Increments steadily
+    } else {
+      setLoadingProgress(100);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
 
   // Handle Submit
   const handleSubmit = async (e) => {
@@ -320,12 +338,30 @@ export default function UserPanel() {
           <button
             type="submit"
             disabled={loading || Boolean(countError) || count === ""}
-            className="mt-3 flex items-center justify-center gap-2 bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`mt-3 relative flex items-center justify-center gap-2 font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] overflow-hidden ${loading
+                ? "bg-gray-900 text-white cursor-wait"
+                : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
+              }`}
           >
             {loading ? (
               <>
-                <Loader2 className="animate-spin" size={18} />
-                Processing...
+                {/* Waterfill Animation */}
+                <div
+                  className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-green-600 to-emerald-500 transition-all duration-300 ease-out"
+                  style={{ height: `${loadingProgress}%` }}
+                />
+
+                {/* Wave decorative line (optional, purely for visual effect) */}
+                <div
+                  className="absolute left-0 w-full h-[2px] bg-green-300 opacity-50 shadow-[0_0_10px_#ffff]"
+                  style={{ bottom: `${loadingProgress}%`, transition: "bottom 300ms ease-out" }}
+                />
+
+                {/* Content Overlay */}
+                <div className="relative z-10 flex items-center justify-center gap-2 drop-shadow-md">
+                  <Loader2 className="animate-spin text-white" size={18} />
+                  <span>Processing... {Math.floor(loadingProgress)}%</span>
+                </div>
               </>
             ) : (
               <>Find Opportunities Now</>
