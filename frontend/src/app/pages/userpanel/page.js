@@ -101,6 +101,13 @@ export default function UserPanel() {
             `${API_BASE_URL}/userjobs/${user.userId}?runId=${response.runId}`,
             { credentials: "include" }
           );
+
+          if (!res.ok) {
+            // If we hit a rate limit or server error, just skip this poll cycle
+            console.warn(`Polling skipped: ${res.status}`);
+            return;
+          }
+
           const data = await res.json();
 
           if (data.jobs && data.jobs.length > 0) {
@@ -342,8 +349,8 @@ export default function UserPanel() {
             //           disabled={loading || Boolean(countError) || count === ""} // Keep enabled if finished so user can click to reset? Or just display logic.
             disabled={loading || Boolean(countError) || count === ""}
             className={`mt-3 relative flex items-center justify-center gap-2 font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] overflow-hidden ${loading || jobFinished
-                ? "bg-gray-900 text-white cursor-wait"
-                : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
+              ? "bg-gray-900 text-white cursor-wait"
+              : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
               }`}
           >
             {loading || jobFinished ? (

@@ -37,7 +37,7 @@ app.use(helmet());
 // Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 100,                  // each IP can hit 100 times
+  max: 1000,                 // each IP can hit 1000 times (Increased for polling)
   standardHeaders: true,
   legacyHeaders: false,
   message: "Too many requests from this IP, please try again later."
