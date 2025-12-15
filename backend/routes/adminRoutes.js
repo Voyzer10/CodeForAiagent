@@ -8,10 +8,16 @@ const router = express.Router();
 router.post("/register", registerAdmin);
 router.post("/login", loginAdmin);
 
+const { getSystemHealth, getSystemResources } = require("../controllers/systemController");
+
 // Protected routes (only admin role)
-router.get("/all", auth, (req, res, next) => {
+router.use(auth, (req, res, next) => {
   if (req.user.role !== "admin") return res.status(403).json({ message: "Admins only" });
   next();
-}, getAdmins);
+});
+
+router.get("/all", getAdmins);
+router.get("/health", getSystemHealth);
+router.get("/resources", getSystemResources);
 
 module.exports = router;

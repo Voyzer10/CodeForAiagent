@@ -27,7 +27,8 @@
     "mongoose": "^8.18.2",
     "node": "^24.9.0",
     "node-fetch": "^2.7.0",
-    "razorpay": "^2.9.6"
+    "razorpay": "^2.9.6",
+    "systeminformation": "^5.27.13"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

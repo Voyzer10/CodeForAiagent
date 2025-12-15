@@ -2,6 +2,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/app/lib/api";
 
+import SystemHealth from '../components/SystemHealth';
+import ResourceMonitor from '../components/ResourceMonitor';
+
+import LogsWidget from '../components/LogsWidget';
+
 export default function DashboardPage() {
   const [jobs, setJobs] = useState([]);
   const [users, setUsers] = useState([]);
@@ -39,7 +44,28 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-800">Admin Overview</h1>
+      </div>
+
+      {/* 1️⃣ System Health & 2️⃣ Resource Monitoring */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <SystemHealth />
+        <ResourceMonitor />
+      </div>
+
+      {/* 3️⃣ Logs & Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 h-full">
+          <LogsWidget />
+        </div>
+        <div className="lg:col-span-1 h-full">
+          <JobsPerDayChart jobs={jobs} />
+        </div>
+      </div>
+
+      <hr className="border-gray-200" />
+      <h2 className="text-xl font-semibold text-gray-700">Platform Analytics</h2>
 
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Total Jobs" value={stats.totalJobs} />
@@ -48,7 +74,7 @@ export default function DashboardPage() {
         <StatCard title="Companies" value={stats.uniqueCompanies} />
       </section>
 
-      <JobsPerDayChart jobs={jobs} />
+
 
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RecentJobs jobs={jobs.slice(0, 8)} />
