@@ -129,11 +129,13 @@ export default function UserPanel() {
           return prev + 1;
         });
       }, 600); // Increments steadily
-    } else {
+    } else if (jobFinished) {
       setLoadingProgress(100);
+    } else {
+      setLoadingProgress(0);
     }
     return () => clearInterval(interval);
-  }, [loading]);
+  }, [loading, jobFinished]);
 
   // Handle Submit
   const handleSubmit = async (e) => {
@@ -337,30 +339,41 @@ export default function UserPanel() {
           {/* Submit Button */}
           <button
             type="submit"
+            //           disabled={loading || Boolean(countError) || count === ""} // Keep enabled if finished so user can click to reset? Or just display logic.
             disabled={loading || Boolean(countError) || count === ""}
-            className={`mt-3 relative flex items-center justify-center gap-2 font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] overflow-hidden ${loading
+            className={`mt-3 relative flex items-center justify-center gap-2 font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] overflow-hidden ${loading || jobFinished
                 ? "bg-gray-900 text-white cursor-wait"
                 : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
               }`}
           >
-            {loading ? (
+            {loading || jobFinished ? (
               <>
                 {/* Waterfill Animation */}
                 <div
-                  className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-green-600 to-emerald-500 transition-all duration-300 ease-out"
+                  className={`absolute bottom-0 left-0 w-full transition-all duration-300 ease-out ${jobFinished ? 'bg-green-600' : 'bg-gradient-to-t from-green-600 to-emerald-500'}`}
                   style={{ height: `${loadingProgress}%` }}
                 />
 
                 {/* Wave decorative line (optional, purely for visual effect) */}
-                <div
-                  className="absolute left-0 w-full h-[2px] bg-green-300 opacity-50 shadow-[0_0_10px_#ffff]"
-                  style={{ bottom: `${loadingProgress}%`, transition: "bottom 300ms ease-out" }}
-                />
+                {!jobFinished && (
+                  <div
+                    className="absolute left-0 w-full h-[2px] bg-green-300 opacity-50 shadow-[0_0_10px_#ffff]"
+                    style={{ bottom: `${loadingProgress}%`, transition: "bottom 300ms ease-out" }}
+                  />
+                )}
 
                 {/* Content Overlay */}
                 <div className="relative z-10 flex items-center justify-center gap-2 drop-shadow-md">
-                  <Loader2 className="animate-spin text-white" size={18} />
-                  <span>Processing... {Math.floor(loadingProgress)}%</span>
+                  {jobFinished ? (
+                    <>
+                      <span>Scale Up to 100% Completed!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Loader2 className="animate-spin text-white" size={18} />
+                      <span>Processing... {Math.floor(loadingProgress)}%</span>
+                    </>
+                  )}
                 </div>
               </>
             ) : (
