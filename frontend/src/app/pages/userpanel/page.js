@@ -8,18 +8,11 @@ import Sidebar from "./Sidebar";
 import { useRouter } from "next/navigation";
 import Alert from "../../components/Alert";
 
-const PROGRESS_MESSAGES = [
-  "Scanning LinkedIn & job boards…",
-  "Analyzing your profile match…",
-  "Filtering best-fit opportunities…",
-  "Finalizing results…",
-];
+
 
 export default function UserPanel() {
   const router = useRouter();
-  const pollRef = useRef(null);
-  const pollSuccessCount = useRef(0);
-  const messageTick = useRef(0);
+  const eventSourceRef = useRef(null);
 
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -36,7 +29,7 @@ export default function UserPanel() {
   const [loading, setLoading] = useState(false);
   const [jobFinished, setJobFinished] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(0);
-  const [progressMessage, setProgressMessage] = useState(PROGRESS_MESSAGES[0]);
+  const [progressMessage, setProgressMessage] = useState("Preparing job…");
 
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
@@ -92,96 +85,65 @@ export default function UserPanel() {
     fetchUser();
   }, [API_BASE_URL]);
 
-  /* ---------------- PROGRESS BAR ANIMATION ---------------- */
+  /* ---------------- SSE PROGRESS LISTENER ---------------- */
   useEffect(() => {
-    if (!loading) return;
+    if (!response?.runId) return;
 
-    const interval = setInterval(() => {
-      setLoadingProgress((prev) => {
-        if (prev >= 95) return 95; // HARD STOP till backend confirms
-        return prev + 1;
-      });
-    }, 600);
-
-    return () => clearInterval(interval);
-  }, [loading]);
-
-  /* ---------------- PROGRESS MESSAGE ROTATION ---------------- */
-  useEffect(() => {
-    const idx = Math.min(
-      Math.floor(loadingProgress / 25),
-      PROGRESS_MESSAGES.length - 1
-    );
-    setProgressMessage(PROGRESS_MESSAGES[idx]);
-  }, [loadingProgress]);
-
-  useEffect(() => {
-    if (!loading || jobFinished) return;
-
-    const msgInterval = setInterval(() => {
-      messageTick.current =
-        (messageTick.current + 1) % PROGRESS_MESSAGES.length;
-      setProgressMessage(PROGRESS_MESSAGES[messageTick.current]);
-    }, 4000); // every 4 seconds
-
-    return () => clearInterval(msgInterval);
-  }, [loading, jobFinished]);
-
-  /* ---------------- POLLING JOB COMPLETION ---------------- */
-  useEffect(() => {
-    if (!response?.runId || !user?.userId || jobFinished) return;
-    if (pollRef.current) {
-      clearInterval(pollRef.current);
+    // Close previous stream
+    if (eventSourceRef.current) {
+      eventSourceRef.current.close();
     }
 
-    pollRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(
-          `${API_BASE_URL}/userjobs/${user.userId}?runId=${response.runId}`,
-          { credentials: "include" }
-        );
+    const es = new EventSource(
+      `${API_BASE_URL}/progress/stream/${response.runId}`
+    );
 
-        if (!res.ok) return;
+    eventSourceRef.current = es;
 
-        const data = await res.json();
-        console.log("poll", pollSuccessCount.current, data);
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-        const completed =
-          data.finished === true ||
-          data.status === "completed" ||
-          data.success === true ||
-          (Array.isArray(data.jobs) && data.jobs.length > 0);
-
-        if (!completed) {
-          pollSuccessCount.current += 1;
-        }
-
-        if (completed || pollSuccessCount.current >= 2) {
-          clearInterval(pollRef.current);
-          setUserJobs(data.jobs || []);
-          setJobFinished(true);
-          setLoading(false);
-          setLoadingProgress(100);
-          setResponse({
-            message: "🎉 Jobs found successfully!",
-            runId: response.runId,
-          });
-        }
-      } catch (e) {
-        console.error("Polling error", e);
+      if (typeof data.progress === "number") {
+        setLoadingProgress(data.progress);
       }
-    }, 3000);
 
-    return () => clearInterval(pollRef.current);
-  }, [response, user, jobFinished, API_BASE_URL]);
+      if (data.message) {
+        setProgressMessage(data.message);
+      }
+
+      if (data.status === "failed") {
+        es.close();
+        setLoading(false);
+        setJobFinished(false);
+        setAlertState({
+          severity: "error",
+          message: data.message || "Job failed",
+        });
+      }
+
+      if (data.status === "completed" || data.progress === 100) {
+        es.close();
+        setLoading(false);
+        setJobFinished(true);
+        setLoadingProgress(100);
+        setResponse((prev) => ({
+          ...prev,
+          message: "🎉 Jobs found successfully!",
+        }));
+      }
+    };
+
+    es.onerror = () => {
+      es.close();
+    };
+
+    return () => es.close();
+  }, [response?.runId, API_BASE_URL]);
 
   /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
-    pollSuccessCount.current = 0;
-    messageTick.current = 0;
-    setProgressMessage(PROGRESS_MESSAGES[0]);
 
     const num = Number(count);
     if (!num || num < 100 || num > 1000) {
@@ -190,10 +152,10 @@ export default function UserPanel() {
     }
     setCountError("");
 
-    setError(null);
     setLoading(true);
     setJobFinished(false);
     setLoadingProgress(0);
+    setProgressMessage("Starting job…");
 
     const arr = new Uint32Array(1);
     crypto.getRandomValues(arr);
@@ -217,14 +179,16 @@ export default function UserPanel() {
             github,
             count: num,
           },
-          sessionId: runId,
           runId,
+          sessionId: runId,
         }),
       });
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
       setLoading(false);
-      setAlertState({ severity: 'error', message: 'Failed to start job' });
+      setAlertState({
+        severity: "error",
+        message: "Failed to start job",
+      });
     }
   };
 

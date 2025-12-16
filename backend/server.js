@@ -17,6 +17,7 @@ const logRoutes = require("./routes/logRoutes");
 const creditsRoutes = require("./routes/creditsRoutes");
 const n8nCallbackRoutes = require("./routes/n8nCallback");
 const appliedJobsRoutes = require("./routes/appliedJobsRoutes");
+const progressRoutes = require("./routes/progressRoutes");
 
 const app = express();
 
@@ -103,6 +104,7 @@ app.use("/api/logs", logRoutes);
 app.use("/api/credits", creditsRoutes);
 app.use("/api/n8n-callback", n8nCallbackRoutes);
 app.use("/api/applied-jobs", appliedJobsRoutes);
+app.use("/api/progress", progressRoutes);
 
 // Your Gmail Draft route is inside authRoutes
 console.log("✅ All API routes registered");
