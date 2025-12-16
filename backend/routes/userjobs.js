@@ -14,6 +14,7 @@ const {
   saveSearch,
   deleteSavedSearch,
   renameSession,
+  renameSavedSearch,
 } = require("../controllers/userController");
 
 const router = express.Router();
@@ -33,8 +34,7 @@ router.get("/searches", auth, getSavedSearches); // for frontend call
 router.get("/searches/:userId", auth, getSavedSearches);
 router.post("/searches/save", auth, saveSearch);
 router.delete("/searches/:name", auth, deleteSavedSearch);
-
-// ✅ Rename Session
+router.put("/searches/:name", auth, renameSavedSearch);
 router.put("/sessions/rename", auth, renameSession);
 
 // ✅ Get jobs for a specific user (keep last)

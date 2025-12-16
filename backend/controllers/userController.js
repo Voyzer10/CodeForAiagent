@@ -204,6 +204,32 @@ const renameSession = async (req, res) => {
   }
 };
 
+// 🟢 Rename a saved search
+const renameSavedSearch = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { name } = req.params; // Old name
+    const { newName } = req.body;
+
+    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    if (!newName) return res.status(400).json({ error: "New name required" });
+
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const search = (user.savedSearches || []).find((s) => s.name === name);
+    if (!search) return res.status(404).json({ error: "Saved search not found" });
+
+    search.name = newName;
+    await user.save();
+
+    res.json({ success: true, savedSearches: user.savedSearches });
+  } catch (err) {
+    console.error("Error renaming saved search:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
 
   updateSocialLinks,
@@ -214,6 +240,7 @@ module.exports = {
   saveSearch,
   deleteSavedSearch,
   renameSession,
+  renameSavedSearch,
 };
 
 

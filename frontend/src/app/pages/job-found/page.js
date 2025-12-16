@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -31,6 +31,8 @@ function JobFoundContent() {
   const [activeSearch, setActiveSearch] = useState("All Jobs");
   const [currentSession, setCurrentSession] = useState(null);
   const [isPolling, setIsPolling] = useState(false);
+  const [editingSearch, setEditingSearch] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -394,6 +396,74 @@ function JobFoundContent() {
     console.log(`✅ Session "${displayName}" selected, showing ${sessionJobs.length} jobs`);
   };
 
+  const handleDeleteSearch = async (searchName) => {
+    if (!confirm(`Are you sure you want to delete "${searchName}"?`)) return;
+
+    try {
+      let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+      const res = await fetch(`${API_BASE_URL}/userjobs/searches/${searchName}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to delete");
+
+      setRecentSearches(data.savedSearches || []);
+      if (activeSearch === searchName) {
+        handleSearchSelect("All Jobs");
+      }
+      setAlertState({ severity: "success", message: "Search deleted" });
+    } catch (err) {
+      console.error(err);
+      setAlertState({ severity: "error", message: err.message });
+    }
+  };
+
+  const startRenaming = (e, searchName) => {
+    e.stopPropagation();
+    setEditingSearch(searchName);
+    setRenameValue(searchName);
+  };
+
+  const cancelRenaming = (e) => {
+    e?.stopPropagation();
+    setEditingSearch(null);
+    setRenameValue("");
+  };
+
+  const handleRenameSearch = async (e, oldName) => {
+    e.stopPropagation();
+    if (!renameValue.trim() || renameValue === oldName) {
+      cancelRenaming();
+      return;
+    }
+
+    try {
+      let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+      const res = await fetch(`${API_BASE_URL}/userjobs/searches/${oldName}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ newName: renameValue }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to rename");
+
+      setRecentSearches(data.savedSearches || []);
+      if (activeSearch === oldName) {
+        setActiveSearch(renameValue);
+      }
+      setEditingSearch(null);
+      setAlertState({ severity: "success", message: "Search renamed" });
+    } catch (err) {
+      console.error(err);
+      setAlertState({ severity: "error", message: err.message });
+    }
+  };
   if (loading)
     return (
       <div className="flex items-center justify-center h-screen text-green-400">
@@ -438,18 +508,75 @@ function JobFoundContent() {
               </button>
 
               {recentSearches.length > 0 ? (
-                recentSearches.map((search, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handleSearchSelect(search)}
-                    className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === search.name
-                      ? "bg-green-700/50 border-green-600 text-green-200"
-                      : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
-                      }`}
-                  >
-                    {search.name} ({search.jobs?.length || 0})
-                  </button>
-                ))
+                recentSearches.map((search, idx) => {
+                  const isActive = activeSearch === search.name;
+                  const isEditing = editingSearch === search.name;
+
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-center rounded-md border transition overflow-hidden group ${isActive
+                        ? "bg-green-700/50 border-green-600 text-green-200"
+                        : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                        }`}
+                    >
+                      {isEditing ? (
+                        <div className="flex items-center px-2 py-1 gap-1">
+                          <input
+                            type="text"
+                            value={renameValue}
+                            onChange={(e) => setRenameValue(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="bg-[#0b0f0e] border border-green-600 rounded px-1 py-0.5 text-xs text-white focus:outline-none w-32"
+                            autoFocus
+                          />
+                          <button
+                            onClick={(e) => handleRenameSearch(e, search.name)}
+                            className="p-1 hover:text-green-400"
+                          >
+                            <Check size={14} />
+                          </button>
+                          <button
+                            onClick={cancelRenaming}
+                            className="p-1 hover:text-red-400"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleSearchSelect(search)}
+                            className="px-3 py-2 text-sm text-left truncate max-w-[150px]"
+                          >
+                            {search.name} <span className="text-xs opacity-70">({search.jobs?.length || 0})</span>
+                          </button>
+
+                          {/* Edit/Delete Actions - visible on hover or if active */}
+                          <div className={`flex items-center px-1 border-l border-green-800/50 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                            <button
+                              onClick={(e) => startRenaming(e, search.name)}
+                              className="p-1.5 hover:text-white text-green-400/70"
+                              title="Rename"
+                            >
+                              <Pencil size={12} />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSearch(search.name);
+                              }}
+                              className="p-1.5 hover:text-red-400 text-red-500/70"
+                              title="Delete"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })
               ) : (
                 <p className="text-gray-500 text-xs italic mt-2">No saved searches yet</p>
               )}

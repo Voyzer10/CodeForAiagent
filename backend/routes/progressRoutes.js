@@ -3,43 +3,97 @@ const { progressMap } = require("../model/progressStore");
 
 const router = express.Router();
 
+/* -------------------------------------------------
+   POST /api/progress/update
+   Called by n8n to update progress
+-------------------------------------------------- */
 router.post("/update", (req, res) => {
-  const secret = req.headers["x-n8n-secret"];
-  if (secret !== process.env.N8N_SECRET) {
-    return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const secret = req.headers["x-n8n-secret"];
+
+    // 🔐 Secret validation
+    if (!secret) {
+      console.error("❌ Progress update failed: Missing X-N8N-SECRET");
+      return res.status(401).json({ error: "Missing secret" });
+    }
+
+    if (secret !== process.env.N8N_SECRET) {
+      console.error("❌ Progress update failed: Invalid secret");
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const { runId, progress, message, status } = req.body;
+
+    // 🧪 Validation
+    if (!runId) {
+      console.error("❌ Progress update failed: runId missing", req.body);
+      return res.status(400).json({ error: "runId missing" });
+    }
+
+    // ✅ Store progress
+    progressMap.set(runId, {
+      progress: Number(progress) || 0,
+      message: message || "Working…",
+      status: status || "running",
+      updatedAt: Date.now(),
+    });
+
+    console.log(
+      `📩 Progress updated | runId=${runId} | ${progress}% | ${message}`
+    );
+
+    return res.json({
+      success: true,
+      runId,
+      progress,
+    });
+  } catch (err) {
+    console.error("🔥 Progress update crash:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
-
-  const { runId, progress, message, status } = req.body;
-  if (!runId) return res.status(400).json({ error: "runId required" });
-
-  progressMap.set(runId, {
-    progress,
-    message,
-    status,
-    updatedAt: Date.now(),
-  });
-
-  res.json({ success: true });
 });
 
-router.get("/stream/:runId", (req, res) => {
-  const { runId } = req.params;
+/* -------------------------------------------------
+   GET /api/progress/:runId
+   Called by frontend polling
+-------------------------------------------------- */
+router.get("/:runId", (req, res) => {
+  try {
+    const { runId } = req.params;
 
-  res.setHeader("Content-Type", "text/event-stream");
-  res.setHeader("Cache-Control", "no-cache");
-  res.setHeader("Connection", "keep-alive");
-
-  const interval = setInterval(() => {
-    const data = progressMap.get(runId);
-    if (data) {
-      res.write(`data: ${JSON.stringify(data)}\n\n`);
+    if (!runId) {
+      return res.status(400).json({
+        progress: 0,
+        message: "runId missing",
+        status: "error",
+      });
     }
-  }, 1000);
 
-  req.on("close", () => {
-    clearInterval(interval);
-    res.end();
-  });
+    const data = progressMap.get(runId);
+
+    // 🟡 No progress yet (job just started)
+    if (!data) {
+      console.log(`ℹ️ Progress check: no data yet for runId=${runId}`);
+      return res.json({
+        progress: 0,
+        message: "Starting job…",
+        status: "running",
+      });
+    }
+
+    console.log(
+      `📤 Progress fetched | runId=${runId} | ${data.progress}%`
+    );
+
+    return res.json(data);
+  } catch (err) {
+    console.error("🔥 Progress fetch crash:", err);
+    return res.status(500).json({
+      progress: 0,
+      message: "Failed to fetch progress",
+      status: "error",
+    });
+  }
 });
 
 module.exports = router;
