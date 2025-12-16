@@ -95,7 +95,7 @@ export default function UserPanel() {
     }
 
     const es = new EventSource(
-      `${API_BASE_URL}/progress/stream/${response.runId}`
+      `${API_BASE_URL}/progress/${response.runId}`
     );
 
     eventSourceRef.current = es;
