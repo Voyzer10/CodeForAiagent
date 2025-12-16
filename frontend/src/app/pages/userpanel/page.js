@@ -85,23 +85,16 @@ export default function UserPanel() {
     fetchUser();
   }, [API_BASE_URL]);
 
-  /* ---------------- SSE PROGRESS LISTENER ---------------- */
-  useEffect(() => {
-    if (!response?.runId) return;
+  /* ---------------- PROGRESS POLLING ---------------- */
+useEffect(() => {
+  if (!response?.runId || jobFinished) return;
 
-    // Close previous stream
-    if (eventSourceRef.current) {
-      eventSourceRef.current.close();
-    }
-
-    const es = new EventSource(
-      `${API_BASE_URL}/progress/${response.runId}`
-    );
-
-    eventSourceRef.current = es;
-
-    es.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+  const interval = setInterval(async () => {
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/progress/${response.runId}`
+      );
+      const data = await res.json();
 
       if (typeof data.progress === "number") {
         setLoadingProgress(data.progress);
@@ -112,7 +105,7 @@ export default function UserPanel() {
       }
 
       if (data.status === "failed") {
-        es.close();
+        clearInterval(interval);
         setLoading(false);
         setJobFinished(false);
         setAlertState({
@@ -121,24 +114,21 @@ export default function UserPanel() {
         });
       }
 
-      if (data.status === "completed" || data.progress === 100) {
-        es.close();
+      if (data.status === "completed" || data.progress >= 100) {
+        clearInterval(interval);
         setLoading(false);
         setJobFinished(true);
         setLoadingProgress(100);
-        setResponse((prev) => ({
-          ...prev,
-          message: "🎉 Jobs found successfully!",
-        }));
+        setProgressMessage("Completed successfully");
       }
-    };
+    } catch (err) {
+      console.error("Progress polling failed", err);
+    }
+  }, 2000); // every 2 sec
 
-    es.onerror = () => {
-      es.close();
-    };
+  return () => clearInterval(interval);
+}, [response?.runId, jobFinished, API_BASE_URL]);
 
-    return () => es.close();
-  }, [response?.runId, API_BASE_URL]);
 
   /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
