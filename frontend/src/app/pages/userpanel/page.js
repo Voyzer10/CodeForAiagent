@@ -18,6 +18,9 @@ const PROGRESS_MESSAGES = [
 export default function UserPanel() {
   const router = useRouter();
   const pollRef = useRef(null);
+  const pollSuccessCount = useRef(0);
+  const messageTick = useRef(0);
+
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -95,7 +98,7 @@ export default function UserPanel() {
 
     const interval = setInterval(() => {
       setLoadingProgress((prev) => {
-        if (prev >= 95) return prev; // HARD STOP till backend confirms
+        if (prev >= 95) return 95; // HARD STOP till backend confirms
         return prev + 1;
       });
     }, 600);
@@ -112,9 +115,24 @@ export default function UserPanel() {
     setProgressMessage(PROGRESS_MESSAGES[idx]);
   }, [loadingProgress]);
 
+  useEffect(() => {
+    if (!loading || jobFinished) return;
+
+    const msgInterval = setInterval(() => {
+      messageTick.current =
+        (messageTick.current + 1) % PROGRESS_MESSAGES.length;
+      setProgressMessage(PROGRESS_MESSAGES[messageTick.current]);
+    }, 4000); // every 4 seconds
+
+    return () => clearInterval(msgInterval);
+  }, [loading, jobFinished]);
+
   /* ---------------- POLLING JOB COMPLETION ---------------- */
   useEffect(() => {
     if (!response?.runId || !user?.userId || jobFinished) return;
+    if (pollRef.current) {
+      clearInterval(pollRef.current);
+    }
 
     pollRef.current = setInterval(async () => {
       try {
@@ -126,6 +144,7 @@ export default function UserPanel() {
         if (!res.ok) return;
 
         const data = await res.json();
+        console.log("poll", pollSuccessCount.current, data);
 
         const completed =
           data.finished === true ||
@@ -133,7 +152,11 @@ export default function UserPanel() {
           data.success === true ||
           (Array.isArray(data.jobs) && data.jobs.length > 0);
 
-        if (completed) {
+        if (!completed) {
+          pollSuccessCount.current += 1;
+        }
+
+        if (completed || pollSuccessCount.current >= 2) {
           clearInterval(pollRef.current);
           setUserJobs(data.jobs || []);
           setJobFinished(true);
@@ -156,6 +179,9 @@ export default function UserPanel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+    pollSuccessCount.current = 0;
+    messageTick.current = 0;
+    setProgressMessage(PROGRESS_MESSAGES[0]);
 
     const num = Number(count);
     if (!num || num < 100 || num > 1000) {
@@ -270,7 +296,7 @@ export default function UserPanel() {
             <input
               type="number"
               value={count}
-              onChange={(e) => setCount(e.target.value)}
+              onChange={(e) => setCount(Number(e.target.value))}
               className="w-full rounded-md bg-[#0e1513] text-green-300 border border-[#1b2b27] px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-400"
             />
             {countError && <p className="text-red-400 text-xs mt-1">{countError}</p>}
@@ -279,8 +305,8 @@ export default function UserPanel() {
           <button
             disabled={loading || Boolean(countError)}
             className={`mt-3 relative flex items-center justify-center gap-2 font-semibold py-2 rounded-md transition-all duration-300 shadow-[0_0_20px_#00ff9d55] overflow-hidden ${loading || jobFinished
-                ? "bg-gray-900 text-white cursor-wait"
-                : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
+              ? "bg-gray-900 text-white cursor-wait"
+              : "bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-400 hover:to-green-300 text-black disabled:opacity-50 disabled:cursor-not-allowed"
               }`}
           >
             {loading || jobFinished ? (
