@@ -170,9 +170,14 @@ function JobFoundContent() {
   const rowVirtualizer = useVirtualizer({
     count: filteredJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 240, // avg job card height
-    overscan: 5, // smooth scroll
+    estimateSize: () => 240,
+    overscan: 8,
   });
+
+  // ✅ Reset selected jobs when search/session changes
+  useEffect(() => {
+    setSelectedJobs([]);
+  }, [activeSearch]);
 
 
   // toggle selection stores/removes the job UUID (job.jobid || job.jobId)
@@ -338,33 +343,42 @@ function JobFoundContent() {
     }
   };
 
-  const handleSearchSelect = (search) => {
-    console.log("🔍 [handleSearchSelect] Called with:", search);
+  // ✅ Normalize & deduplicate jobs for saved searches
+  const normalizeJobs = (jobsArray = []) => {
+    const map = new Map();
 
+    jobsArray.forEach((item) => {
+      if (item?.jobs && Array.isArray(item.jobs)) {
+        item.jobs.forEach(addJob);
+      } else {
+        addJob(item);
+      }
+    });
+
+    function addJob(job) {
+      const uuid = job?.jobid || job?.jobId || job?.id || job?._id;
+      if (!uuid) return;
+      map.set(uuid, job);
+    }
+
+    return Array.from(map.values());
+  };
+
+  const handleSearchSelect = (search) => {
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
       setActiveSearch("All Jobs");
       setCurrentSession(null);
-      console.log("✅ Showing all jobs:", userJobs.length);
-    } else if (search?.jobs) {
-      let jobsToShow = [];
-
-      if (Array.isArray(search.jobs)) {
-        jobsToShow = search.jobs.flatMap((j) => {
-          if (j.jobs && Array.isArray(j.jobs)) {
-            return j.jobs;
-          }
-          return j;
-        });
-      }
-
-      console.log("✅ Filtered jobs for search:", search.name, "Count:", jobsToShow.length);
-      setFilteredJobs(jobsToShow);
-      setActiveSearch(search.name);
-      setCurrentSession(null);
-    } else {
-      console.warn("⚠️ Unknown search format:", search);
+      return;
     }
+
+    if (!search?.jobs) return;
+
+    const normalizedJobs = normalizeJobs(search.jobs);
+
+    setFilteredJobs(normalizedJobs);
+    setActiveSearch(search.name);
+    setCurrentSession(null);
   };
 
   const handleSessionSelect = (session) => {
@@ -399,24 +413,33 @@ function JobFoundContent() {
   const handleDeleteSearch = async (searchName) => {
     if (!confirm(`Are you sure you want to delete "${searchName}"?`)) return;
 
+    // ✅ Optimistic UI update
+    setRecentSearches((prev) =>
+      prev.filter((s) => s.name !== searchName)
+    );
+
+    if (activeSearch === searchName) {
+      handleSearchSelect("All Jobs");
+    }
+
     try {
       let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
+      API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
 
-      const res = await fetch(`${API_BASE_URL}/userjobs/searches/${searchName}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete");
+      const res = await fetch(
+        `${API_BASE_URL}/userjobs/searches/${encodeURIComponent(searchName)}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
-      setRecentSearches(data.savedSearches || []);
-      if (activeSearch === searchName) {
-        handleSearchSelect("All Jobs");
+      if (!res.ok) {
+        throw new Error("Failed to delete search");
       }
+
       setAlertState({ severity: "success", message: "Search deleted" });
     } catch (err) {
-      console.error(err);
       setAlertState({ severity: "error", message: err.message });
     }
   };
@@ -706,70 +729,82 @@ function JobFoundContent() {
                       }}
                     >
                       {/* 🔽 SAME CARD UI — UNCHANGED */}
+                      {/* JOB CARD */}
                       <div
-                        className={`p-4 border rounded-xl shadow-md transition cursor-pointer
-                ${isSelected
-                            ? "bg-green-900/20 border-green-500"
+                        className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer
+                          min-h-[230px] flex flex-col justify-between
+                          ${isSelected
+                            ? "bg-green-900/30 border-green-500 shadow-[0_0_0_1px_#22c55e]"
                             : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
                           }`}
                         onClick={() => !isApplied && toggleJobSelection(jobUUID)}
                       >
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-lg font-semibold text-green-400 truncate">
+                        {/* HEADER */}
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className="text-base font-semibold text-green-400 leading-snug line-clamp-2">
                             {title}
                           </h3>
 
                           {isApplied ? (
-                            <div className="flex items-center gap-1 text-green-500 bg-green-900/30 px-2 py-1 rounded text-xs border border-green-800">
-                              <CheckCircle size={14} />
-                              <span>Already Applied</span>
-                            </div>
+                            <span className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full
+                              bg-green-900/40 border border-green-700 text-green-400 shrink-0">
+                              <CheckCircle size={13} />
+                              Applied
+                            </span>
                           ) : (
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleJobSelection(jobUUID)}
-                              className="accent-green-500 cursor-pointer"
                               onClick={(e) => e.stopPropagation()}
+                              className="w-4 h-4 accent-green-500 cursor-pointer mt-1"
                             />
                           )}
                         </div>
 
+                        {/* SKILLS / DESCRIPTION */}
                         <p
-                          className="text-sm text-gray-500 mt-2 line-clamp-3"
+                          className="mt-2 text-sm text-gray-400 line-clamp-2"
                           dangerouslySetInnerHTML={{ __html: description }}
                         />
 
-                        <div className="mt-3 text-xs text-green-300 space-y-1">
-                          <div className="text-gray-400 text-sm mb-2">{location}</div>
-                          <div className="text-gray-400 text-sm mb-2">
+                        {/* META */}
+                        <div className="mt-3 text-xs text-gray-400 space-y-1">
+                          {location && <div>📍 {location}</div>}
+                          <div>
                             Posted:{" "}
-                            {postedAt
-                              ? new Date(postedAt).toLocaleDateString()
-                              : "Unknown date"}
+                            {postedAt ? new Date(postedAt).toLocaleDateString() : "Unknown"}
                           </div>
                         </div>
 
-                        {job.link && (
-                          <a
-                            href={job.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block mt-3 text-green-400 hover:text-green-300 text-sm"
+                        {/* ACTIONS */}
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedJob(job);
+                            }}
+                            className="flex-1 px-3 py-2 text-sm rounded-md
+                              bg-green-700/20 border border-green-700
+                              text-green-300 hover:bg-green-700/40 transition"
                           >
-                            View / Apply →
-                          </a>
-                        )}
+                            View Details
+                          </button>
 
-                        <button
-                          className="mt-3 w-full px-3 py-2 bg-green-700/20 border border-green-700 text-green-300 rounded-md hover:bg-green-700/40 transition text-sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedJob(job);
-                          }}
-                        >
-                          View Details
-                        </button>
+                          {job.link && (
+                            <a
+                              href={job.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="px-3 py-2 text-sm rounded-md
+                                bg-[#12201c] border border-green-800
+                                text-green-400 hover:bg-green-900/30 transition"
+                            >
+                              Apply →
+                            </a>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );
