@@ -12,6 +12,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import UserNavbar from "../userpanel/Navbar";
 import Sidebar from "../userpanel/Sidebar";
 
@@ -34,6 +35,7 @@ export default function Profile() {
   const [saveStatus, setSaveStatus] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [credits, setCredits] = useState(0);
+  const router = useRouter();
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -413,7 +415,9 @@ export default function Profile() {
                     <div className="text-xs text-gray-400">Member</div>
                     <div className="text-green-300 font-semibold">Premium</div>
                   </div>
-                  <button className="px-3 py-1 rounded-md text-sm" style={{ background: "linear-gradient(90deg,#00fa92 0%, #4ade80 100%)", color: "#030604" }}>
+                  <button
+                    onClick={() => router.push('/pages/price')}
+                    className="px-3 py-1 rounded-md text-sm" style={{ background: "linear-gradient(90deg,#00fa92 0%, #4ade80 100%)", color: "#030604" }}>
                     Upgrade
                   </button>
                 </div>

@@ -40,6 +40,7 @@ export default function UserPanel() {
   const [sessionId, setSessionId] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [alertState, setAlertState] = useState(null);
+  const [credits, setCredits] = useState(0);
 
   let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || "";
   while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
@@ -71,12 +72,24 @@ export default function UserPanel() {
         setUser(data.user);
 
         if (data.user?.userId) {
+          if (data.user.linkedin) setLinkedin(data.user.linkedin);
+          if (data.user.github) setGithub(data.user.github);
+
           const jobRes = await fetch(
             `${API_BASE_URL}/userjobs/${data.user.userId}`,
             { credentials: "include" }
           );
           const jobData = await jobRes.json();
           setUserJobs(jobData.jobs || []);
+
+          // Fetch credits
+          try {
+            const creditRes = await fetch(`${API_BASE_URL}/credits/check?userId=${data.user.userId}`, { credentials: "include" });
+            const creditData = await creditRes.json();
+            if (creditRes.ok) setCredits(creditData.credits);
+          } catch (e) {
+            console.error("Failed to fetch credits", e);
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -86,54 +99,66 @@ export default function UserPanel() {
   }, [API_BASE_URL]);
 
   /* ---------------- PROGRESS POLLING ---------------- */
-useEffect(() => {
-  if (!response?.runId || jobFinished) return;
+  useEffect(() => {
+    if (!response?.runId || jobFinished) return;
 
-  const interval = setInterval(async () => {
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/progress/${response.runId}`
-      );
-      const data = await res.json();
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/progress/${response.runId}`
+        );
+        const data = await res.json();
 
-      if (typeof data.progress === "number") {
-        setLoadingProgress(data.progress);
+        if (typeof data.progress === "number") {
+          setLoadingProgress(data.progress);
+        }
+
+        if (data.message) {
+          setProgressMessage(data.message);
+        }
+
+        if (data.status === "failed") {
+          clearInterval(interval);
+          setLoading(false);
+          setJobFinished(false);
+          setAlertState({
+            severity: "error",
+            message: data.message || "Job failed",
+          });
+        }
+
+        if (data.status === "completed" || data.progress >= 100) {
+          clearInterval(interval);
+          setLoading(false);
+          setJobFinished(true);
+          setLoadingProgress(100);
+          setProgressMessage("Completed successfully");
+        }
+      } catch (err) {
+        console.error("Progress polling failed", err);
       }
+    }, 2000); // every 2 sec
 
-      if (data.message) {
-        setProgressMessage(data.message);
-      }
-
-      if (data.status === "failed") {
-        clearInterval(interval);
-        setLoading(false);
-        setJobFinished(false);
-        setAlertState({
-          severity: "error",
-          message: data.message || "Job failed",
-        });
-      }
-
-      if (data.status === "completed" || data.progress >= 100) {
-        clearInterval(interval);
-        setLoading(false);
-        setJobFinished(true);
-        setLoadingProgress(100);
-        setProgressMessage("Completed successfully");
-      }
-    } catch (err) {
-      console.error("Progress polling failed", err);
-    }
-  }, 2000); // every 2 sec
-
-  return () => clearInterval(interval);
-}, [response?.runId, jobFinished, API_BASE_URL]);
+    return () => clearInterval(interval);
+  }, [response?.runId, jobFinished, API_BASE_URL]);
 
 
   /* ---------------- SUBMIT ---------------- */
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (loading) return;
+
+    // Check credits before starting
+    if (credits < 100) {
+      setAlertState({
+        severity: "error",
+        message: "Insufficient credits! You need at least 100 credits. Redirecting to plans..."
+      });
+      setTimeout(() => {
+        router.push("/pages/price");
+      }, 2000);
+      return;
+    }
 
     const num = Number(count);
     if (!num || num < 100 || num > 1000) {
