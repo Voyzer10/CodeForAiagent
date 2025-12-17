@@ -365,6 +365,8 @@ function JobFoundContent() {
   };
 
   const handleSearchSelect = (search) => {
+    console.log("🔍 Search clicked:", search?.name || search);
+
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
       setActiveSearch("All Jobs");
@@ -372,14 +374,35 @@ function JobFoundContent() {
       return;
     }
 
-    if (!search?.jobs) return;
+    if (!search?.jobs || !Array.isArray(search.jobs)) {
+      console.warn("⚠️ Search has no jobs array:", search);
+      return;
+    }
 
-    const normalizedJobs = normalizeJobs(search.jobs);
+    // ✅ Extract job UUIDs from saved search
+    const savedJobIds = new Set(
+      normalizeJobs(search.jobs)
+        .map((j) => j.jobid || j.jobId || j.id || j._id)
+        .filter(Boolean)
+    );
 
-    setFilteredJobs(normalizedJobs);
+    // 🔎 DEBUG LOGS (SAFE TO KEEP TEMPORARILY)
+    console.log("🆔 Saved job IDs:", [...savedJobIds]);
+
+    // ✅ Filter from current userJobs
+    const matchedJobs = userJobs.filter((job) => {
+      const uuid = job.jobid || job.jobId || job.id || job._id;
+      return savedJobIds.has(uuid);
+    });
+
+    console.log("📦 Matched jobs count:", matchedJobs.length);
+    console.log("📦 Matched jobs sample:", matchedJobs.slice(0, 3));
+
+    setFilteredJobs(matchedJobs);
     setActiveSearch(search.name);
     setCurrentSession(null);
   };
+
 
   const handleSessionSelect = (session) => {
     console.log("🕒 [handleSessionSelect] Called with session:", session);

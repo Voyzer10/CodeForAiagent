@@ -2,19 +2,20 @@
 const fs = require("fs");
 const path = require("path");
 
-// ========== LOG DIRECTORY ==========
+// ================= LOG DIRECTORY =================
 const logsDir = path.join(__dirname, "logs");
-if (!fs.existsSync(logsDir)) fs.mkdirSync(logsDir, { recursive: true });
+if (!fs.existsSync(logsDir)) {
+  fs.mkdirSync(logsDir, { recursive: true });
+}
 
-// ========== LOG FILES ==========
+// ================= LOG FILES =================
 const logFile = path.join(logsDir, "logs.txt");
 const errorFile = path.join(logsDir, "errorLogs.txt");
 const queueLogFile = path.join(logsDir, "queueLogs.txt");
 
-// ========== PRETTY DATE FORMAT ==========
+// ================= TIMESTAMP =================
 function timestamp() {
-  const d = new Date();
-  return d.toLocaleString("en-IN", {
+  return new Date().toLocaleString("en-IN", {
     timeZone: "Asia/Kolkata",
     day: "2-digit",
     month: "short",
@@ -25,13 +26,50 @@ function timestamp() {
   });
 }
 
-// ========== FILE APPEND ==========
-function write(file, msg) {
-  const line = `[${timestamp()}] ${msg}\n`;
-  fs.appendFile(file, line, () => { });
+// ================= SAFE STRINGIFY =================
+function safeStringify(value) {
+  const seen = new WeakSet();
+
+  return JSON.stringify(
+    value,
+    (key, val) => {
+      if (typeof val === "object" && val !== null) {
+        if (seen.has(val)) return "[Circular]";
+        seen.add(val);
+      }
+      if (typeof val === "function") return `[Function: ${val.name || "anonymous"}]`;
+      return val;
+    },
+    2
+  );
 }
 
-// ========== CUSTOM LOG FUNCTIONS ==========
+// ================= FILE WRITE =================
+function write(file, msg) {
+  const line = `[${timestamp()}] ${msg}\n`;
+  fs.appendFile(file, line, () => {});
+}
+
+// ================= FORMAT ARGS =================
+function formatArgs(args) {
+  return args
+    .map(arg => {
+      if (arg instanceof Error) {
+        return `${arg.message}\n${arg.stack}`;
+      }
+      if (typeof arg === "object") {
+        try {
+          return safeStringify(arg);
+        } catch {
+          return "[Unserializable Object]";
+        }
+      }
+      return String(arg);
+    })
+    .join(" ");
+}
+
+// ================= CUSTOM LOG FUNCTIONS =================
 function logToFile(msg) {
   write(logFile, msg);
 }
@@ -44,22 +82,23 @@ function logQueueToFile(msg) {
   write(queueLogFile, msg);
 }
 
-// ========== OVERRIDE console.log + console.error ==========
+// ================= OVERRIDE CONSOLE =================
 const originalLog = console.log;
 const originalError = console.error;
 
 console.log = (...args) => {
-  const msg = args.join(" ");
+  const msg = formatArgs(args);
   write(logFile, msg);
   originalLog.apply(console, args);
 };
 
 console.error = (...args) => {
-  const msg = args.join(" ");
+  const msg = formatArgs(args);
   write(errorFile, msg);
   originalError.apply(console, args);
 };
 
+// ================= EXPORTS =================
 module.exports = {
   logToFile,
   logErrorToFile,
