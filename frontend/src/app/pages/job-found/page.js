@@ -365,7 +365,7 @@ function JobFoundContent() {
   };
 
   const handleSearchSelect = (search) => {
-    console.log("🔍 Search clicked:", search?.name || search);
+    console.log("🔍 Saved search clicked:", search);
 
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
@@ -374,34 +374,29 @@ function JobFoundContent() {
       return;
     }
 
-    if (!search?.jobs || !Array.isArray(search.jobs)) {
-      console.warn("⚠️ Search has no jobs array:", search);
+    // 🔥 IMPORTANT FIX
+    if (!search?.runId) {
+      console.warn("⚠️ Saved search has no runId:", search);
+      setFilteredJobs([]);
       return;
     }
 
-    // ✅ Extract job UUIDs from saved search
-    const savedJobIds = new Set(
-      normalizeJobs(search.jobs)
-        .map((j) => j.jobid || j.jobId || j.id || j._id)
-        .filter(Boolean)
-    );
-
-    // 🔎 DEBUG LOGS (SAFE TO KEEP TEMPORARILY)
-    console.log("🆔 Saved job IDs:", [...savedJobIds]);
-
-    // ✅ Filter from current userJobs
     const matchedJobs = userJobs.filter((job) => {
-      const uuid = job.jobid || job.jobId || job.id || job._id;
-      return savedJobIds.has(uuid);
+      return (
+        job.runId === search.runId ||
+        job.sessionId === search.runId ||
+        job.sessionid === search.runId
+      );
     });
 
+    console.log("🆔 Search runId:", search.runId);
     console.log("📦 Matched jobs count:", matchedJobs.length);
-    console.log("📦 Matched jobs sample:", matchedJobs.slice(0, 3));
 
     setFilteredJobs(matchedJobs);
     setActiveSearch(search.name);
     setCurrentSession(null);
   };
+
 
 
   const handleSessionSelect = (session) => {
@@ -595,7 +590,11 @@ function JobFoundContent() {
                             onClick={() => handleSearchSelect(search)}
                             className="px-3 py-2 text-sm text-left truncate max-w-[150px]"
                           >
-                            {search.name} <span className="text-xs opacity-70">({search.jobs?.length || 0})</span>
+                            {search.name} <span className="text-xs opacity-70">({userJobs.filter(j =>
+                              j.runId === search.runId ||
+                              j.sessionId === search.runId
+                            ).length})
+                            </span>
                           </button>
 
                           {/* Edit/Delete Actions - visible on hover or if active */}
