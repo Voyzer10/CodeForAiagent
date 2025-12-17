@@ -6,17 +6,25 @@ const Job = require("../model/application-tracking");
 const {
   refreshGoogleTokens,
   decrypt,
-  encrypt,
-} = require("./googleController"); // shared helpers
-
-const crypto = require("crypto");
+} = require("./googleController");
 
 /* ======================================================
-   CREATE GMAIL DRAFT (MAIN FUNCTION)
-   POST /api/gmail/create-draft
-   Body: { userId, jobid, attachmentName?, attachmentBase64? }
+   EMAIL SANITIZER
 ====================================================== */
-// Helper: Find Job
+function sanitizeEmail(raw) {
+  if (!raw || typeof raw !== "string") return null;
+
+  // Extract first valid email from messy strings
+  const match = raw.match(
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
+  );
+
+  return match ? match[0].toLowerCase() : null;
+}
+
+/* ======================================================
+   FIND JOB (ROBUST)
+====================================================== */
 async function findJob(jobid) {
   let job = await Job.findOne({ jobid });
   if (!job) job = await Job.findOne({ jobId: jobid });
@@ -25,14 +33,14 @@ async function findJob(jobid) {
   if (!job && mongoose.Types.ObjectId.isValid(jobid)) {
     try {
       job = await Job.findById(jobid);
-    } catch (e) {
-      // ignore
-    }
+    } catch (_) {}
   }
   return job;
 }
 
-// Helper: Ensure Tokens
+/* ======================================================
+   ENSURE GOOGLE TOKENS
+====================================================== */
 async function ensureTokens(user) {
   if (!user.gmailRefreshToken) {
     return { error: "gmail_not_connected" };
@@ -42,7 +50,8 @@ async function ensureTokens(user) {
   const refreshTokenPlain = decrypt(user.gmailRefreshToken);
 
   const tokenExpired =
-    !user.gmailTokenExpiry || new Date(user.gmailTokenExpiry).getTime() < Date.now() + 60000;
+    !user.gmailTokenExpiry ||
+    new Date(user.gmailTokenExpiry).getTime() < Date.now() + 60000;
 
   if (!accessToken || tokenExpired) {
     const refreshed = await refreshGoogleTokens(user);
@@ -53,27 +62,29 @@ async function ensureTokens(user) {
   return { accessToken, refreshTokenPlain };
 }
 
-// Helper: Build Raw Email
+/* ======================================================
+   BUILD RAW EMAIL
+====================================================== */
 function buildRawEmail(to, subject, body, attachmentName, attachmentBase64) {
   const boundary = "----=_NodeMailBoundary_" + Date.now();
+
   const parts = [
     `To: ${to}`,
     `Subject: ${subject}`,
+    `MIME-Version: 1.0`,
     `Content-Type: multipart/mixed; boundary="${boundary}"`,
     "",
     `--${boundary}`,
     `Content-Type: text/plain; charset="UTF-8"`,
     "",
-    body,
-    ""
+    body || "",
+    "",
   ];
 
   if (attachmentBase64 && attachmentName) {
     let pureBase64 = attachmentBase64;
-    const prefixIndex = pureBase64.indexOf("base64,");
-    if (prefixIndex !== -1) {
-      pureBase64 = pureBase64.slice(prefixIndex + 7);
-    }
+    const idx = pureBase64.indexOf("base64,");
+    if (idx !== -1) pureBase64 = pureBase64.slice(idx + 7);
 
     parts.push(
       `--${boundary}`,
@@ -87,76 +98,94 @@ function buildRawEmail(to, subject, body, attachmentName, attachmentBase64) {
   }
 
   parts.push(`--${boundary}--`);
+
   const raw = parts.join("\r\n");
 
-  let rawEncoded = Buffer.from(raw, "utf8")
+  return Buffer.from(raw, "utf8")
     .toString("base64")
     .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-
-  if (rawEncoded.endsWith("==")) {
-    rawEncoded = rawEncoded.slice(0, -2);
-  } else if (rawEncoded.endsWith("=")) {
-    rawEncoded = rawEncoded.slice(0, -1);
-  }
-
-  return rawEncoded;
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
+/* ======================================================
+   CREATE GMAIL DRAFT
+   POST /api/auth/gmail/create-draft
+====================================================== */
 exports.createGmailDraft = async (req, res) => {
-  console.log("\n\n=======================================\n📩  createGmailDraft API HIT\n=======================================\n");
+  console.log(
+    "\n=======================================\n📩 createGmailDraft API HIT\n=======================================\n"
+  );
 
   try {
     const userId = Number(req.body.userId);
     const jobid = String(req.body.jobid);
     const { attachmentName, attachmentBase64 } = req.body;
 
-    if (!userId || isNaN(userId) || !jobid || jobid === "undefined" || jobid === "null") {
+    if (!userId || isNaN(userId) || !jobid || jobid === "undefined") {
       return res.status(400).json({ error: "userId and jobid required" });
     }
 
-    // 1. Find Job
+    /* ---------- FIND JOB ---------- */
     console.log(`🔎 Searching for job with ID: ${jobid}`);
     const job = await findJob(jobid);
 
     if (!job) {
-      console.log("❌ Job not found in DB.");
+      console.log("❌ Job not found");
       return res.status(404).json({ error: "Job not found" });
     }
     console.log(`✅ Job found: ${job._id}`);
 
-    // 2. Find User
+    /* ---------- FIND USER ---------- */
     const user = await User.findOne({ userId });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    // 3. Ensure Tokens
+    /* ---------- TOKENS ---------- */
     const tokens = await ensureTokens(user);
     if (tokens.error) {
-      if (tokens.error === "invalid_refresh_token") {
-        return res.status(400).json({ error: "gmail_reconnect_needed", message: "Reconnect Gmail." });
-      }
       return res.status(400).json(tokens);
     }
 
-    // 4. OAuth Client
     const clientId = decrypt(user.clientId);
     const clientSecret = decrypt(user.clientSecret);
-    if (!clientId || !clientSecret) return res.status(400).json({ error: "client_credentials_missing" });
 
     const oAuthClient = new google.auth.OAuth2(clientId, clientSecret);
-    oAuthClient.setCredentials({ access_token: tokens.accessToken, refresh_token: tokens.refreshTokenPlain });
+    oAuthClient.setCredentials({
+      access_token: tokens.accessToken,
+      refresh_token: tokens.refreshTokenPlain,
+    });
 
-    // Validate Email
-    let toEmail = (job.email_to || "").trim();
-    console.log(`📧 Draft Details -> To: '${toEmail}', Subject: '${job.email_subject}'`);
+    /* ---------- EMAIL SANITIZATION ---------- */
+    const rawEmail = job.email_to;
+    const toEmail = sanitizeEmail(rawEmail);
 
-    if (!toEmail || !toEmail.includes("@")) {
-      console.error("❌ Invalid 'To' address:", toEmail);
-      return res.status(400).json({ error: "Invalid email address", details: "The job has no valid HR email found." });
+    console.log(
+      `📧 Email check → Raw: '${rawEmail}' | Sanitized: '${toEmail}' | Subject: '${job.email_subject}'`
+    );
+
+    if (!toEmail) {
+      console.error("❌ Invalid email after sanitization:", rawEmail);
+
+      job.email_to = "email_not_found";
+      await job.save();
+
+      return res.status(400).json({
+        error: "Invalid email address",
+        details: rawEmail,
+      });
     }
 
-    // 5. Create Draft
-    const rawEncoded = buildRawEmail(toEmail, job.email_subject, job.email_content || "", attachmentName, attachmentBase64);
+    /* ---------- CREATE GMAIL DRAFT ---------- */
+    const rawEncoded = buildRawEmail(
+      toEmail,
+      job.email_subject,
+      job.email_content || "",
+      attachmentName,
+      attachmentBase64
+    );
+
     const gmail = google.gmail({ version: "v1", auth: oAuthClient });
 
     const draft = await gmail.users.drafts.create({
@@ -166,11 +195,13 @@ exports.createGmailDraft = async (req, res) => {
 
     const draftId = draft?.data?.id;
 
-    // Mark job as applied (sent = true)
+    /* ---------- UPDATE JOB ---------- */
     job.sent = true;
     job.trackingId = String(userId);
-    job.draftId = draftId; // Save draft ID
+    job.draftId = draftId;
     await job.save();
+
+    console.log("✅ Gmail draft created:", draftId);
 
     return res.json({
       success: true,
@@ -178,12 +209,19 @@ exports.createGmailDraft = async (req, res) => {
       gmailUrl: `https://mail.google.com/mail/u/0/?fs=1&drafts=${draftId}`,
       job,
     });
-
   } catch (err) {
     console.error("❌ createGmailDraft ERROR:", err.message);
-    if (String(err.message || "").toLowerCase().includes("invalid_grant")) {
-      return res.status(400).json({ error: "gmail_reconnect_needed", message: "Reconnect Gmail." });
+
+    if (String(err.message).toLowerCase().includes("invalid_grant")) {
+      return res.status(400).json({
+        error: "gmail_reconnect_needed",
+        message: "Reconnect Gmail.",
+      });
     }
-    return res.status(500).json({ error: "Failed to create draft", details: err.message });
+
+    return res.status(500).json({
+      error: "Failed to create draft",
+      details: err.message,
+    });
   }
 };
