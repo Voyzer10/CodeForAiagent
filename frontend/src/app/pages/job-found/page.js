@@ -43,7 +43,7 @@ const JobListItem = ({
         width: "100%",
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      className="px-4 py-2"
+      className="px-4 py-3"
     >
       <div
         className={`group relative p-4 rounded-xl border transition-all duration-300
@@ -320,7 +320,7 @@ function JobFoundContent() {
   const rowVirtualizer = useVirtualizer({
     count: filteredJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 140,
+    estimateSize: () => 200,
     overscan: 8,
   });
 

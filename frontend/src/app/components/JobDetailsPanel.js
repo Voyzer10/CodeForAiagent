@@ -138,13 +138,18 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                             <span className="font-semibold">{company}</span>
                             <CheckCircle size={14} className="text-green-500" />
                         </div>
-                        <button
-                            onClick={() => onToggleSave(job)}
-                            className={`p-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${isSaved ? 'bg-green-500/10 text-green-400' : 'bg-gray-800/50 text-gray-400 hover:text-green-400 hover:bg-green-500/5'}`}
-                        >
-                            <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
-                            {isSaved ? "Saved" : "Save this job"}
-                        </button>
+                        <div className="flex items-center pt-2">
+                            {isApplied ? (
+                                <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
+                                    <CheckCircle size={14} />
+                                    Applied
+                                </span>
+                            ) : isActivelyHiring ? (
+                                <span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                                    Actively Hiring
+                                </span>
+                            ) : null}
+                        </div>
                     </div>
 
                     <div className="flex flex-col gap-4">
@@ -152,18 +157,6 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                             <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">
                                 {title}
                             </h1>
-                            <div className="flex items-center pt-2">
-                                {isApplied ? (
-                                    <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
-                                        <CheckCircle size={14} />
-                                        Applied
-                                    </span>
-                                ) : isActivelyHiring ? (
-                                    <span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
-                                        Actively Hiring
-                                    </span>
-                                ) : null}
-                            </div>
                         </div>
 
                         {/* Meta Info Grid */}
@@ -220,8 +213,12 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                     </button>
 
                     <div className="flex items-center gap-3">
-                        <button className="p-2 rounded-lg border border-green-800/50">
-                            <Bookmark size={18} />
+                        <button
+                            onClick={() => onToggleSave(job)}
+                            className={`p-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${isSaved ? 'bg-green-500/10 text-green-400' : 'bg-gray-800/50 text-gray-400 hover:text-green-400 hover:bg-green-500/5'}`}
+                        >
+                            <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
+                            {isSaved ? "Saved" : "Save this job"}
                         </button>
                         <button className="p-2 rounded-lg border border-green-800/50">
                             <MoreHorizontal size={18} />
