@@ -1,12 +1,157 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Alert from "../../components/Alert"; // Imported Alert
 import JobDetailsPanel from "../../components/JobDetailsPanel";
+
+const JobListItem = ({
+  job,
+  jobUUID,
+  isSelected,
+  isApplied,
+  selectedJob,
+  setSelectedJob,
+  toggleJobSelection,
+  virtualRow,
+  rowVirtualizer
+}) => {
+  const [isSaved, setIsSaved] = useState(false);
+
+  const title = job.Title || job.title || "(No title)";
+  const company = job.Company || job.companyName || "Unknown Company";
+  const salary = job.Salary || job.salary || null;
+  const location = job.Location || job.location || "Remote";
+  const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
+  const isActivelyHiring = job.benefits?.includes("Actively Hiring") || job.isActivelyHiring;
+
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("savedJobs") || "[]");
+    setIsSaved(saved.some(sj => (sj.jobid || sj.jobId) === jobUUID));
+  }, [jobUUID]);
+
+  const toggleSaveJob = (e) => {
+    e.stopPropagation();
+    const saved = JSON.parse(localStorage.getItem("savedJobs") || "[]");
+    let updated;
+    if (isSaved) {
+      updated = saved.filter(sj => (sj.jobid || sj.jobId) !== jobUUID);
+    } else {
+      updated = [...saved, job];
+    }
+    localStorage.setItem("savedJobs", JSON.stringify(updated));
+    setIsSaved(!isSaved);
+  };
+
+  return (
+    <div
+      ref={rowVirtualizer.measureElement}
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        width: "100%",
+        transform: `translateY(${virtualRow.start}px)`,
+      }}
+      className="px-4 py-2"
+    >
+      <div
+        className={`group relative p-4 rounded-xl border transition-all duration-300
+          flex flex-row items-start gap-4 cursor-pointer
+          ${isSelected
+            ? "bg-green-900/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
+            : selectedJob === job
+              ? "bg-green-900/5 border-green-600/40"
+              : "bg-[#0c1210] border-[#1b2b27] hover:border-green-800/60 hover:bg-[#111a17]"
+          }`}
+        onClick={() => setSelectedJob(job)}
+      >
+        {/* 1. Left: Company Logo Placeholder */}
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform">
+          <Building2 size={24} />
+        </div>
+
+        {/* 2. Middle: Content */}
+        <div className="flex-1 min-w-0 pr-8 pb-8 text-left">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <h3 className="text-[15px] font-bold text-white group-hover:text-green-400 transition-colors truncate max-w-[70%]">
+              {title}
+            </h3>
+            {isActivelyHiring && (
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 whitespace-nowrap">
+                Actively Hiring
+              </span>
+            )}
+            {isApplied && (
+              <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded bg-green-900/40 text-green-400">
+                <CheckCircle size={10} />
+                Applied
+              </span>
+            )}
+          </div>
+
+          <div className="text-sm font-medium text-gray-400 mb-3">{company}</div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-[11px] text-gray-400/80">
+            <div className="flex items-center gap-1.5">
+              <MapPin size={13} className="text-gray-500 flex-shrink-0" />
+              <span className="truncate">{location}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Briefcase size={13} className="text-gray-500 flex-shrink-0" />
+              <span className="truncate">{job.EmploymentType || job.jobType || "Full-time"}</span>
+            </div>
+            {salary && (
+              <div className="flex items-center gap-1.5 font-semibold text-green-400/90">
+                <span className="text-gray-500 font-normal">$</span>
+                {salary}
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <Clock size={13} className="text-gray-500 flex-shrink-0" />
+              <span>{postedAt ? new Date(postedAt).toLocaleDateString() : "Recently"}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Actions / Selection */}
+        <div className="absolute top-4 right-4 flex flex-col items-end h-[calc(100%-32px)]">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleSaveJob}
+              className={`p-1.5 rounded-md transition-all ${isSaved ? 'text-green-400 bg-green-400/10' : 'text-gray-500 hover:text-green-400 hover:bg-green-400/5'}`}
+            >
+              <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} />
+            </button>
+            {!isApplied && (
+              <input
+                type="checkbox"
+                checked={isSelected}
+                onChange={() => toggleJobSelection(jobUUID)}
+                onClick={(e) => e.stopPropagation()}
+                className="w-4 h-4 rounded accent-green-500 border-green-800/50 cursor-pointer"
+              />
+            )}
+          </div>
+
+          <button
+            className="text-[12px] font-semibold text-green-400/70 hover:text-green-400 flex items-center gap-0.5 transition-colors mt-auto"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedJob(job);
+            }}
+          >
+            View Full Job
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 function JobFoundContent() {
   const [user, setUser] = useState(null);
@@ -738,104 +883,21 @@ function JobFoundContent() {
               >
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                   const job = filteredJobs[virtualRow.index];
-
-                  const jobUUID =
-                    job.jobid || job.jobId || job.id || job._id || virtualRow.index;
-
-                  const isSelected = selectedJobs.includes(jobUUID);
-                  const isApplied = appliedJobIds.has(jobUUID);
-                  const title = job.Title || job.title || "(No title)";
-                  const company = job.Company || job.companyName || "Unknown Company";
-                  const salary = job.Salary || job.salary || null;
-                  const location = job.Location || job.location || "Remote";
-                  const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
+                  const jobUUID = job.jobid || job.jobId || job.id || job._id || virtualRow.index;
 
                   return (
-                    <div
+                    <JobListItem
                       key={jobUUID}
-                      ref={rowVirtualizer.measureElement}
-                      style={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        width: "100%",
-                        transform: `translateY(${virtualRow.start}px)`,
-                      }}
-                      className="px-4 py-2"
-                    >
-                      {/* JOB CARD */}
-                      <div
-                        className={`group relative p-4 rounded-xl border transition-all duration-300
-                          flex flex-row items-start gap-4 cursor-pointer
-                          ${isSelected
-                            ? "bg-green-900/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
-                            : selectedJob === job
-                              ? "bg-green-900/5 border-green-600/40"
-                              : "bg-[#0c1210] border-[#1b2b27] hover:border-green-800/60 hover:bg-[#111a17]"
-                          }`}
-                        onClick={() => setSelectedJob(job)}
-                      >
-                        {/* 1. Left: Company Logo Placeholder */}
-                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform">
-                          <Building2 size={24} />
-                        </div>
-
-                        {/* 2. Middle: Content */}
-                        <div className="flex-1 min-w-0 pr-8">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-[15px] font-bold text-white group-hover:text-green-400 transition-colors truncate">
-                              {title}
-                            </h3>
-                            {isApplied && (
-                              <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded bg-green-900/40 text-green-400">
-                                <CheckCircle size={10} />
-                                Applied
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="text-sm font-medium text-gray-400 mb-2">{company}</div>
-
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400/80">
-                            <div className="flex items-center gap-1.5">
-                              <MapPin size={13} className="text-gray-500" />
-                              {location}
-                            </div>
-                            {salary && (
-                              <div className="font-semibold text-green-400/90">{salary}</div>
-                            )}
-                            <div className="flex items-center gap-1.5 ml-auto md:ml-0">
-                              <Clock size={13} className="text-gray-500" />
-                              {postedAt ? new Date(postedAt).toLocaleDateString() : "Recently"}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* 3. Actions / Selection */}
-                        <div className="absolute top-4 right-4 flex flex-col items-end gap-6 h-full">
-                          {!isApplied && (
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => toggleJobSelection(jobUUID)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="w-4 h-4 rounded accent-green-500 border-green-800/50 cursor-pointer"
-                            />
-                          )}
-
-                          <button
-                            className="text-[12px] font-semibold text-green-400/70 hover:text-green-400 flex items-center gap-0.5 transition-colors mt-auto mb-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedJob(job);
-                            }}
-                          >
-                            View Full Job
-                            <ChevronRight size={14} />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+                      job={job}
+                      jobUUID={jobUUID}
+                      virtualRow={virtualRow}
+                      rowVirtualizer={rowVirtualizer}
+                      isSelected={selectedJobs.includes(jobUUID)}
+                      isApplied={appliedJobIds.has(jobUUID)}
+                      selectedJob={selectedJob}
+                      setSelectedJob={setSelectedJob}
+                      toggleJobSelection={toggleJobSelection}
+                    />
                   );
                 })}
               </div>

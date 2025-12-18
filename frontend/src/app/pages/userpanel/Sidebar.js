@@ -112,80 +112,53 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 overflow-auto">
-        <ul className="space-y-2">
-          {/* Job Found */}
-
+      <nav className="flex-1 py-4 overflow-auto no-scrollbar">
+        <ul className="space-y-1">
           {/* User Panel */}
           <li>
             <Link
               href="/pages/userpanel"
-              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative ${isActive('/pages/userpanel') ? '' : 'hover:bg-[#062217]'
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/userpanel')
+                ? 'bg-green-900/10 border-r-2 border-green-500'
+                : 'hover:bg-green-900/5'
                 }`}
             >
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-md">
-                <User className="w-4 h-4 text-[#7b8f86]" />
-              </span>
-              <span className={`flex-1 text-sm ${isActive('/pages/userpanel') ? 'text-[#eafff0] font-semibold' : 'text-[#dfe9e5]'}`}>
+              <User className={`w-5 h-5 ${isActive('/pages/userpanel') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/pages/userpanel') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 User Panel
               </span>
-              {isActive('/pages/userpanel') && (
-                <span
-                  aria-hidden
-                  className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 rounded-r-md"
-                  style={{ background: 'linear-gradient(180deg,#00fa92,#4ade80)' }}
-                />
-              )}
             </Link>
           </li>
+
+          {/* Profile */}
           <li>
             <Link
               href="/pages/profile"
-              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative ${isActive('/pages/profile') ? '' : 'hover:bg-[#062217]'
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/profile')
+                ? 'bg-green-900/10 border-r-2 border-green-500'
+                : 'hover:bg-green-900/5'
                 }`}
             >
-              <span className={`inline-flex items-center justify-center w-9 h-9 rounded-md ${isActive('/pages/profile') ? 'bg-gradient-to-r from-[#00fa92] to-[#4ade80] shadow-[0_8px_40px_rgba(0,250,146,0.12)]' : ''}`}>
-                <User className={`w-4 h-4 ${isActive('/pages/profile') ? 'text-[#04220e]' : 'text-[#7b8f86]'}`} />
-              </span>
-              <span className={`flex-1 text-sm ${isActive('/pages/profile') ? 'text-[#eafff0] font-semibold' : 'text-[#dfe9e5]'}`}>
+              <User className={`w-5 h-5 ${isActive('/pages/profile') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/pages/profile') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 Profile
               </span>
-              {isActive('/pages/profile') && (
-                <span
-                  aria-hidden
-                  className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 rounded-r-md"
-                  style={{ background: 'linear-gradient(180deg,#00fa92,#4ade80)' }}
-                />
-              )}
             </Link>
           </li>
-          <li>
 
+          {/* Job Found */}
+          <li>
             <Link
               href="/pages/job-found"
-              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative overflow-hidden ${isActive('/pages/job-found') ? '' : 'hover:bg-[#062217]'
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/job-found')
+                ? 'bg-green-900/10 border-r-2 border-green-500'
+                : 'hover:bg-green-900/5'
                 }`}
-              aria-current={isActive('/pages/job-found') ? 'page' : undefined}
             >
-              <span
-                className={`inline-flex items-center justify-center w-9 h-9 rounded-md transition-all ${isActive('/pages/job-found') ? 'bg-gradient-to-r from-[#00fa92] to-[#4ade80] shadow-[0_8px_40px_rgba(0,250,146,0.12)]' : 'bg-transparent'
-                  }`}
-              >
-                <Briefcase className={`${isActive('/pages/job-found') ? 'text-[#04220e]' : 'text-[#9fffcf]'} w-4 h-4`} />
-              </span>
-
-              <span className={`flex-1 text-sm ${isActive('/pages/job-found') ? 'text-[#eafff0] font-semibold' : 'text-[#dfe9e5]'}`}>
+              <Briefcase className={`w-5 h-5 ${isActive('/pages/job-found') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/pages/job-found') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 Job Found
               </span>
-
-              {/* Left neon accent for active */}
-              {isActive('/pages/job-found') && (
-                <span
-                  aria-hidden
-                  className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 rounded-r-md"
-                  style={{ background: 'linear-gradient(180deg,#00fa92,#4ade80)' }}
-                />
-              )}
             </Link>
           </li>
 
@@ -193,61 +166,52 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           <li>
             <Link
               href="/pages/applied-jobs"
-              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative ${isActive('/pages/applied-jobs') ? '' : 'hover:bg-[#062217]'}`}
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/applied-jobs')
+                ? 'bg-green-900/10 border-r-2 border-green-500'
+                : 'hover:bg-green-900/5'
+                }`}
             >
-              <span className={`inline-flex items-center justify-center w-9 h-9 rounded-md ${isActive('/pages/applied-jobs') ? 'bg-gradient-to-r from-[#00fa92] to-[#4ade80] shadow-[0_8px_40px_rgba(0,250,146,0.12)]' : ''}`}>
-                <Send className={`w-4 h-4 ${isActive('/pages/applied-jobs') ? 'text-[#04220e]' : 'text-[#7b8f86]'}`} />
+              <Send className={`w-5 h-5 ${isActive('/pages/applied-jobs') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/pages/applied-jobs') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                Job Applied
               </span>
-              <span className={`flex-1 text-sm ${isActive('/pages/applied-jobs') ? 'text-[#eafff0] font-semibold' : 'text-[#dfe9e5]'}`}>Job Applied</span>
-              {isActive('/pages/applied-jobs') && (
-                <span
-                  aria-hidden
-                  className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 rounded-r-md"
-                  style={{ background: 'linear-gradient(180deg,#00fa92,#4ade80)' }}
-                />
-              )}
             </Link>
           </li>
 
-
-
           {/* Saved Jobs */}
           <li>
-            <button
-              type="button"
-              className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-[#062217]"
+            <Link
+              href="/pages/saved-jobs"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/saved-jobs')
+                ? 'bg-green-900/10 border-r-2 border-green-500'
+                : 'hover:bg-green-900/5'
+                }`}
             >
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-md">
-                <Bookmark className="w-4 h-4 text-[#7b8f86]" />
+              <Bookmark className={`w-5 h-5 ${isActive('/pages/saved-jobs') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/pages/saved-jobs') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                Saved Jobs
               </span>
-              <span className="flex-1 text-sm text-[#dfe9e5]">Saved Jobs</span>
-            </button>
+            </Link>
           </li>
 
           {/* Notifications */}
           <li>
             <button
-              type="button"
-              className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-[#062217] relative"
+              className="w-full group flex items-center gap-3 px-6 py-3 transition-all hover:bg-green-900/5"
             >
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-md">
-                <Bell className="w-4 h-4 text-[#7b8f86]" />
-              </span>
-              <span className="flex-1 text-sm text-[#dfe9e5]">Notifications</span>
-              <span className="h-2 w-2 rounded-full bg-[#00fa92]" aria-hidden />
+              <Bell className="w-5 h-5 text-gray-500 group-hover:text-green-400" />
+              <span className="text-sm text-gray-400 group-hover:text-gray-200">Notifications</span>
+              <span className="ml-auto h-2 w-2 rounded-full bg-green-500" />
             </button>
           </li>
 
           {/* Settings */}
           <li>
             <button
-              type="button"
-              className="flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-[#062217]"
+              className="w-full group flex items-center gap-3 px-6 py-3 transition-all hover:bg-green-900/5"
             >
-              <span className="inline-flex items-center justify-center w-9 h-9 rounded-md">
-                <Settings className="w-4 h-4 text-[#7b8f86]" />
-              </span>
-              <span className="flex-1 text-sm text-[#dfe9e5]">Settings</span>
+              <Settings className="w-5 h-5 text-gray-500 group-hover:text-green-400" />
+              <span className="text-sm text-gray-400 group-hover:text-gray-200">Settings</span>
             </button>
           </li>
         </ul>
