@@ -6,6 +6,7 @@ import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Alert from "../../components/Alert"; // Imported Alert
+import JobDetailsPanel from "../../components/JobDetailsPanel";
 
 function JobFoundContent() {
   const [user, setUser] = useState(null);
@@ -718,13 +719,13 @@ function JobFoundContent() {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6">
+        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6 bg-[#0b0f0e]">
           {/* Job List */}
           <div
             ref={parentRef}
-            className="w-full lg:w-1/3 m-0 lg:m-2 overflow-y-auto no-scrollbar
-             max-h-[40vh] lg:max-h-full p-4 lg:p-0
-             border-b lg:border-b-0 lg:border-r border-green-800/50"
+            className="w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
+             max-h-[40vh] lg:max-h-full
+             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]"
           >
             {filteredJobs.length === 0 ? (
               <div className="text-center text-gray-400 mt-10">No jobs found.</div>
@@ -772,9 +773,11 @@ function JobFoundContent() {
                           min-h-[230px] flex flex-col justify-between
                           ${isSelected
                             ? "bg-green-900/30 border-green-500 shadow-[0_0_0_1px_#22c55e]"
-                            : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700"
+                            : selectedJob === job
+                              ? "bg-green-900/20 border-green-600"
+                              : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700 hover:bg-[#121c19]"
                           }`}
-                        onClick={() => !isApplied && toggleJobSelection(jobUUID)}
+                        onClick={() => setSelectedJob(job)}
                       >
                         {/* HEADER */}
                         <div className="flex items-start justify-between gap-3">
@@ -812,6 +815,18 @@ function JobFoundContent() {
                             Posted:{" "}
                             {postedAt ? new Date(postedAt).toLocaleDateString() : "Unknown"}
                           </div>
+                        </div>
+
+                        <div className="mt-4 pt-3 border-t border-green-800/30">
+                          <button
+                            className="w-full py-2 text-sm text-green-300 bg-green-900/20 hover:bg-green-900/40 border border-green-800/50 rounded-md transition-colors font-medium"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedJob(job);
+                            }}
+                          >
+                            View Details
+                          </button>
                         </div>
 
                         {/* ACTIONS */}
@@ -852,40 +867,23 @@ function JobFoundContent() {
 
 
           {/* Job Details */}
-          <div className="w-full lg:w-2/3 p-6 overflow-y-auto no-scrollbar bg-[#0b0f0e] min-h-[50vh] lg:min-h-auto">
-            {selectedJob ? (
-              <div>
-                <h3 className="text-2xl font-bold text-green-400 mb-3">{selectedJob.Title || selectedJob.title}</h3>
-
-                <div className="space-y-2 text-sm max-h-[65vh] overflow-y-auto">
-                  {Object.keys(selectedJob).map((key) => {
-                    if (["_id", "__v"].includes(key)) return null;
-                    return (
-                      <div key={key}>
-                        <span className="font-semibold text-green-300">{key}: </span>
-                        {key === "link" || key === "applyUrl" ? (
-                          <a href={selectedJob[key]} target="_blank" rel="noopener noreferrer" className="text-green-400 underline">
-                            {selectedJob[key]}
-                          </a>
-                        ) : (
-                          <span className="text-gray-300">{String(selectedJob[key])}</span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {selectedJob.link && (
-                  <div className="mt-6">
-                    <a href={selectedJob.link} target="_blank" rel="noopener noreferrer" className="inline-block bg-green-600 text-black px-5 py-2 rounded-md hover:bg-green-500 transition font-semibold">
-                      Go to Job
-                    </a>
+          {/* Job Details */}
+          <div className="hidden lg:block w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative">
+            <div className="absolute inset-0 overflow-hidden">
+              {selectedJob ? (
+                <JobDetailsPanel
+                  job={selectedJob}
+                  onApply={(job) => applyJobs([job])}
+                />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-gray-500">
+                  <div className="w-16 h-16 mb-4 rounded-full bg-green-900/20 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-green-700/50" />
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-gray-500 text-center mt-10">Select a job to view details.</div>
-            )}
+                  <p>Select a job to view details</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

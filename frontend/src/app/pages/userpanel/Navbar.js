@@ -71,7 +71,6 @@ export default function UserNavbar({ onSidebarToggle, className }) {
                     <>
                         <div className="text-right hidden md:block">
                             <p className="text-sm font-semibold text-green-400">{user.name}</p>
-                            <p className="text-xs text-gray-400">Premium Member</p>
                         </div>
                         <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-green-500 shadow-[0_0_10px_rgba(74,222,128,0.3)]">
                             {user.googlePicture ? (
