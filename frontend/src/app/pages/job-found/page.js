@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Pencil, Trash2, X, Check } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -171,7 +171,7 @@ function JobFoundContent() {
   const rowVirtualizer = useVirtualizer({
     count: filteredJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 240,
+    estimateSize: () => 140,
     overscan: 8,
   });
 
@@ -745,14 +745,10 @@ function JobFoundContent() {
                   const isSelected = selectedJobs.includes(jobUUID);
                   const isApplied = appliedJobIds.has(jobUUID);
                   const title = job.Title || job.title || "(No title)";
-                  const description =
-                    job.Description ||
-                    job.descriptionText ||
-                    job.descriptionHtml ||
-                    "No description available.";
-                  const location = job.Location || job.location || "";
-                  const postedAt =
-                    job.postedAt || job.datePosted || job.createdAt || null;
+                  const company = job.Company || job.companyName || "Unknown Company";
+                  const salary = job.Salary || job.salary || null;
+                  const location = job.Location || job.location || "Remote";
+                  const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
 
                   return (
                     <div
@@ -765,97 +761,78 @@ function JobFoundContent() {
                         width: "100%",
                         transform: `translateY(${virtualRow.start}px)`,
                       }}
+                      className="px-4 py-2"
                     >
-                      {/* 🔽 SAME CARD UI — UNCHANGED */}
                       {/* JOB CARD */}
                       <div
-                        className={`p-4 rounded-xl border transition-all duration-200 cursor-pointer
-                          min-h-[230px] flex flex-col justify-between
+                        className={`group relative p-4 rounded-xl border transition-all duration-300
+                          flex flex-row items-start gap-4 cursor-pointer
                           ${isSelected
-                            ? "bg-green-900/30 border-green-500 shadow-[0_0_0_1px_#22c55e]"
+                            ? "bg-green-900/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
                             : selectedJob === job
-                              ? "bg-green-900/20 border-green-600"
-                              : "bg-[#0e1513] border-[#1b2b27] hover:border-green-700 hover:bg-[#121c19]"
+                              ? "bg-green-900/5 border-green-600/40"
+                              : "bg-[#0c1210] border-[#1b2b27] hover:border-green-800/60 hover:bg-[#111a17]"
                           }`}
                         onClick={() => setSelectedJob(job)}
                       >
-                        {/* HEADER */}
-                        <div className="flex items-start justify-between gap-3">
-                          <h3 className="text-base font-semibold text-green-400 leading-snug line-clamp-2">
-                            {title}
-                          </h3>
+                        {/* 1. Left: Company Logo Placeholder */}
+                        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform">
+                          <Building2 size={24} />
+                        </div>
 
-                          {isApplied ? (
-                            <span className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full
-                              bg-green-900/40 border border-green-700 text-green-400 shrink-0">
-                              <CheckCircle size={13} />
-                              Applied
-                            </span>
-                          ) : (
+                        {/* 2. Middle: Content */}
+                        <div className="flex-1 min-w-0 pr-8">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-[15px] font-bold text-white group-hover:text-green-400 transition-colors truncate">
+                              {title}
+                            </h3>
+                            {isApplied && (
+                              <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded bg-green-900/40 text-green-400">
+                                <CheckCircle size={10} />
+                                Applied
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="text-sm font-medium text-gray-400 mb-2">{company}</div>
+
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-400/80">
+                            <div className="flex items-center gap-1.5">
+                              <MapPin size={13} className="text-gray-500" />
+                              {location}
+                            </div>
+                            {salary && (
+                              <div className="font-semibold text-green-400/90">{salary}</div>
+                            )}
+                            <div className="flex items-center gap-1.5 ml-auto md:ml-0">
+                              <Clock size={13} className="text-gray-500" />
+                              {postedAt ? new Date(postedAt).toLocaleDateString() : "Recently"}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Actions / Selection */}
+                        <div className="absolute top-4 right-4 flex flex-col items-end gap-6 h-full">
+                          {!isApplied && (
                             <input
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => toggleJobSelection(jobUUID)}
                               onClick={(e) => e.stopPropagation()}
-                              className="w-4 h-4 accent-green-500 cursor-pointer mt-1"
+                              className="w-4 h-4 rounded accent-green-500 border-green-800/50 cursor-pointer"
                             />
                           )}
-                        </div>
 
-                        {/* SKILLS / DESCRIPTION */}
-                        <p
-                          className="mt-2 text-sm text-gray-400 line-clamp-2"
-                          dangerouslySetInnerHTML={{ __html: description }}
-                        />
-
-                        {/* META */}
-                        <div className="mt-3 text-xs text-gray-400 space-y-1">
-                          {location && <div>📍 {location}</div>}
-                          <div>
-                            Posted:{" "}
-                            {postedAt ? new Date(postedAt).toLocaleDateString() : "Unknown"}
-                          </div>
-                        </div>
-
-                        <div className="mt-4 pt-3 border-t border-green-800/30">
                           <button
-                            className="w-full py-2 text-sm text-green-300 bg-green-900/20 hover:bg-green-900/40 border border-green-800/50 rounded-md transition-colors font-medium"
+                            className="text-[12px] font-semibold text-green-400/70 hover:text-green-400 flex items-center gap-0.5 transition-colors mt-auto mb-2"
                             onClick={(e) => {
                               e.stopPropagation();
                               setSelectedJob(job);
                             }}
                           >
-                            View Details
+                            View Full Job
+                            <ChevronRight size={14} />
                           </button>
-                        </div>
-
-                        {/* ACTIONS */}
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedJob(job);
-                            }}
-                            className="flex-1 px-3 py-2 text-sm rounded-md
-                              bg-green-700/20 border border-green-700
-                              text-green-300 hover:bg-green-700/40 transition"
-                          >
-                            View Details
-                          </button>
-
-                          {job.link && (
-                            <a
-                              href={job.link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="px-3 py-2 text-sm rounded-md
-                                bg-[#12201c] border border-green-800
-                                text-green-400 hover:bg-green-900/30 transition"
-                            >
-                              Apply →
-                            </a>
-                          )}
                         </div>
                       </div>
                     </div>

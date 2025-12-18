@@ -78,7 +78,7 @@ export default function Profile() {
     };
 
     fetchUser();
-  }, []);
+  }, [API_BASE_URL]);
 
   const handleSaveLink = async (platform, value) => {
     if (!value.trim()) return;
