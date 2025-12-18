@@ -139,6 +139,27 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
             </Link>
           </li>
           <li>
+            <Link
+              href="/pages/profile"
+              className={`group flex items-center gap-3 px-3 py-2 rounded-md transition-colors relative ${isActive('/pages/profile') ? '' : 'hover:bg-[#062217]'
+                }`}
+            >
+              <span className={`inline-flex items-center justify-center w-9 h-9 rounded-md ${isActive('/pages/profile') ? 'bg-gradient-to-r from-[#00fa92] to-[#4ade80] shadow-[0_8px_40px_rgba(0,250,146,0.12)]' : ''}`}>
+                <User className={`w-4 h-4 ${isActive('/pages/profile') ? 'text-[#04220e]' : 'text-[#7b8f86]'}`} />
+              </span>
+              <span className={`flex-1 text-sm ${isActive('/pages/profile') ? 'text-[#eafff0] font-semibold' : 'text-[#dfe9e5]'}`}>
+                Profile
+              </span>
+              {isActive('/pages/profile') && (
+                <span
+                  aria-hidden
+                  className="absolute left-0 top-1/2 -translate-y-1/2 h-10 w-1 rounded-r-md"
+                  style={{ background: 'linear-gradient(180deg,#00fa92,#4ade80)' }}
+                />
+              )}
+            </Link>
+          </li>
+          <li>
 
             <Link
               href="/pages/job-found"

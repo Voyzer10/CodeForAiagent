@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function UserNavbar({ onSidebarToggle, className }) {
     const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -65,51 +66,30 @@ export default function UserNavbar({ onSidebarToggle, className }) {
                 </svg>
             </button>
 
-            <div className="relative cursor-pointer">
-                <button
-                    onClick={toggleDropdown}
-                    className="focus:outline-none rounded-full p-1 cursor-pointer"
-                >
-                    <svg width="40" height="40" fill="none">
-                        <circle cx="20" cy="20" r="20" fill="url(#grad)" />
-                        <defs>
-                            <linearGradient id="grad" x1="0" y1="20" x2="40" y2="20">
-                                <stop stopColor="#4ADE80" />
-                                <stop offset="1" stopColor="#16A34A" />
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                </button>
-
-                {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-[#1F2937] text-green-400 rounded-md shadow-lg z-50 cursor-pointer border-2 border-white">
-
-                        {user && (
-                            <div className="px-4 py-3 border-b border-white">
-                                <p className="text-green-400 font-semibold">{user.name}</p>
-                                <p className="text-green-400 text-sm">{user.id}</p>
-                            </div>
-                        )}
-
-                        <button
-                            onClick={() => router.push("/pages/profile")}
-                            className="block w-full text-left px-4 py-3 hover:bg-[#2e3b34]"
-                        >
-                            Profile
-                        </button>
-
-                        <button className="block w-full text-left px-4 py-3 hover:bg-[#2e3b34]">
-                            Settings
-                        </button>
-
-                        {/* 🔥 FIXED LOGOUT */}
-                        <button
-                            onClick={handleLogout}
-                            className="flex w-full text-left px-4 py-3 hover:bg-[#2e3b34] text-red-400"
-                        >
-                            <LogOut className="mr-2" /> Logout
-                        </button>
-                    </div>
+            <div className="flex items-center gap-4">
+                {user && (
+                    <>
+                        <div className="text-right hidden md:block">
+                            <p className="text-sm font-semibold text-green-400">{user.name}</p>
+                            <p className="text-xs text-gray-400">Premium Member</p>
+                        </div>
+                        <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-green-500 shadow-[0_0_10px_rgba(74,222,128,0.3)]">
+                            {user.googlePicture ? (
+                                <Image
+                                    src={user.googlePicture}
+                                    alt="User"
+                                    width={40}
+                                    height={40}
+                                    className="w-full h-full object-cover"
+                                    unoptimized
+                                />
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-br from-[#00fa92] to-[#16A34A] flex items-center justify-center text-black font-bold">
+                                    {user.name?.charAt(0) || "U"}
+                                </div>
+                            )}
+                        </div>
+                    </>
                 )}
             </div>
         </nav>

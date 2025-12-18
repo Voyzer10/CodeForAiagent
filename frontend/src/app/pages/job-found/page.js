@@ -231,6 +231,21 @@ function JobFoundContent() {
 
   // FULL updated applyJobs: always send job.jobid (UUID) to n8n, poll until DB has email_to & email_subject, then redirect
   const applyJobs = async (jobsToApply) => {
+    // 1. Check Gmail Connection FIRST
+    if (!user?.gmailEmail) {
+      setAlertState({
+        severity: "error",
+        message: "Connect Gmail first",
+      });
+      // Allow the alert to be seen briefly, then redirect? 
+      // User asked: "if no then it will say connect Gmail first first and route to profile page"
+      // Immediate redirect might hide the alert, but let's try pushing immediately or with a tiny delay.
+      setTimeout(() => {
+        router.push("/pages/profile");
+      }, 1500);
+      return;
+    }
+
     if (!jobsToApply.length) {
       setAlertState({ severity: "warning", message: "No jobs selected!" });
       return;
