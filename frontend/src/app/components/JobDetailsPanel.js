@@ -102,7 +102,7 @@ function extractSections(html = "") {
 }
 
 /* ---------------- MAIN COMPONENT ---------------- */
-const JobDetailsPanel = ({ job, onApply }) => {
+const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onToggleSave }) => {
     // Hooks must be called unconditionally
     const descriptionHtml = job?.descriptionHtml || job?.DescriptionText || job?.description || "";
 
@@ -123,57 +123,90 @@ const JobDetailsPanel = ({ job, onApply }) => {
     const applicants = job.applicantsCount || null;
 
     const formattedDate = postedAt ? new Date(postedAt).toLocaleDateString() : "Recently";
+    const isActivelyHiring = job.benefits?.includes("Actively Hiring") || job.isActivelyHiring;
+    const isApplied = isAppliedProp || job.isApplied;
 
     return (
         <div className="h-full overflow-y-auto bg-[#0e1513] text-gray-300 no-scrollbar">
             <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-10">
 
-                {/* ================= HEADER (GRID BASED) ================= */}
-                <header className="grid grid-cols-1 md:grid-cols-6 gap-6 border-b border-green-800/30 pb-6">
-
-                    {/* Company */}
-                    <div className="md:col-span-6 flex items-center gap-2 text-green-400 text-sm">
-                        <Building2 size={16} />
-                        <span className="font-medium">{company}</span>
-                        <CheckCircle size={14} className="text-green-500" />
+                {/* ================= HEADER (REFINED) ================= */}
+                <header className="space-y-6 border-b border-green-800/30 pb-10">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-2 text-green-400 text-sm">
+                            <Building2 size={18} />
+                            <span className="font-semibold">{company}</span>
+                            <CheckCircle size={14} className="text-green-500" />
+                        </div>
+                        <button
+                            onClick={() => onToggleSave(job)}
+                            className={`p-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${isSaved ? 'bg-green-500/10 text-green-400' : 'bg-gray-800/50 text-gray-400 hover:text-green-400 hover:bg-green-500/5'}`}
+                        >
+                            <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
+                            {isSaved ? "Saved" : "Save this job"}
+                        </button>
                     </div>
 
-                    {/* Job Title */}
-                    <div className="md:col-span-4">
-                        <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
-                            {title}
-                        </h1>
-                    </div>
-
-                    {/* Status */}
-                    <div className="md:col-span-2 flex md:justify-end">
-                        {job.benefits?.includes("Actively Hiring") && (
-                            <span className="px-3 py-1 text-xs rounded-full border border-green-500/30 text-green-400">
-                                Actively Hiring
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Meta Info */}
-                    <div className="md:col-span-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-400">
-                        <div className="flex items-center gap-2">
-                            <MapPin size={16} />
-                            {location}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Briefcase size={16} />
-                            {type}
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Clock size={16} />
-                            {formattedDate}
-                        </div>
-                        {applicants && (
-                            <div className="flex items-center gap-2">
-                                <Users size={16} />
-                                {applicants}+ applicants
+                    <div className="flex flex-col gap-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">
+                                {title}
+                            </h1>
+                            <div className="flex items-center pt-2">
+                                {isApplied ? (
+                                    <span className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-green-500/10 border border-green-500/20 text-green-400">
+                                        <CheckCircle size={14} />
+                                        Applied
+                                    </span>
+                                ) : isActivelyHiring ? (
+                                    <span className="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-400">
+                                        Actively Hiring
+                                    </span>
+                                ) : null}
                             </div>
-                        )}
+                        </div>
+
+                        {/* Meta Info Grid */}
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-4">
+                            <div className="bg-[#111a17] p-3 rounded-xl border border-green-800/10 flex items-center gap-3 group hover:border-green-500/30 transition-colors">
+                                <div className="p-2 rounded-lg bg-green-500/10 text-green-400 group-hover:scale-110 transition-transform">
+                                    <MapPin size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Location</p>
+                                    <p className="text-sm font-medium text-gray-200">{location}</p>
+                                </div>
+                            </div>
+                            <div className="bg-[#111a17] p-3 rounded-xl border border-green-800/10 flex items-center gap-3 group hover:border-green-500/30 transition-colors">
+                                <div className="p-2 rounded-lg bg-green-500/10 text-green-400 group-hover:scale-110 transition-transform">
+                                    <Briefcase size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Type</p>
+                                    <p className="text-sm font-medium text-gray-200">{type}</p>
+                                </div>
+                            </div>
+                            <div className="bg-[#111a17] p-3 rounded-xl border border-green-800/10 flex items-center gap-3 group hover:border-green-500/30 transition-colors">
+                                <div className="p-2 rounded-lg bg-green-500/10 text-green-400 group-hover:scale-110 transition-transform">
+                                    <Clock size={18} />
+                                </div>
+                                <div>
+                                    <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Posted</p>
+                                    <p className="text-sm font-medium text-gray-200">{formattedDate}</p>
+                                </div>
+                            </div>
+                            {applicants && (
+                                <div className="bg-[#111a17] p-3 rounded-xl border border-green-800/10 flex items-center gap-3 group hover:border-green-500/30 transition-colors">
+                                    <div className="p-2 rounded-lg bg-green-500/10 text-green-400 group-hover:scale-110 transition-transform">
+                                        <Users size={18} />
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Applicants</p>
+                                        <p className="text-sm font-medium text-gray-200">{applicants}+</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </header>
 

@@ -10,16 +10,49 @@ export default function SavedJobs() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem("savedJobs") || "[]");
-        setSavedJobs(saved);
+        const fetchSavedJobs = async () => {
+            try {
+                let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+                while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+                const res = await fetch(`${API_BASE_URL}/userjobs/jobs/saved`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+                const data = await res.json();
+                if (res.ok) setSavedJobs(data.savedJobs || []);
+            } catch (err) {
+                console.error("Failed to fetch saved jobs:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSavedJobs();
     }, []);
 
-    const removeSavedJob = (jobUUID, e) => {
+    const removeSavedJob = async (job, e) => {
         if (e) e.stopPropagation();
-        const updated = savedJobs.filter(job => (job.jobid || job.jobId || job.id || job._id) !== jobUUID);
-        localStorage.setItem("savedJobs", JSON.stringify(updated));
-        setSavedJobs(updated);
+        try {
+            let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+            while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+            const res = await fetch(`${API_BASE_URL}/userjobs/jobs/save-toggle`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ job }),
+                credentials: "include",
+            });
+
+            if (res.ok) {
+                const jobUUID = job.jobid || job.jobId || job.id || job._id;
+                setSavedJobs(prev => prev.filter(sj => (sj.jobid || sj.jobId || sj.id || sj._id) !== jobUUID));
+            }
+        } catch (err) {
+            console.error("Failed to remove job:", err);
+        }
     };
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -109,7 +142,7 @@ export default function SavedJobs() {
                                             {/* Actions */}
                                             <div className="flex items-center gap-3 w-full md:w-auto md:ml-auto">
                                                 <button
-                                                    onClick={(e) => removeSavedJob(jobUUID, e)}
+                                                    onClick={(e) => removeSavedJob(job, e)}
                                                     className="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all order-2 md:order-1"
                                                     title="Remove from bookmarks"
                                                 >

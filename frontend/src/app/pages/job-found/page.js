@@ -13,14 +13,14 @@ const JobListItem = ({
   jobUUID,
   isSelected,
   isApplied,
+  isSaved,
+  onToggleSave,
   selectedJob,
   setSelectedJob,
   toggleJobSelection,
   virtualRow,
   rowVirtualizer
 }) => {
-  const [isSaved, setIsSaved] = useState(false);
-
   const title = job.Title || job.title || "(No title)";
   const company = job.Company || job.companyName || "Unknown Company";
   const salary = job.Salary || job.salary || null;
@@ -28,27 +28,14 @@ const JobListItem = ({
   const postedAt = job.postedAt || job.datePosted || job.createdAt || null;
   const isActivelyHiring = job.benefits?.includes("Actively Hiring") || job.isActivelyHiring;
 
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("savedJobs") || "[]");
-    setIsSaved(saved.some(sj => (sj.jobid || sj.jobId) === jobUUID));
-  }, [jobUUID]);
-
-  const toggleSaveJob = (e) => {
-    e.stopPropagation();
-    const saved = JSON.parse(localStorage.getItem("savedJobs") || "[]");
-    let updated;
-    if (isSaved) {
-      updated = saved.filter(sj => (sj.jobid || sj.jobId) !== jobUUID);
-    } else {
-      updated = [...saved, job];
-    }
-    localStorage.setItem("savedJobs", JSON.stringify(updated));
-    setIsSaved(!isSaved);
-  };
+  // Only one badge: Applied takes priority
+  const showAppliedBadge = isApplied;
+  const showActivelyHiringBadge = !isApplied && isActivelyHiring;
 
   return (
     <div
       ref={rowVirtualizer.measureElement}
+      key={jobUUID}
       style={{
         position: "absolute",
         top: 0,
@@ -69,72 +56,81 @@ const JobListItem = ({
           }`}
         onClick={() => setSelectedJob(job)}
       >
-        {/* 1. Left: Company Logo Placeholder */}
+        {/* 1. Left: Company Logo */}
         <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform">
           <Building2 size={24} />
         </div>
 
         {/* 2. Middle: Content */}
-        <div className="flex-1 min-w-0 pr-8 pb-8 text-left">
-          <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <h3 className="text-[15px] font-bold text-white group-hover:text-green-400 transition-colors truncate max-w-[70%]">
+        <div className="flex-1 min-w-0 pr-12 pb-6 text-left">
+          <div className="flex flex-wrap items-start gap-2 mb-2">
+            <h3 className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight">
               {title}
             </h3>
-            {isActivelyHiring && (
-              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 whitespace-nowrap">
-                Actively Hiring
-              </span>
-            )}
-            {isApplied && (
-              <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded bg-green-900/40 text-green-400">
-                <CheckCircle size={10} />
-                Applied
-              </span>
-            )}
+            <div className="flex flex-wrap gap-1.5 shrink-0 pt-0.5">
+              {showAppliedBadge ? (
+                <span className="flex items-center gap-1 px-1.5 py-0.5 text-[10px] uppercase tracking-wider font-bold rounded bg-green-500/10 border border-green-500/20 text-green-400 whitespace-nowrap">
+                  <CheckCircle size={10} />
+                  Applied
+                </span>
+              ) : showActivelyHiringBadge ? (
+                <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 whitespace-nowrap">
+                  Actively Hiring
+                </span>
+              ) : null}
+            </div>
           </div>
 
-          <div className="text-sm font-medium text-gray-400 mb-3">{company}</div>
+          <div className="text-[13px] font-medium text-gray-400 mb-4">{company}</div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 gap-x-4 text-[11px] text-gray-400/80">
-            <div className="flex items-center gap-1.5">
-              <MapPin size={13} className="text-gray-500 flex-shrink-0" />
-              <span className="truncate">{location}</span>
+          {/* GRID BASED META - AUTO ADAPTIVE */}
+          <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
+            <div className="flex items-center gap-2 min-w-0">
+              <MapPin size={14} className="text-gray-500 flex-shrink-0" />
+              <span className="text-[11px] text-gray-400 truncate">{location}</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <Briefcase size={13} className="text-gray-500 flex-shrink-0" />
-              <span className="truncate">{job.EmploymentType || job.jobType || "Full-time"}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <Briefcase size={14} className="text-gray-500 flex-shrink-0" />
+              <span className="text-[11px] text-gray-400 truncate">{job.EmploymentType || job.jobType || "Full-time"}</span>
             </div>
             {salary && (
-              <div className="flex items-center gap-1.5 font-semibold text-green-400/90">
-                <span className="text-gray-500 font-normal">$</span>
-                {salary}
+              <div className="flex items-center gap-2 min-w-0 font-medium text-green-400/90">
+                <span className="text-gray-500 text-[10px] font-normal">$</span>
+                <span className="text-[11px] truncate">{salary}</span>
               </div>
             )}
-            <div className="flex items-center gap-1.5">
-              <Clock size={13} className="text-gray-500 flex-shrink-0" />
-              <span>{postedAt ? new Date(postedAt).toLocaleDateString() : "Recently"}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <Clock size={14} className="text-gray-500 flex-shrink-0" />
+              <span className="text-[11px] text-gray-400 truncate">
+                {postedAt ? new Date(postedAt).toLocaleDateString() : "Recently"}
+              </span>
             </div>
           </div>
         </div>
 
-        {/* 3. Actions / Selection */}
-        <div className="absolute top-4 right-4 flex flex-col items-end h-[calc(100%-32px)]">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={toggleSaveJob}
-              className={`p-1.5 rounded-md transition-all ${isSaved ? 'text-green-400 bg-green-400/10' : 'text-gray-500 hover:text-green-400 hover:bg-green-400/5'}`}
-            >
-              <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} />
-            </button>
+        {/* 3. Actions / Selection - FIXED TOP RIGHT */}
+        <div className="absolute top-4 right-4 flex flex-col items-center gap-4 h-[calc(100%-32px)]">
+          <div className="flex flex-col items-center gap-3">
             {!isApplied && (
               <input
                 type="checkbox"
                 checked={isSelected}
                 onChange={() => toggleJobSelection(jobUUID)}
                 onClick={(e) => e.stopPropagation()}
+                title="Select for application"
                 className="w-4 h-4 rounded accent-green-500 border-green-800/50 cursor-pointer"
               />
             )}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleSave(job);
+              }}
+              title="Save this job"
+              className={`p-1.5 rounded-md transition-all ${isSaved ? 'text-green-400 bg-green-400/10' : 'text-gray-500 hover:text-green-400 hover:bg-green-400/5'}`}
+            >
+              <Bookmark size={16} fill={isSaved ? "currentColor" : "none"} />
+            </button>
           </div>
 
           <button
@@ -168,6 +164,7 @@ function JobFoundContent() {
   // NOTE: selectedJobs now stores UUIDs (jobid) — consistent with n8n & DB
   const [selectedJobs, setSelectedJobs] = useState([]);
   const [appliedJobIds, setAppliedJobIds] = useState(new Set());
+  const [savedJobIds, setSavedJobIds] = useState(new Set()); // ✅ Added savedJobIds state
 
   const [responseMessage, setResponseMessage] = useState(""); // For status box text
   const [alertState, setAlertState] = useState(null);
@@ -214,6 +211,13 @@ function JobFoundContent() {
         const userData = await userRes.json();
         if (!userRes.ok) throw new Error(userData.message || "Failed to fetch user");
         setUser(userData.user);
+
+        // Load saved jobs from user object
+        if (userData.user?.savedJobs) {
+          const ids = userData.user.savedJobs.map(sj => sj.jobid || sj.jobId || sj.id || sj._id);
+          setSavedJobIds(new Set(ids));
+        }
+
         const userId = userData.user?.userId;
         if (!userId) throw new Error("User info missing");
 
@@ -325,6 +329,41 @@ function JobFoundContent() {
     setSelectedJobs([]);
   }, [activeSearch]);
 
+
+  // ✅ Toggle Save Job via API
+  const handleToggleSave = async (job) => {
+    try {
+      let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+      while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
+      const res = await fetch(`${API_BASE_URL}/userjobs/jobs/save-toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job }),
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to toggle save");
+
+      // Update local set of IDs
+      const jobUUID = job.jobid || job.jobId || job.id || job._id;
+      setSavedJobIds(prev => {
+        const next = new Set(prev);
+        if (next.has(jobUUID)) next.delete(jobUUID);
+        else next.add(jobUUID);
+        return next;
+      });
+
+      setAlertState({
+        severity: "success",
+        message: data.message === "Job saved" ? "Job saved successfully!" : "Job removed from saved list",
+      });
+    } catch (err) {
+      console.error("Save error:", err);
+      setAlertState({ severity: "error", message: err.message });
+    }
+  };
 
   // toggle selection stores/removes the job UUID (job.jobid || job.jobId)
   const toggleJobSelection = (jobId) => {
@@ -894,6 +933,8 @@ function JobFoundContent() {
                       rowVirtualizer={rowVirtualizer}
                       isSelected={selectedJobs.includes(jobUUID)}
                       isApplied={appliedJobIds.has(jobUUID)}
+                      isSaved={savedJobIds.has(jobUUID)}
+                      onToggleSave={handleToggleSave}
                       selectedJob={selectedJob}
                       setSelectedJob={setSelectedJob}
                       toggleJobSelection={toggleJobSelection}
@@ -913,6 +954,9 @@ function JobFoundContent() {
                 <JobDetailsPanel
                   job={selectedJob}
                   onApply={(job) => applyJobs([job])}
+                  isApplied={appliedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
+                  isSaved={savedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
+                  onToggleSave={handleToggleSave}
                 />
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-500">

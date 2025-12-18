@@ -113,7 +113,7 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
 
       {/* Navigation */}
       <nav className="flex-1 py-4 overflow-auto no-scrollbar">
-        <ul className="space-y-1">
+        <ul className="space-y-2">
           {/* User Panel */}
           <li>
             <Link

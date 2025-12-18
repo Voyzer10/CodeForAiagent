@@ -88,6 +88,8 @@ const userSchema = new mongoose.Schema(
     gmailConnectedAt: { type: Date, default: null }, // when user connected email
 
     googlePicture: { type: String, default: null }, // Google profile picture URL
+
+    savedJobs: { type: Array, default: [] }, // ✅ Added savedJobs
   },
   { timestamps: true }
 );

@@ -230,6 +230,58 @@ const renameSavedSearch = async (req, res) => {
   }
 };
 
+// 🟢 Toggle a saved job (Add if not exists, remove if exists)
+const toggleSavedJob = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { job } = req.body;
+
+    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    if (!job) return res.status(400).json({ error: "Job object required" });
+
+    // Use jobid/id as unique identifier
+    const jobUUID = job.jobid || job.jobId || job.id || job._id;
+    if (!jobUUID) return res.status(400).json({ error: "Job ID missing" });
+
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.savedJobs = user.savedJobs || [];
+    const index = user.savedJobs.findIndex(sj => (sj.jobid || sj.jobId || sj.id || sj._id) === jobUUID);
+
+    if (index === -1) {
+      // Add job
+      user.savedJobs.unshift(job);
+      await user.save();
+      res.json({ success: true, message: "Job saved", savedJobs: user.savedJobs });
+    } else {
+      // Remove job
+      user.savedJobs.splice(index, 1);
+      await user.save();
+      res.json({ success: true, message: "Job removed", savedJobs: user.savedJobs });
+    }
+  } catch (err) {
+    console.error("Error toggling saved job:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+// 🟢 Get all saved jobs
+const getSavedJobs = async (req, res) => {
+  try {
+    const userId = Number(req.params.userId) || req.user?.id;
+    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+
+    const user = await User.findOne({ userId });
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({ savedJobs: user.savedJobs || [] });
+  } catch (err) {
+    console.error("Error fetching saved jobs:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
 
   updateSocialLinks,
@@ -241,6 +293,8 @@ module.exports = {
   deleteSavedSearch,
   renameSession,
   renameSavedSearch,
+  toggleSavedJob,
+  getSavedJobs,
 };
 
 
