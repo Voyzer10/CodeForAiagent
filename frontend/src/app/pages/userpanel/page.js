@@ -13,7 +13,7 @@ import {
   History,
   ArrowRight,
   Briefcase,
-  X
+  X as XIcon
 } from "lucide-react";
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
@@ -54,6 +54,9 @@ export default function UserPanel() {
   const [alertState, setAlertState] = useState(null);
   const [credits, setCredits] = useState(0);
   const [searchHistory, setSearchHistory] = useState([]);
+  const [modalSearchName, setModalSearchName] = useState("");
+
+  const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
 
   /* ---------------- LOAD HISTORY (SERVER SIDE) ---------------- */
   useEffect(() => {
@@ -67,12 +70,14 @@ export default function UserPanel() {
         const data = await res.json();
         if (res.ok && data.savedSearches) {
           // Map saved searches to the format expected by pills
-          const history = data.savedSearches.map(s => ({
-            title: s.name.split(' in ')[0] || s.name, // Estimate title from name
-            loc: s.name.split(' in ')[1] || "",
-            count: 100, // Default or estimate
-            originalName: s.name
-          })).slice(0, 5);
+          const history = data.savedSearches
+            .filter(s => s && s.name)
+            .map(s => ({
+              title: s.name.split(' in ')[0] || s.name, // Estimate title from name
+              loc: s.name.split(' in ')[1] || "",
+              count: 100, // Default or estimate
+              originalName: s.name
+            })).slice(0, 5);
           setSearchHistory(history);
         }
       } catch (e) {
@@ -93,9 +98,6 @@ export default function UserPanel() {
       ...prev.filter(item => item.title.toLowerCase() !== title.toLowerCase())
     ].slice(0, 5));
   };
-
-  let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  while (API_BASE_URL.endsWith("/")) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
   /* ---------------- ALERT AUTO DISMISS ---------------- */
   useEffect(() => {
@@ -389,8 +391,8 @@ export default function UserPanel() {
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
                   className={`w-full rounded-xl bg-[#0e1513] px-4 py-3 border focus:outline-none transition-all ${count === 100
-                      ? "text-green-400 border-green-500/50 ring-1 ring-green-500/20"
-                      : "text-green-300 border-[#2d3b4d] focus:ring-2 focus:ring-green-500/50"
+                    ? "text-green-400 border-green-500/50 ring-1 ring-green-500/20"
+                    : "text-green-300 border-[#2d3b4d] focus:ring-2 focus:ring-green-500/50"
                     }`}
                 />
               </div>
@@ -513,9 +515,12 @@ export default function UserPanel() {
           <div className="bg-[#13201c] border border-green-500/20 rounded-2xl w-full max-w-md p-8 shadow-2xl relative animate-in zoom-in-95 duration-300">
             <button
               className="absolute top-4 right-4 text-gray-500 hover:text-white transition-colors"
-              onClick={() => setShowSaveModal(false)}
+              onClick={() => {
+                setShowSaveModal(false);
+                setModalSearchName("");
+              }}
             >
-              <X className="w-6 h-6" />
+              <XIcon className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center">
@@ -532,36 +537,34 @@ export default function UserPanel() {
               <input
                 type="text"
                 placeholder="e.g. Frontend Roles in Berlin"
-                className="w-full bg-[#0e1513] border border-[#2d3b4d] text-green-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all"
-                id="searchNameInput"
+                className="w-full bg-[#0e1513] border border-[#2d3b4d] text-green-300 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all font-medium"
+                value={modalSearchName}
+                onChange={(e) => setModalSearchName(e.target.value)}
                 autoFocus
               />
 
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={async () => {
-                    const searchName = document.getElementById("searchNameInput")?.value.trim();
-                    if (!searchName) {
+                    if (!modalSearchName.trim()) {
                       setAlertState({ severity: "warning", message: "Please enter a search name to continue." });
                       return;
                     }
-                    // If named, we proceed to view jobs (which redirects to /job-found)
-                    // The actual save will happen if they click "Save Search" which is the other button
-                    // But the user said "if user clicks on view jobs then user had to name the search first"
-                    // This implies View Jobs should ALSO save it.
                     try {
                       const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
                         body: JSON.stringify({
-                          name: searchName,
+                          name: modalSearchName.trim(),
                           jobs: userJobs,
                           runId: response?.runId,
                           sessionId: sessionId,
                         }),
                       });
                       if (!res.ok) throw new Error("Failed to save search");
+                      setModalSearchName("");
+                      setShowSaveModal(false);
                       router.push(`/pages/job-found?runId=${response.runId}`);
                     } catch (err) {
                       setAlertState({ severity: "error", message: err.message || "Error saving search" });
@@ -573,14 +576,14 @@ export default function UserPanel() {
                 </button>
                 <button
                   onClick={async () => {
-                    const searchName = document.getElementById("searchNameInput")?.value.trim() || `${jobTitle} in ${location}`;
+                    const finalName = modalSearchName.trim() || `${jobTitle} in ${location}`;
                     try {
                       const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         credentials: "include",
                         body: JSON.stringify({
-                          name: searchName,
+                          name: finalName,
                           jobs: userJobs,
                           runId: response?.runId,
                           sessionId: sessionId,
@@ -589,6 +592,7 @@ export default function UserPanel() {
                       );
                       if (!res.ok) throw new Error("Failed to save search");
                       setAlertState({ severity: "success", message: "Search saved successfully!" });
+                      setModalSearchName("");
                       setShowSaveModal(false);
                       router.push(`/pages/job-found?runId=${response.runId}`);
                     } catch (err) {
