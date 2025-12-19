@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import LocationDropdown from "../../components/LocationDropdown";
 import {
-  loader2 as Loader2,
+  Loader2,
   Search,
   MapPin,
   Linkedin,

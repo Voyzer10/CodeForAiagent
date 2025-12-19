@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
-  loader2 as Loader2,
+  Loader2,
   Info,
   Pencil,
   X,
