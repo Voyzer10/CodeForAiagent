@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { Combobox, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { MapPin } from "lucide-react";
 
 export default function LocationDropdown({ value, onChange, placeholder = "Search location" }) {
   const [query, setQuery] = useState("");
@@ -72,8 +73,11 @@ export default function LocationDropdown({ value, onChange, placeholder = "Searc
       <div className="relative w-full">
         {/* Input Box */}
         <div className="relative w-full cursor-default overflow-hidden rounded-md border border-[#1b2b27] bg-[#0e1513] text-left shadow-sm focus-within:ring-2 focus-within:ring-green-400">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <MapPin className="h-4 w-4 text-gray-500" />
+          </div>
           <Combobox.Input
-            className="w-full border-none py-2.5 pl-3 pr-10 text-sm text-green-300 placeholder-gray-500 bg-transparent focus:ring-0"
+            className="w-full border-none py-2.5 pl-9 pr-10 text-sm text-green-300 placeholder-gray-500 bg-transparent focus:ring-0"
             displayValue={(val) => val}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={placeholder}
@@ -119,17 +123,15 @@ export default function LocationDropdown({ value, onChange, placeholder = "Searc
                 <Combobox.Option
                   key={`${location}-${index}`} // ✅ Unique key fix
                   className={({ active }) =>
-                    `relative cursor-default select-none px-3 py-2 ${
-                      active ? "bg-[#12201c] text-green-200" : "text-green-300"
+                    `relative cursor-default select-none px-3 py-2 ${active ? "bg-[#12201c] text-green-200" : "text-green-300"
                     }`
                   }
                   value={location}
                 >
                   {({ selected }) => (
                     <span
-                      className={`${
-                        selected ? "font-medium" : "font-normal"
-                      } block truncate`}
+                      className={`${selected ? "font-medium" : "font-normal"
+                        } block truncate`}
                     >
                       {location}
                     </span>
