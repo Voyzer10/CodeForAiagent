@@ -12,6 +12,7 @@ import {
   Sparkles,
   History,
   ArrowRight,
+  Briefcase,
   X
 } from "lucide-react";
 import UserNavbar from "./Navbar";
@@ -54,33 +55,43 @@ export default function UserPanel() {
   const [credits, setCredits] = useState(0);
   const [searchHistory, setSearchHistory] = useState([]);
 
-  /* ---------------- LOAD HISTORY ---------------- */
+  /* ---------------- LOAD HISTORY (SERVER SIDE) ---------------- */
   useEffect(() => {
-    try {
-      const history = JSON.parse(localStorage.getItem("ai_job_search_history") || "[]");
-      setSearchHistory(history);
-    } catch (e) {
-      console.error("Failed to load search history", e);
-    }
-  }, []);
+    if (!user?.userId) return;
 
-  /* ---------------- SAVE SEARCH CONTEXT ---------------- */
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/userjobs/searches/${user.userId}`, {
+          credentials: "include"
+        });
+        const data = await res.json();
+        if (res.ok && data.savedSearches) {
+          // Map saved searches to the format expected by pills
+          const history = data.savedSearches.map(s => ({
+            title: s.name.split(' in ')[0] || s.name, // Estimate title from name
+            loc: s.name.split(' in ')[1] || "",
+            count: 100, // Default or estimate
+            originalName: s.name
+          })).slice(0, 5);
+          setSearchHistory(history);
+        }
+      } catch (e) {
+        console.error("Failed to fetch search history", e);
+      }
+    };
+    fetchHistory();
+  }, [user?.userId, API_BASE_URL]);
+
+  /* ---------------- SAVE SEARCH CONTEXT (DUMMY - PERSISTED BY SERVER) ---------------- */
   const saveSearchContext = (title, loc, jobCount) => {
-    try {
-      const history = JSON.parse(localStorage.getItem("ai_job_search_history") || "[]");
-      const newEntry = { title, loc, count: jobCount, timestamp: Date.now() };
-
-      // Keep only unique titles, most recent first
-      const updatedHistory = [
-        newEntry,
-        ...history.filter(item => item.title.toLowerCase() !== title.toLowerCase())
-      ].slice(0, 5);
-
-      localStorage.setItem("ai_job_search_history", JSON.stringify(updatedHistory));
-      setSearchHistory(updatedHistory);
-    } catch (e) {
-      console.error("Failed to save search history", e);
-    }
+    // We already persist searches via the "Save Search" modal which hits the backend
+    // So we don't need to manually update local storage anymore
+    // We'll just update the local state for immediate feedback if desired
+    const newEntry = { title, loc, count: jobCount, timestamp: Date.now() };
+    setSearchHistory(prev => [
+      newEntry,
+      ...prev.filter(item => item.title.toLowerCase() !== title.toLowerCase())
+    ].slice(0, 5));
   };
 
   let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -174,8 +185,8 @@ export default function UserPanel() {
           setJobFinished(true);
           setLoadingProgress(100);
           setProgressMessage("Completed successfully");
-          // Auto-trigger Save Modal
-          setTimeout(() => setShowSaveModal(true), 1500);
+          // Auto-trigger Save Modal with a slight delay
+          setTimeout(() => setShowSaveModal(true), 3000);
         }
       } catch (err) {
         console.error("Progress polling failed", err);
@@ -268,7 +279,7 @@ export default function UserPanel() {
       {/* Header text */}
       <div className="text-center mt-24 mb-10">
         <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">
-          AI Job <span className="text-green-500">Automation</span>
+          Smarter Job Search <span className="text-green-500">Starts Here</span>
         </h1>
         <p className="text-gray-400 max-w-xl mx-auto text-lg">
           Connect your profiles and let our AI agents handle the heavy lifting of finding your next career move.
@@ -285,8 +296,8 @@ export default function UserPanel() {
             {/* Job Title & Recommendations */}
             <div className="space-y-3">
               <label className="text-gray-400 text-sm font-medium flex items-center gap-2">
-                <Search size={14} className="text-green-500" />
-                Target Job Title
+                <Briefcase size={14} className="text-green-500" />
+                Job Title
               </label>
               <input
                 required
@@ -323,15 +334,15 @@ export default function UserPanel() {
             <div className="space-y-3">
               <label className="text-gray-400 text-sm font-medium flex items-center gap-2">
                 <MapPin size={14} className="text-green-500" />
-                Preferred Location
+                Location
               </label>
               <div className="[&_*]:!text-sm">
                 <LocationDropdown value={location} onChange={setLocation} placeholder="Search city, area, or PIN" />
               </div>
             </div>
 
-            {/* Social Links Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Social Links - Stacked */}
+            <div className="flex flex-col gap-6">
               <div className="space-y-3">
                 <label className="text-gray-400 text-sm font-medium flex items-center gap-2">
                   <Linkedin size={14} className="text-[#0A66C2]" />
@@ -344,7 +355,7 @@ export default function UserPanel() {
                   placeholder="linkedin.com/in/username"
                   className="w-full rounded-xl bg-[#0e1513] text-green-300 border border-[#2d3b4d] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all placeholder:text-gray-600"
                 />
-                <p className="text-[10px] text-gray-500 font-medium italic pl-1">
+                <p className="text-[10px] text-gray-400 font-medium italic pl-1">
                   Save this in your profile for better results
                 </p>
               </div>
@@ -360,7 +371,7 @@ export default function UserPanel() {
                   placeholder="github.com/username"
                   className="w-full rounded-xl bg-[#0e1513] text-green-300 border border-[#2d3b4d] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all placeholder:text-gray-600"
                 />
-                <p className="text-[10px] text-gray-500 font-medium italic pl-1">
+                <p className="text-[10px] text-gray-400 font-medium italic pl-1">
                   Save this in your profile for better results
                 </p>
               </div>
@@ -371,17 +382,17 @@ export default function UserPanel() {
               <label className="text-gray-400 text-sm font-medium">Number of Jobs to Fetch</label>
               <div className="flex items-center gap-4">
                 <input
-                  type="range"
+                  type="number"
                   min="100"
                   max="1000"
-                  step="50"
+                  step="1"
                   value={count}
                   onChange={(e) => setCount(Number(e.target.value))}
-                  className="flex-1 accent-green-500 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer"
+                  className={`w-full rounded-xl bg-[#0e1513] px-4 py-3 border focus:outline-none transition-all ${count === 100
+                      ? "text-green-400 border-green-500/50 ring-1 ring-green-500/20"
+                      : "text-green-300 border-[#2d3b4d] focus:ring-2 focus:ring-green-500/50"
+                    }`}
                 />
-                <span className="bg-[#0e1513] border border-[#2d3b4d] text-green-400 px-3 py-1 rounded-lg font-mono text-sm min-w-[70px] text-center">
-                  {count}
-                </span>
               </div>
               {countError && <p className="text-red-400 text-xs">{countError}</p>}
             </div>
@@ -389,14 +400,14 @@ export default function UserPanel() {
             <button
               disabled={loading}
               className={`mt-4 group relative flex items-center justify-center gap-2 font-bold py-4 rounded-xl transition-all duration-500 overflow-hidden ${loading
-                  ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
-                  : "bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-black shadow-[0_0_25px_#10b98133] hover:shadow-[0_0_35px_#10b98155] active:scale-[0.98]"
+                ? "bg-gray-800 text-gray-500 cursor-not-allowed border border-gray-700"
+                : "bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-500 hover:to-emerald-400 text-black shadow-[0_0_25px_#10b98133] hover:shadow-[0_0_35px_#10b98155] active:scale-[0.98]"
                 }`}
             >
               {loading ? (
                 <>
                   <Loader2 className="animate-spin" size={20} />
-                  <span>Agent is Deploying...</span>
+                  <span> Finding Opportunities...</span>
                 </>
               ) : (
                 <>
@@ -528,10 +539,37 @@ export default function UserPanel() {
 
               <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => setShowSaveModal(false)}
+                  onClick={async () => {
+                    const searchName = document.getElementById("searchNameInput")?.value.trim();
+                    if (!searchName) {
+                      setAlertState({ severity: "warning", message: "Please enter a search name to continue." });
+                      return;
+                    }
+                    // If named, we proceed to view jobs (which redirects to /job-found)
+                    // The actual save will happen if they click "Save Search" which is the other button
+                    // But the user said "if user clicks on view jobs then user had to name the search first"
+                    // This implies View Jobs should ALSO save it.
+                    try {
+                      const res = await fetch(`${API_BASE_URL}/userjobs/searches/save`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        credentials: "include",
+                        body: JSON.stringify({
+                          name: searchName,
+                          jobs: userJobs,
+                          runId: response?.runId,
+                          sessionId: sessionId,
+                        }),
+                      });
+                      if (!res.ok) throw new Error("Failed to save search");
+                      router.push(`/pages/job-found?runId=${response.runId}`);
+                    } catch (err) {
+                      setAlertState({ severity: "error", message: err.message || "Error saving search" });
+                    }
+                  }}
                   className="flex-1 px-4 py-3 bg-white/5 text-gray-400 rounded-xl hover:bg-white/10 transition-colors font-bold"
                 >
-                  Skip
+                  View Jobs
                 </button>
                 <button
                   onClick={async () => {
@@ -552,7 +590,7 @@ export default function UserPanel() {
                       if (!res.ok) throw new Error("Failed to save search");
                       setAlertState({ severity: "success", message: "Search saved successfully!" });
                       setShowSaveModal(false);
-                      router.push("/pages/job-found");
+                      router.push(`/pages/job-found?runId=${response.runId}`);
                     } catch (err) {
                       setAlertState({ severity: "error", message: err.message || "Error saving search" });
                     }
