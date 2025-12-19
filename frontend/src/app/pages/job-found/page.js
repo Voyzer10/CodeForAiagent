@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -707,15 +707,24 @@ function JobFoundContent() {
   };
   if (loading)
     return (
-      <div className="flex items-center justify-center h-screen text-green-400">
-        Loading your saved jobs...
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0a0f0d] text-green-400">
+        <Loader2 className="animate-spin w-10 h-10 mb-4 text-green-500" />
+        <span className="text-xl font-medium animate-pulse">Loading your saved jobs...</span>
       </div>
     );
 
   if (error)
     return (
-      <div className="flex items-center justify-center h-screen text-red-500">
-        {error}
+      <div className="flex flex-col items-center justify-center h-screen bg-[#0a0f0d] text-red-500 p-6 text-center">
+        <X size={48} className="mb-4 text-red-600" />
+        <h2 className="text-2xl font-bold mb-2">Oops! Something went wrong</h2>
+        <p className="max-w-md">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-6 px-6 py-2 bg-gray-800 rounded-lg hover:bg-gray-700 transition"
+        >
+          Try Again
+        </button>
       </div>
     );
 
@@ -733,19 +742,25 @@ function JobFoundContent() {
         </div>
       )}
 
-      <div className="flex-1 p-6 md:p-10 relative">
+      <div className="flex-1 p-6 md:p-10 relative bg-[#0b0f0e]">
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
-          <div className="flex ">
-            <h2 className="text-md font-bold text-green-400 mb-2  px-3 pt-1.5">Saved Searches</h2>
-            <div className="flex flex-wrap gap-2">
+          <div className="flex flex-col gap-4 w-full">
+            <h2 className="text-lg font-bold text-green-400 px-3 flex items-center gap-2">
+              <History size={18} className="text-green-500" />
+              Saved Searches
+            </h2>
+            <div className="flex flex-wrap gap-3 px-3">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
-                className={`px-4 py-2 rounded-md text-sm border transition ${activeSearch === "All Jobs"
-                  ? "bg-green-700/50 border-green-600 text-green-200"
-                  : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                className={`px-5 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg ${activeSearch === "All Jobs"
+                  ? "bg-green-500 text-black border-green-400 shadow-green-500/20 scale-105"
+                  : "bg-[#111a17] border-[#1b2b27] text-green-400 hover:border-green-500/50 hover:bg-[#16211e]"
                   }`}
               >
-                All Jobs ({userJobs.length})
+                All Jobs
+                <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeSearch === "All Jobs" ? "bg-black/20" : "bg-green-500/10"}`}>
+                  {userJobs.length}
+                </span>
               </button>
 
               {recentSearches.length > 0 ? (
@@ -753,55 +768,62 @@ function JobFoundContent() {
                   const isActive = activeSearch === search.name;
                   const isEditing = editingSearch === search.name;
 
+                  // Inclusive filter for counts
+                  const jobCount = userJobs.filter(j =>
+                    j.runId === search.runId ||
+                    j.sessionId === search.runId ||
+                    j.sessionid === search.runId ||
+                    j.runId === search.sessionId ||
+                    j.sessionId === search.sessionId
+                  ).length;
+
                   return (
                     <div
                       key={idx}
-                      className={`flex items-center rounded-md border transition overflow-hidden group ${isActive
-                        ? "bg-green-700/50 border-green-600 text-green-200"
-                        : "bg-green-700/20 border-green-700 text-green-300 hover:bg-green-700/40"
+                      className={`flex items-center rounded-full border transition-all duration-300 overflow-hidden group shadow-lg ${isActive
+                        ? "bg-green-500 text-black border-green-400 shadow-green-500/20 scale-105"
+                        : "bg-[#111a17] border-[#1b2b27] text-green-400 hover:border-green-500/50 hover:bg-[#16211e]"
                         }`}
                     >
                       {isEditing ? (
-                        <div className="flex items-center px-2 py-1 gap-1">
+                        <div className="flex items-center px-4 py-1.5 gap-2">
                           <input
                             type="text"
                             value={renameValue}
                             onChange={(e) => setRenameValue(e.target.value)}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-[#0b0f0e] border border-green-600 rounded px-1 py-0.5 text-xs text-white focus:outline-none w-32"
+                            className="bg-black/40 border border-green-400 shadow-inner rounded-full px-3 py-1 text-xs text-white focus:outline-none w-40"
                             autoFocus
                           />
                           <button
                             onClick={(e) => handleRenameSearch(e, search.name)}
-                            className="p-1 hover:text-green-400"
+                            className="p-1 hover:scale-110 transition-transform"
                           >
-                            <Check size={14} />
+                            <Check size={16} />
                           </button>
                           <button
                             onClick={cancelRenaming}
-                            className="p-1 hover:text-red-400"
+                            className="p-1 hover:scale-110 transition-transform text-red-400"
                           >
-                            <X size={14} />
+                            <X size={16} />
                           </button>
                         </div>
                       ) : (
                         <>
                           <button
                             onClick={() => handleSearchSelect(search)}
-                            className="px-3 py-2 text-sm text-left truncate max-w-[150px]"
+                            className="px-5 py-2.5 text-xs font-bold text-left truncate max-w-[200px] flex items-center gap-2"
                           >
-                            {search.name} <span className="text-xs opacity-70">({userJobs.filter(j =>
-                              j.runId === search.runId ||
-                              j.sessionId === search.runId
-                            ).length})
+                            {search.name}
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? "bg-black/20" : "bg-green-500/10 text-green-300"}`}>
+                              {jobCount}
                             </span>
                           </button>
 
-                          {/* Edit/Delete Actions - visible on hover or if active */}
-                          <div className={`flex items-center px-1 border-l border-green-800/50 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                          <div className={`flex items-center pr-3 pl-1 border-l ${isActive ? 'border-black/10 opacity-100' : 'border-green-800/20 opacity-0 group-hover:opacity-100'} transition-all`}>
                             <button
                               onClick={(e) => startRenaming(e, search.name)}
-                              className="p-1.5 hover:text-white text-green-400/70"
+                              className={`p-1.5 transition-colors ${isActive ? 'hover:text-white text-black/60' : 'hover:text-white text-green-400/60'}`}
                               title="Rename"
                             >
                               <Pencil size={12} />
@@ -811,7 +833,7 @@ function JobFoundContent() {
                                 e.stopPropagation();
                                 handleDeleteSearch(search.name);
                               }}
-                              className="p-1.5 hover:text-red-400 text-red-500/70"
+                              className={`p-1.5 transition-colors ${isActive ? 'hover:text-red-900 text-black/60' : 'hover:text-red-400 text-red-500/60'}`}
                               title="Delete"
                             >
                               <Trash2 size={12} />
@@ -823,36 +845,46 @@ function JobFoundContent() {
                   );
                 })
               ) : (
-                <p className="text-gray-500 text-xs italic mt-2">No saved searches yet</p>
+                <div className="flex items-center gap-2 px-4 py-2 bg-gray-900/40 rounded-full border border-gray-800/50">
+                  <span className="text-gray-500 text-xs italic px-2">No saved searches yet</span>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        <div className="flex flex-col mt-4 w-full">
-          <h2 className="text-md font-bold text-green-400 mb-2 px-3">Recent Sessions</h2>
-          <div className="flex flex-wrap gap-2 px-3">
-            {sessions.length > 0 ? (
-              sessions.map((session, idx) => {
-                const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
-                const isActive = activeSearch === `Session: ${displayName}`;
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => handleSessionSelect(session)}
-                    className={`px-3 py-1 rounded-md text-xs border transition ${isActive ? "bg-green-700/50 border-green-600 text-green-200" : "bg-green-700/10 border-green-800 text-green-400 hover:bg-green-700/30"
-                      }`}
-                  >
-                    {displayName}
-                    <span className="ml-1 opacity-70">({session.deducted} jobs)</span>
-                  </button>
-                );
-              })
-            ) : (
-              <p className="text-gray-500 text-xs italic">No recent sessions</p>
-            )}
+        {/* Recent Sessions Area - Hidden as per user request */}
+        {false && (
+          <div className="flex flex-col mt-8 w-full">
+            <h2 className="text-md font-bold text-green-400 mb-3 px-3 flex items-center gap-2">
+              <Clock size={16} />
+              Recent Discovery Waves
+            </h2>
+            <div className="flex flex-wrap gap-2 px-3">
+              {sessions.length > 0 ? (
+                sessions.map((session, idx) => {
+                  const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
+                  const isActive = activeSearch === `Session: ${displayName}`;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleSessionSelect(session)}
+                      className={`px-4 py-1.5 rounded-full text-[11px] font-bold border transition ${isActive ? "bg-green-500 text-black border-green-400" : "bg-[#111a17] border-green-800/30 text-green-400 hover:bg-green-700/20"
+                        }`}
+                    >
+                      {displayName}
+                      <span className={`ml-2 px-2 py-0.5 rounded-full text-[9px] ${isActive ? 'bg-black/10' : 'bg-green-500/10'}`}>
+                        {session.deducted} jobs
+                      </span>
+                    </button>
+                  );
+                })
+              ) : (
+                <p className="text-gray-500 text-xs italic px-3">No recent data streams discovered</p>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex gap-3 mt-6 md:mt-0">
           <button
@@ -897,9 +929,13 @@ function JobFoundContent() {
 
         {/* Status Message Area */}
         {applying && (
-          <div className="mt-6 w-full max-w-lg p-4 bg-green-900/40 border border-green-500/50 rounded-xl text-green-300 text-center shadow-[0_0_15px_#00ff9d22] animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col items-center gap-2">
-            <Loader2 className="animate-spin text-green-400" size={24} />
-            <p className="font-semibold text-lg">{responseMessage}</p>
+          <div className="mt-8 mx-auto w-full max-w-lg p-6 bg-[#0e1614] border border-green-500/30 rounded-2xl text-green-400 text-center shadow-[0_0_30px_rgba(74,222,128,0.1)] animate-in fade-in zoom-in duration-500 flex flex-col items-center gap-3">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />
+              <Loader2 className="animate-spin text-green-400 relative z-10" size={32} />
+            </div>
+            <p className="font-bold text-xl tracking-wide animate-pulse">{responseMessage}</p>
+            <p className="text-sm text-gray-500">Please wait while we synchronize with the application server.</p>
           </div>
         )}
 
@@ -912,7 +948,10 @@ function JobFoundContent() {
              border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]"
           >
             {filteredJobs.length === 0 ? (
-              <div className="text-center text-gray-400 mt-10">No jobs found.</div>
+              <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
+                <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-700 animate-[spin_10s_linear_infinite]" />
+                <p className="font-medium">No results found in this stream.</p>
+              </div>
             ) : (
               <div
                 style={{
@@ -976,7 +1015,15 @@ function JobFoundContent() {
 
 export default function JobFound() {
   return (
-    <Suspense fallback={<div className="flex h-screen items-center justify-center bg-[#0a0f0d] text-green-500">Loading search parameters...</div>}>
+    <Suspense fallback={
+      <div className="flex flex-col h-screen items-center justify-center bg-[#0a0f0d] text-green-500">
+        <div className="w-20 h-20 mb-8 relative">
+          <div className="absolute inset-0 rounded-full border-4 border-green-500/20" />
+          <div className="absolute inset-0 rounded-full border-4 border-t-green-500 animate-spin" />
+        </div>
+        <p className="text-xl font-bold tracking-widest animate-pulse">SYNCHRONIZING...</p>
+      </div>
+    }>
       <JobFoundContent />
     </Suspense>
   );
