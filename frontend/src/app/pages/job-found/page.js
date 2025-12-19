@@ -753,12 +753,12 @@ function JobFoundContent() {
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
                 className={`px-5 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg ${activeSearch === "All Jobs"
-                  ? "bg-green-500 text-black border-green-400 shadow-green-500/20 scale-105"
-                  : "bg-[#111a17] border-[#1b2b27] text-green-400 hover:border-green-500/50 hover:bg-[#16211e]"
+                  ? "bg-[#0e1a16] text-green-400 border-green-500/50 shadow-[0_0_15px_rgba(74,222,128,0.2)] scale-105"
+                  : "bg-[#111a17] border-[#1b2b27] text-gray-400 hover:border-green-500/30 hover:bg-[#16211e]"
                   }`}
               >
                 All Jobs
-                <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeSearch === "All Jobs" ? "bg-black/20" : "bg-green-500/10"}`}>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] ${activeSearch === "All Jobs" ? "bg-green-500/10 text-green-400" : "bg-gray-800 text-gray-500"}`}>
                   {userJobs.length}
                 </span>
               </button>
@@ -768,21 +768,23 @@ function JobFoundContent() {
                   const isActive = activeSearch === search.name;
                   const isEditing = editingSearch === search.name;
 
-                  // Inclusive filter for counts
-                  const jobCount = userJobs.filter(j =>
-                    j.runId === search.runId ||
-                    j.sessionId === search.runId ||
-                    j.sessionid === search.runId ||
-                    j.runId === search.sessionId ||
-                    j.sessionId === search.sessionId
-                  ).length;
+                  // Use search.jobs.length if available, else filter
+                  const jobCount = Array.isArray(search.jobs)
+                    ? search.jobs.length
+                    : userJobs.filter(j =>
+                      j.runId === search.runId ||
+                      j.sessionId === search.runId ||
+                      j.sessionid === search.runId ||
+                      j.runId === search.sessionId ||
+                      j.sessionId === search.sessionId
+                    ).length;
 
                   return (
                     <div
                       key={idx}
                       className={`flex items-center rounded-full border transition-all duration-300 overflow-hidden group shadow-lg ${isActive
-                        ? "bg-green-500 text-black border-green-400 shadow-green-500/20 scale-105"
-                        : "bg-[#111a17] border-[#1b2b27] text-green-400 hover:border-green-500/50 hover:bg-[#16211e]"
+                        ? "bg-[#0e1a16] text-green-400 border-green-500/50 shadow-[0_0_15px_rgba(74,222,128,0.2)] scale-105"
+                        : "bg-[#111a17] border-[#1b2b27] text-gray-400 hover:border-green-500/30 hover:bg-[#16211e]"
                         }`}
                     >
                       {isEditing ? (
@@ -815,15 +817,15 @@ function JobFoundContent() {
                             className="px-5 py-2.5 text-xs font-bold text-left truncate max-w-[200px] flex items-center gap-2"
                           >
                             {search.name}
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? "bg-black/20" : "bg-green-500/10 text-green-300"}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? "bg-green-500/10 text-green-400" : "bg-gray-800 text-gray-500"}`}>
                               {jobCount}
                             </span>
                           </button>
 
-                          <div className={`flex items-center pr-3 pl-1 border-l ${isActive ? 'border-black/10 opacity-100' : 'border-green-800/20 opacity-0 group-hover:opacity-100'} transition-all`}>
+                          <div className={`flex items-center pr-3 pl-1 border-l ${isActive ? 'border-green-800/20 opacity-100' : 'border-green-800/10 opacity-0 group-hover:opacity-100'} transition-all`}>
                             <button
                               onClick={(e) => startRenaming(e, search.name)}
-                              className={`p-1.5 transition-colors ${isActive ? 'hover:text-white text-black/60' : 'hover:text-white text-green-400/60'}`}
+                              className="p-1.5 transition-colors hover:text-white text-green-400/60"
                               title="Rename"
                             >
                               <Pencil size={12} />
@@ -833,7 +835,7 @@ function JobFoundContent() {
                                 e.stopPropagation();
                                 handleDeleteSearch(search.name);
                               }}
-                              className={`p-1.5 transition-colors ${isActive ? 'hover:text-red-900 text-black/60' : 'hover:text-red-400 text-red-500/60'}`}
+                              className="p-1.5 transition-colors hover:text-red-400 text-red-500/80"
                               title="Delete"
                             >
                               <Trash2 size={12} />

@@ -12,6 +12,7 @@ import {
   Bell,
   Settings,
   LogOut,
+  Loader2
 } from 'lucide-react';
 
 let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
@@ -22,6 +23,7 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
   const pathname = usePathname() || '/';
   const [recentSearches, setRecentSearches] = useState([]);
   const [user, setUser] = useState(null);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (propRecentSearches) {
@@ -242,16 +244,31 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
       <div className="px-4 py-4 border-t border-[#11221b]">
         <button
           type="button"
-          onClick={() => {
-            // keep functionality unchanged: you can wire actual logout logic elsewhere
+          disabled={isLoggingOut}
+          onClick={async () => {
+            setIsLoggingOut(true);
             try {
-              // example placeholder: clear cookies/localstorage if needed
-            } catch (e) { }
+              const res = await fetch(`${API_BASE_URL}/auth/logout`, {
+                method: "POST",
+                credentials: "include",
+              });
+              if (res.ok) {
+                window.location.href = "/login";
+              }
+            } catch (e) {
+              console.error("Logout failed", e);
+            } finally {
+              setIsLoggingOut(false);
+            }
           }}
-          className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-gradient-to-r from-[#00fa92] to-[#4ade80] text-[#030604] font-semibold shadow-[0_10px_30px_rgba(0,250,146,0.12)]"
+          className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-md bg-[#0e1a16] border border-red-500/30 text-red-500 hover:bg-red-500 hover:text-white transition-all font-semibold shadow-lg group disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <LogOut className="w-4 h-4" />
-          Logout
+          {isLoggingOut ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+          )}
+          {isLoggingOut ? 'Logging out...' : 'Logout'}
         </button>
       </div>
     </aside>

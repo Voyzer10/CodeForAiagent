@@ -384,7 +384,7 @@ export default function UserPanel() {
                   className="w-full rounded-xl bg-[#0e1513] text-green-300 border border-[#2d3b4d] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all placeholder:text-gray-600"
                 />
                 <p className="text-[10px] text-gray-400 font-medium italic pl-1 text-red-500">
-                  Save this in your profile for better results
+                  * Save this in your profile for better results
                 </p>
               </div>
 
@@ -399,8 +399,8 @@ export default function UserPanel() {
                   placeholder="github.com/username"
                   className="w-full rounded-xl bg-[#0e1513] text-green-300 border border-[#2d3b4d] px-4 py-3 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all placeholder:text-gray-600"
                 />
-                <p className="text-[10px] text-gray-400 font-medium italic pl-1">
-                  Save this in your profile for better results
+                <p className="text-[10px] text-gray-400 font-medium italic pl-1 text-red-500">
+                  * Save this in your profile for better results
                 </p>
               </div>
             </div>
