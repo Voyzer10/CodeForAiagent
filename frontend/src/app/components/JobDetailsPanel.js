@@ -134,8 +134,19 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                 <header className="space-y-6 border-b border-green-800/30 pb-10">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2 text-green-400 text-sm">
-                            <Building2 size={18} />
-                            <span className="font-semibold">{company}</span>
+                            <div className="w-6 h-6 rounded bg-white/10 overflow-hidden flex items-center justify-center">
+                                {job.company?.logo ? (
+                                    <img
+                                        src={job.company.logo}
+                                        alt={job.company?.name || company}
+                                        className="w-full h-full object-contain p-0.5"
+                                        onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-4 h-4 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+                                    />
+                                ) : (
+                                    <Building2 size={14} />
+                                )}
+                            </div>
+                            <span className="font-semibold">{job.company?.name || company}</span>
                             <CheckCircle size={14} className="text-green-500" />
                         </div>
                         <div className="flex items-center pt-2">
@@ -302,15 +313,24 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                 {/* ================= ABOUT COMPANY ================= */}
                 <section className="pt-6 border-t border-green-800/30">
                     <h2 className="text-xl font-semibold text-white mb-4">
-                        About {company}
+                        About {job.company?.name || company}
                     </h2>
                     <div className="flex items-start gap-4">
-                        <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center">
-                            <Building2 size={22} className="text-black" />
+                        <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
+                            {job.company?.logo ? (
+                                <img
+                                    src={job.company.logo}
+                                    alt={job.company?.name || company}
+                                    className="w-full h-full object-contain p-1.5"
+                                    onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-6 h-6 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+                                />
+                            ) : (
+                                <Building2 size={22} className="text-green-400/60" />
+                            )}
                         </div>
                         <div>
                             <p className="text-sm text-gray-300">
-                                {company} is a growing organization working on impactful
+                                {job.company?.name || company} is a growing organization working on impactful
                                 products across industries.
                             </p>
                             {job.link && (

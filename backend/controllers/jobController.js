@@ -7,6 +7,36 @@ const { getCache, setCache } = require("../utils/cache");
 
 console.log("🔄 jobController loaded with debugging");
 
+const companyLookup = [
+  {
+    $lookup: {
+      from: "Company-Information",
+      localField: "CompanyID",
+      foreignField: "CompanyID",
+      as: "companyInfo"
+    }
+  },
+  {
+    $unwind: {
+      path: "$companyInfo",
+      preserveNullAndEmptyArrays: true
+    }
+  },
+  {
+    $addFields: {
+      company: {
+        name: "$companyInfo.Comp_Name",
+        logo: "$companyInfo.logo"
+      }
+    }
+  },
+  {
+    $project: {
+      companyInfo: 0
+    }
+  }
+];
+
 /* ======================================================
    CREATE JOB  (WRITE PATH)
 ====================================================== */
@@ -149,9 +179,11 @@ const getUserJobs = async (req, res) => {
       ];
     }
 
-    const jobs = await Job.find(query)
-      .sort({ postedAt: -1 })
-      .lean();
+    const jobs = await Job.aggregate([
+      { $match: query },
+      { $sort: { postedAt: -1 } },
+      ...companyLookup
+    ]);
 
     console.log("🧠 Redis SET (user):", userCacheKey);
     await setCache(userCacheKey, jobs, 300);
@@ -194,9 +226,10 @@ const getAllUserJobs = async (req, res) => {
   }
 
   try {
-    const jobs = await Job.find()
-      .sort({ createdAt: -1 })
-      .lean();
+    const jobs = await Job.aggregate([
+      { $sort: { createdAt: -1 } },
+      ...companyLookup
+    ]);
 
     return res.json(jobs);
   } catch (err) {

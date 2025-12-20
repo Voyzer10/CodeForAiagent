@@ -1,6 +1,30 @@
 const User = require("../model/User");
+const mongoose = require("mongoose");
 
+const enrichJobsWithCompanyInfo = async (jobs) => {
+  if (!jobs || !jobs.length) return [];
 
+  // 1. Get unique CompanyIDs (supporting both company.CompanyID and CompanyID)
+  const companyIds = [...new Set(jobs.map(j => j.CompanyID || (j.company && j.company.CompanyID)).filter(Boolean))];
+
+  if (!companyIds.length) return jobs;
+
+  // 2. Fetch from Company-Information collection
+  const companies = await mongoose.connection.db.collection('Company-Information')
+    .find({ CompanyID: { $in: companyIds } })
+    .toArray();
+
+  const companyMap = companies.reduce((acc, c) => {
+    acc[c.CompanyID] = { name: c.Comp_Name, logo: c.logo };
+    return acc;
+  }, {});
+
+  // 3. Re-inject into job objects
+  return jobs.map(j => ({
+    ...j,
+    company: companyMap[j.CompanyID || (j.company && j.company.CompanyID)] || j.company || null
+  }));
+};
 const updateSocialLinks = async (req, res) => {
   try {
     // 1️⃣ Identify user correctly
@@ -40,6 +64,7 @@ const updateSocialLinks = async (req, res) => {
     res.status(500).json({ message: "Server error updating socials" });
   }
 };
+
 
 
 // Client ID nad client secret 
@@ -119,7 +144,17 @@ const getSavedSearches = async (req, res) => {
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.json({ savedSearches: user.savedSearches || [] });
+    const savedSearches = user.savedSearches || [];
+
+    // Enriched with company info
+    const enrichedSearches = await Promise.all(
+      savedSearches.map(async (s) => ({
+        ...s.toObject ? s.toObject() : s, // handle both Mongoose subdocs and plain objects
+        jobs: await enrichJobsWithCompanyInfo(s.jobs || [])
+      }))
+    );
+
+    res.json({ savedSearches: enrichedSearches });
   } catch (err) {
     console.error("Error fetching saved searches:", err);
     res.status(500).json({ error: "Server error" });
@@ -275,7 +310,10 @@ const getSavedJobs = async (req, res) => {
     const user = await User.findOne({ userId });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    res.json({ savedJobs: user.savedJobs || [] });
+    const savedJobs = user.savedJobs || [];
+    const enrichedJobs = await enrichJobsWithCompanyInfo(savedJobs);
+
+    res.json({ savedJobs: enrichedJobs });
   } catch (err) {
     console.error("Error fetching saved jobs:", err);
     res.status(500).json({ error: "Server error" });

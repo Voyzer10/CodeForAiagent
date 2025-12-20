@@ -26,12 +26,44 @@ exports.getAppliedJobs = async (req, res) => {
      * - Handles sent = "true"
      * - NO mongoose casting issues
      */
-    const appliedJobs = await Job.find({
-      trackingId: userId,
-      $expr: {
-        $eq: [{ $toString: "$sent" }, "true"],
+    const appliedJobs = await Job.aggregate([
+      {
+        $match: {
+          trackingId: userId,
+          $expr: {
+            $eq: [{ $toString: "$sent" }, "true"],
+          },
+        },
       },
-    }).sort({ updatedAt: -1 });
+      { $sort: { updatedAt: -1 } },
+      {
+        $lookup: {
+          from: "Company-Information",
+          localField: "CompanyID",
+          foreignField: "CompanyID",
+          as: "companyInfo",
+        },
+      },
+      {
+        $unwind: {
+          path: "$companyInfo",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          company: {
+            name: "$companyInfo.Comp_Name",
+            logo: "$companyInfo.logo",
+          },
+        },
+      },
+      {
+        $project: {
+          companyInfo: 0,
+        },
+      },
+    ]);
 
     console.log(`📦 Found ${appliedJobs.length} applied jobs.`);
 

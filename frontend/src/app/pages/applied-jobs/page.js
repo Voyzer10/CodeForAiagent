@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Loader2, ExternalLink, Mail, Calendar, CheckCircle2 } from 'lucide-react';
+import { Loader2, ExternalLink, Mail, Calendar, CheckCircle2, Building2 } from 'lucide-react';
 import UserNavbar from '../userpanel/Navbar';
 import Sidebar from '../userpanel/Sidebar';
 
@@ -75,10 +75,26 @@ export default function AppliedJobs() {
             <div className="min-h-screen w-full bg-[#09110f] text-white">
                 <UserNavbar onSidebarToggle={toggleSidebar} />
                 <Sidebar isOpen={sidebarOpen} onSelectSearch={() => { }} />
-                <div className="flex items-center justify-center h-screen">
-                    <Loader2 className="animate-spin w-8 h-8 text-[#00fa92]" />
-                    <span className="ml-3 text-[#9ca3af]">Loading applied jobs...</span>
-                </div>
+                <main className="max-w-[1200px] mx-auto px-6 py-10 mt-14 animate-pulse">
+                    <div className="h-10 w-48 bg-gray-800/60 rounded mb-2"></div>
+                    <div className="h-4 w-64 bg-gray-800/40 rounded mb-8"></div>
+
+                    <div className="h-28 bg-green-900/10 border border-green-800/20 rounded-xl mb-6"></div>
+
+                    <div className="space-y-4">
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="bg-[#0b1512] border border-[#11221b] rounded-xl p-6 flex flex-col md:flex-row items-center gap-6">
+                                <div className="w-14 h-14 bg-green-500/5 rounded-xl flex-shrink-0"></div>
+                                <div className="flex-1 space-y-3">
+                                    <div className="h-5 bg-gray-800/60 rounded w-1/2"></div>
+                                    <div className="h-4 bg-gray-800/40 rounded w-1/3"></div>
+                                    <div className="h-4 bg-gray-800/40 rounded w-1/4"></div>
+                                </div>
+                                <div className="h-10 w-32 bg-green-500/10 rounded-full"></div>
+                            </div>
+                        ))}
+                    </div>
+                </main>
             </div>
         );
     }
@@ -135,10 +151,26 @@ export default function AppliedJobs() {
                             >
                                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                                     <div className="flex-1 w-full">
-                                        {/* Job Title/Subject */}
-                                        <h3 className="text-lg font-semibold text-white mb-2 break-words">
-                                            {job.email_subject || 'Application Draft'}
-                                        </h3>
+                                        <div className="flex items-center gap-3 mb-2">
+                                            <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                                {job.company?.logo ? (
+                                                    <img
+                                                        src={job.company.logo}
+                                                        alt={job.company?.name}
+                                                        className="w-full h-full object-contain p-1"
+                                                        onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-5 h-5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+                                                    />
+                                                ) : (
+                                                    <Building2 size={20} className="text-green-500/60" />
+                                                )}
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-white break-words">
+                                                {job.email_subject || 'Application Draft'}
+                                            </h3>
+                                        </div>
+                                        {job.company?.name && (
+                                            <div className="text-[#00fa92] text-sm font-medium mb-3 ml-12 -mt-1">{job.company.name}</div>
+                                        )}
 
                                         {/* Recipient Email */}
                                         <div className="flex flex-wrap items-center gap-2 mb-3">

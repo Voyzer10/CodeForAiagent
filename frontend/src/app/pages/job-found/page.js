@@ -10,39 +10,35 @@ import JobDetailsPanel from "../../components/JobDetailsPanel";
 
 const JobListItemSkeleton = () => (
   <div className="px-4 py-3">
-    <div className="p-4 rounded-xl border border-[#1b2b27] bg-[#0c1210] flex flex-row items-start gap-4 animate-pulse">
+    <div className="group relative p-4 rounded-xl border border-[#1b2b27] bg-[#0c1210] flex flex-row items-start gap-4 animate-pulse">
       {/* 1. Left: Company Logo Skeleton */}
       <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-500/5 border border-green-500/10"></div>
 
       {/* 2. Middle: Content Skeleton */}
       <div className="flex-1 min-w-0 pr-12 pb-6">
-        <div className="h-4 bg-green-500/10 rounded w-3/4 mb-3"></div>
+        <div className="flex flex-wrap items-start gap-2 mb-2">
+          <div className="h-4 bg-green-500/10 rounded w-3/4 mb-1"></div>
+          <div className="h-3 bg-gray-800/50 rounded w-16 mb-1"></div>
+        </div>
         <div className="h-3 bg-gray-800/50 rounded w-1/2 mb-5"></div>
 
+        {/* Meta Info Grid */}
         <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
-            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
-            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
-            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
-            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
-          </div>
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-2">
+              <div className="w-3.5 h-3.5 rounded bg-gray-800/50"></div>
+              <div className="h-2 bg-gray-800/40 rounded w-16"></div>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* 3. Actions Skeleton */}
+      {/* 3. Actions / Selection Skeleton */}
       <div className="absolute top-4 right-4 flex flex-col items-center gap-4 h-[calc(100%-32px)]">
-        <div className="w-4 h-4 rounded bg-gray-800/50"></div>
-        <div className="w-6 h-6 rounded bg-gray-800/50"></div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-4 h-4 rounded bg-gray-800/50"></div>
+          <div className="w-6 h-6 rounded bg-gray-800/50"></div>
+        </div>
         <div className="mt-auto h-3 bg-gray-800/50 rounded w-16"></div>
       </div>
     </div>
@@ -98,8 +94,17 @@ const JobListItem = ({
         onClick={() => setSelectedJob(job)}
       >
         {/* 1. Left: Company Logo */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform">
-          <Building2 size={24} />
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform overflow-hidden bg-white/5">
+          {job.company?.logo ? (
+            <img
+              src={job.company.logo}
+              alt={job.company?.name || company}
+              className="w-full h-full object-contain p-1"
+              onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-6 h-6 text-green-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+            />
+          ) : (
+            <Building2 size={24} />
+          )}
         </div>
 
         {/* 2. Middle: Content */}
@@ -122,7 +127,7 @@ const JobListItem = ({
             </div>
           </div>
 
-          <div className="text-[13px] font-medium text-gray-400 mb-4">{company}</div>
+          <div className="text-[13px] font-medium text-gray-400 mb-4 truncate">{job.company?.name || company}</div>
 
           {/* GRID BASED META - AUTO ADAPTIVE */}
           <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
@@ -754,30 +759,48 @@ const JobFoundContent = () => {
 
         <div className="flex-1 p-6 md:p-10 mt-14">
           <div className="flex flex-col gap-6">
-            {/* Header Skeletons */}
-            <div className="flex gap-4">
-              <div className="h-10 w-32 bg-gray-800/50 rounded-full animate-pulse"></div>
-              <div className="h-10 w-32 bg-gray-800/50 rounded-full animate-pulse"></div>
-              <div className="h-10 w-32 bg-gray-800/50 rounded-full animate-pulse"></div>
+            {/* Header Skeletons - Filter Pills */}
+            <div className="flex flex-wrap gap-4 items-center">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-10 w-32 bg-gray-800/40 border border-gray-800/50 rounded-full animate-pulse"></div>
+              ))}
             </div>
 
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Job List Skeleton */}
-              <div className="flex-1 space-y-4">
+            {/* Action Bar Skeleton */}
+            <div className="flex gap-3 mb-2">
+              <div className="h-10 w-40 bg-gray-800/60 rounded-md border border-gray-800/50 animate-pulse"></div>
+              <div className="h-10 w-32 bg-gray-800/40 rounded-md border border-gray-800/50 animate-pulse"></div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row border border-green-800/30 rounded-lg overflow-hidden h-[70vh] bg-[#0b0f0e]">
+              {/* Job List Skeleton Column */}
+              <div className="w-full lg:w-1/3 border-r border-green-800/30 bg-[#0b0f0e] h-full overflow-hidden">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <JobListItemSkeleton key={i} />
                 ))}
               </div>
 
-              {/* Details Panel Skeleton */}
-              <div className="hidden lg:block w-[450px] bg-[#0c1210] border border-[#1b2b27] rounded-xl p-6 h-[calc(100vh-250px)] animate-pulse">
-                <div className="h-8 bg-green-500/10 rounded w-2/3 mb-6"></div>
-                <div className="h-4 bg-gray-800/50 rounded w-1/2 mb-10"></div>
-                <div className="space-y-4">
-                  <div className="h-4 bg-gray-800/40 rounded w-full"></div>
-                  <div className="h-4 bg-gray-800/40 rounded w-full"></div>
-                  <div className="h-4 bg-gray-800/40 rounded w-3/4"></div>
-                  <div className="h-32 bg-gray-800/20 rounded w-full mt-8"></div>
+              {/* Details Panel Skeleton Column */}
+              <div className="hidden lg:block lg:w-2/3 bg-[#0c1210] p-8 space-y-10 animate-pulse">
+                <div className="flex justify-between items-start border-b border-green-800/10 pb-10">
+                  <div className="space-y-4 w-2/3">
+                    <div className="h-4 bg-green-500/10 rounded w-1/4"></div>
+                    <div className="h-12 bg-gray-800/60 rounded w-full"></div>
+                  </div>
+                  <div className="h-10 w-24 bg-gray-800/40 rounded-lg"></div>
+                </div>
+
+                <div className="h-16 bg-green-900/10 border border-green-800/20 rounded-xl w-full"></div>
+
+                <div className="grid grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-20 bg-gray-800/20 border border-gray-800/10 rounded-xl"></div>
+                  ))}
+                </div>
+
+                <div className="space-y-6">
+                  <div className="h-6 bg-gray-800/40 rounded w-1/4"></div>
+                  <div className="h-40 bg-gray-800/10 rounded-2xl w-full"></div>
                 </div>
               </div>
             </div>
@@ -1117,12 +1140,34 @@ const JobFoundContent = () => {
 export default function JobFound() {
   return (
     <Suspense fallback={
-      <div className="flex flex-col h-screen items-center justify-center bg-[#0a0f0d] text-green-500">
-        <div className="w-20 h-20 mb-8 relative">
-          <div className="absolute inset-0 rounded-full border-4 border-green-500/20" />
-          <div className="absolute inset-0 rounded-full border-4 border-t-green-500 animate-spin" />
+      <div className="flex min-h-screen bg-[#0b0f0e] text-white">
+        <div className="h-20 w-full fixed top-0 border-b border-white/10 bg-[#121e12]/60 z-50"></div>
+        <div className="w-64 h-full fixed left-0 border-r border-white/10 bg-[#0a0f0d] hidden md:block pt-20"></div>
+
+        <div className="flex-1 p-6 md:p-10 mt-14 ml-0 md:ml-64 animate-pulse">
+          <div className="flex flex-col gap-6">
+            <div className="flex gap-4">
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row border border-green-800/30 rounded-lg overflow-hidden h-[75vh]">
+              <div className="w-full lg:w-1/3 border-r border-green-800/30 bg-[#0b0f0e] p-4 space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-32 bg-gray-800/20 rounded-xl"></div>
+                ))}
+              </div>
+              <div className="hidden lg:block lg:w-2/3 bg-[#0e1513] p-8 space-y-8">
+                <div className="h-12 bg-gray-800/40 rounded w-1/2"></div>
+                <div className="grid grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-800/30 rounded-xl"></div>)}
+                </div>
+                <div className="h-64 bg-gray-800/10 rounded-2xl"></div>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-xl font-bold tracking-widest animate-pulse">SYNCHRONIZING...</p>
       </div>
     }>
       <JobFoundContent />

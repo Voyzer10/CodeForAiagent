@@ -97,7 +97,27 @@ export default function SavedJobs() {
                         </div>
 
                         {/* Job List */}
-                        {filteredJobs.length > 0 ? (
+                        {loading ? (
+                            <div className="space-y-4">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="bg-[#0e1513] border border-green-800/10 rounded-2xl p-5 flex flex-col md:flex-row items-center gap-6 animate-pulse">
+                                        <div className="w-14 h-14 bg-green-500/5 rounded-xl flex-shrink-0"></div>
+                                        <div className="flex-1 space-y-3 w-full">
+                                            <div className="h-5 bg-gray-800/60 rounded w-1/3"></div>
+                                            <div className="h-4 bg-green-500/5 rounded w-1/4"></div>
+                                            <div className="flex gap-4">
+                                                <div className="h-3 bg-gray-800/40 rounded w-16"></div>
+                                                <div className="h-3 bg-gray-800/40 rounded w-16"></div>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-3 w-full md:w-auto">
+                                            <div className="h-10 w-10 bg-gray-800/40 rounded-lg"></div>
+                                            <div className="h-10 w-32 bg-gray-800/60 rounded-lg"></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : filteredJobs.length > 0 ? (
                             <div className="space-y-4">
                                 {filteredJobs.map((job, idx) => {
                                     const jobUUID = job.jobid || job.jobId || job.id || job._id || idx;
@@ -110,9 +130,18 @@ export default function SavedJobs() {
                                             key={jobUUID}
                                             className="group bg-[#0e1513] border border-green-800/20 rounded-2xl p-5 hover:border-green-500/40 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-lg shadow-black/20"
                                         >
-                                            {/* Company Icon */}
-                                            <div className="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center text-green-400 flex-shrink-0 group-hover:scale-105 transition-transform">
-                                                <Building2 size={28} />
+                                            {/* Company Icon / Logo */}
+                                            <div className="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center text-green-400 flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                                                {job.company?.logo ? (
+                                                    <img
+                                                        src={job.company.logo}
+                                                        alt={job.company?.name || company}
+                                                        className="w-full h-full object-contain p-1.5"
+                                                        onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+                                                    />
+                                                ) : (
+                                                    <Building2 size={28} />
+                                                )}
                                             </div>
 
                                             {/* Content */}
@@ -120,7 +149,7 @@ export default function SavedJobs() {
                                                 <h3 className="text-lg font-bold text-white group-hover:text-green-400 transition-colors truncate">
                                                     {title}
                                                 </h3>
-                                                <div className="text-green-400 font-medium text-sm mb-3">{company}</div>
+                                                <div className="text-green-400 font-medium text-sm mb-3 truncate">{job.company?.name || company}</div>
 
                                                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-gray-500">
                                                     <div className="flex items-center gap-1.5">
