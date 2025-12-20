@@ -1140,4 +1140,43 @@ const JobFoundContent = () => {
   );
 }
 
+const JobFound = () => {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen bg-[#0b0f0e] text-white">
+        <div className="h-20 w-full fixed top-0 border-b border-white/10 bg-[#121e12]/60 z-50"></div>
+        <div className="w-64 h-full fixed left-0 border-r border-white/10 bg-[#0a0f0d] hidden md:block pt-20"></div>
+
+        <div className="flex-1 p-6 md:p-10 mt-14 ml-0 md:ml-64 animate-pulse">
+          <div className="flex flex-col gap-6">
+            <div className="flex gap-4">
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row border border-green-800/30 rounded-lg overflow-hidden h-[75vh]">
+              <div className="w-full lg:w-1/3 border-r border-green-800/30 bg-[#0b0f0e] p-4 space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-32 bg-gray-800/20 rounded-xl"></div>
+                ))}
+              </div>
+              <div className="hidden lg:block lg:w-2/3 bg-[#0e1513] p-8 space-y-8">
+                <div className="h-12 bg-gray-800/40 rounded w-1/2"></div>
+                <div className="grid grid-cols-4 gap-4">
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-800/30 rounded-xl"></div>)}
+                </div>
+                <div className="h-64 bg-gray-800/10 rounded-2xl"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }>
+      <JobFoundContent />
+    </Suspense>
+  );
+};
+
 export default JobFound;
+
