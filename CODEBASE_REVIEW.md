@@ -21,7 +21,7 @@ This holistic review identifies **8 high-priority security vulnerabilities**, **
 
 ## Section 1: PR Comment Suggestions
 
-### 1.1 CRITICAL: XSS Vulnerability via dangerouslySetInnerHTML
+### 1.1 CRITICAL: XSS Vulnerability via `dangerouslySetInnerHTML`
 
 **File**: `frontend/src/app/components/JobDetailsPanel.js:245`
 
@@ -35,6 +35,7 @@ This holistic review identifies **8 high-priority security vulnerabilities**, **
 
 **Current Code**:
 ```jsx
+// ❌ UNSAFE: Renders unsanitized HTML from external sources
 <div
     className="prose prose-invert max-w-none text-sm"
     dangerouslySetInnerHTML={{ __html: descriptionHtml }}
@@ -460,7 +461,7 @@ Or use React's built-in conditional rendering:
 
 ---
 
-### 1.8 MEDIUM: Code Duplication - Sanitization Logic
+### 1.8 MEDIUM: Code Duplication in Sanitization Logic
 
 **Files**:
 - `backend/controllers/authController.js:12-25`
@@ -1571,7 +1572,7 @@ export const SafeImage = ({
 // After:
 <SafeImage
   src={companyLogo}
-  alt={company name}
+  alt={companyName}
   iconClassName="w-8 h-8 text-green-400"
 />
 ```
@@ -1653,12 +1654,12 @@ module.exports = {
 
 **Current State**: Basic "/" endpoint returns "Backend is running"
 
-**Recommendation**:
+**Recommendation**: 
 Add comprehensive health checks:
-```javascript
-GET /health/live   // Is server alive?
-GET /health/ready  // Is server ready (DB connected, Redis up)?
-GET /health/deps   // Status of all dependencies
+```
+GET /health/live   # Is server alive?
+GET /health/ready  # Is server ready (DB connected, Redis up)?
+GET /health/deps   # Status of all dependencies
 ```
 
 ### 3.4 Add API Versioning
@@ -1683,18 +1684,18 @@ GET /health/deps   // Status of all dependencies
 
 ## Appendix A: Security Checklist
 
-- [x] Authentication: JWT with httpOnly cookies ✅
-- [x] Password hashing: bcrypt with proper rounds ✅
-- [x] Input sanitization: NoSQL injection prevention ✅
-- [x] Rate limiting: Global rate limiter exists ✅
-- [ ] XSS Protection: **CRITICAL ISSUE** - dangerouslySetInnerHTML ❌
-- [ ] Secret Management: **CRITICAL ISSUE** - Hardcoded fallbacks ❌
-- [ ] API Authentication: **HIGH ISSUE** - Unprotected webhook ❌
-- [ ] Timing Attacks: **HIGH ISSUE** - User enumeration possible ❌
-- [x] CORS: Properly configured with whitelist ✅
-- [x] Security Headers: Helmet.js configured ✅
-- [ ] Rate Limiting: Needs refinement per endpoint ⚠️
-- [ ] Error Handling: Inconsistent, may leak information ⚠️
+- ✅ Authentication: JWT with httpOnly cookies
+- ✅ Password hashing: bcrypt with proper rounds
+- ✅ Input sanitization: NoSQL injection prevention
+- ✅ Rate limiting: Global rate limiter exists
+- ❌ XSS Protection: **CRITICAL ISSUE** - dangerouslySetInnerHTML
+- ❌ Secret Management: **CRITICAL ISSUE** - Hardcoded fallbacks
+- ❌ API Authentication: **HIGH ISSUE** - Unprotected webhook
+- ❌ Timing Attacks: **HIGH ISSUE** - User enumeration possible
+- ✅ CORS: Properly configured with whitelist
+- ✅ Security Headers: Helmet.js configured
+- ⚠️ Rate Limiting: Needs refinement per endpoint
+- ⚠️ Error Handling: Inconsistent, may leak information
 
 ---
 
