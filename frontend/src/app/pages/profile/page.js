@@ -54,6 +54,10 @@ export default function Profile() {
   const [saveStatus, setSaveStatus] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [credits, setCredits] = useState(0);
+  const [preferredJobTitles, setPreferredJobTitles] = useState([]);
+  const [preferredLocations, setPreferredLocations] = useState([]);
+  const [newTitle, setNewTitle] = useState("");
+  const [newLocation, setNewLocation] = useState("");
   const router = useRouter();
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
@@ -80,6 +84,9 @@ export default function Profile() {
           github: data.user.github || "",
           linkedin: data.user.linkedin || "",
         });
+
+        setPreferredJobTitles(data.user.preferredJobTitles || []);
+        setPreferredLocations(data.user.preferredLocations || []);
 
         // Fetch credits
         try {
@@ -138,6 +145,58 @@ export default function Profile() {
   const handleResumeUpload = (e) => {
     const file = e.target.files[0];
     if (file) alert(`Uploaded: ${file.name}`);
+  };
+
+  const updatePreferencesOnServer = async (titles, locations) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/update-preferences`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferredJobTitles: titles,
+          preferredLocations: locations
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to update preferences");
+      }
+    } catch (err) {
+      console.error("Error updating preferences:", err);
+    }
+  };
+
+  const handleAddTitle = async () => {
+    if (!newTitle.trim()) return;
+    const updated = [...preferredJobTitles, newTitle.trim()];
+    setPreferredJobTitles(updated);
+    setNewTitle("");
+    await updatePreferencesOnServer(updated, preferredLocations);
+  };
+
+  const handleRemoveTitle = async (titleToRemove) => {
+    const updated = preferredJobTitles.filter(t => t !== titleToRemove);
+    setPreferredJobTitles(updated);
+    await updatePreferencesOnServer(updated, preferredLocations);
+  };
+
+  const handleAddLocation = async () => {
+    if (!newLocation.trim()) return;
+    if (preferredLocations.length >= 6) {
+      alert("You can add a maximum of 6 locations");
+      return;
+    }
+    const updated = [...preferredLocations, newLocation.trim()];
+    setPreferredLocations(updated);
+    setNewLocation("");
+    await updatePreferencesOnServer(preferredJobTitles, updated);
+  };
+
+  const handleRemoveLocation = async (locationToRemove) => {
+    const updated = preferredLocations.filter(l => l !== locationToRemove);
+    setPreferredLocations(updated);
+    await updatePreferencesOnServer(preferredJobTitles, updated);
   };
 
   if (loading)
@@ -399,16 +458,69 @@ export default function Profile() {
             <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
               <h3 className="text-lg font-bold text-white mb-6">Job Application Preferences</h3>
               <div className="space-y-8">
+                {/* Job Titles */}
                 <div>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-4">Target Roles</p>
-                  <div className="flex flex-wrap gap-2">
-                    {["Frontend Developer", "Web Developer", "React Specialist", "UI Engineer"].map(role => (
-                      <span key={role} className="px-4 py-2 rounded-xl bg-gray-900/60 border border-white/5 text-gray-300 text-xs font-semibold hover:border-green-500/30 transition-all cursor-default">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-4">Your Preferred Job titles</p>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {preferredJobTitles.map(role => (
+                      <span key={role} className="group px-4 py-2 rounded-xl bg-gray-900/60 border border-white/5 text-gray-300 text-xs font-semibold hover:border-green-500/30 transition-all cursor-default flex items-center gap-2">
                         {role}
+                        <button onClick={() => handleRemoveTitle(role)} className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                          <X size={14} />
+                        </button>
                       </span>
                     ))}
-                    <button className="px-4 py-2 rounded-xl bg-green-500/5 border border-dashed border-green-500/20 text-green-400 text-xs font-bold hover:bg-green-500/10 transition-all">
-                      + Add Role
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newTitle}
+                      onChange={(e) => setNewTitle(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddTitle()}
+                      placeholder="Add preferred job title..."
+                      className="flex-1 bg-black/40 border border-gray-800 px-4 py-2 rounded-xl text-xs text-gray-200 focus:outline-none focus:border-green-500/50 transition-colors"
+                    />
+                    <button
+                      onClick={handleAddTitle}
+                      className="px-4 py-2 rounded-xl bg-green-500/5 border border-dashed border-green-500/20 text-green-400 text-xs font-bold hover:bg-green-500/10 transition-all"
+                    >
+                      + Add Title
+                    </button>
+                  </div>
+                </div>
+
+                {/* Locations */}
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Your Preferable Locations</p>
+                    <span className="text-[10px] text-gray-600 font-medium">{preferredLocations.length}/6 Locations</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {preferredLocations.map(loc => (
+                      <span key={loc} className="group px-4 py-2 rounded-xl bg-gray-900/60 border border-white/5 text-gray-300 text-xs font-semibold hover:border-green-500/30 transition-all cursor-default flex items-center gap-2">
+                        {loc}
+                        <button onClick={() => handleRemoveLocation(loc)} className="text-gray-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newLocation}
+                      onChange={(e) => setNewLocation(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddLocation()}
+                      placeholder="Add preferred location (e.g. Remote, New York)..."
+                      className="flex-1 bg-black/40 border border-gray-800 px-4 py-2 rounded-xl text-xs text-gray-200 focus:outline-none focus:border-green-500/50 transition-colors"
+                      disabled={preferredLocations.length >= 6}
+                    />
+                    <button
+                      onClick={handleAddLocation}
+                      disabled={preferredLocations.length >= 6}
+                      className={`px-4 py-2 rounded-xl border border-dashed text-xs font-bold transition-all ${preferredLocations.length >= 6 ? 'bg-gray-900/40 border-gray-800 text-gray-600 cursor-not-allowed' : 'bg-green-500/5 border-green-500/20 text-green-400 hover:bg-green-500/10'}`}
+                    >
+                      + Add Location
                     </button>
                   </div>
                 </div>

@@ -282,6 +282,44 @@ const getSavedJobs = async (req, res) => {
   }
 };
 
+// 🟢 Update user preferences (Job Titles and Locations)
+const updatePreferences = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+
+    const { preferredJobTitles, preferredLocations } = req.body;
+    const updateData = {};
+
+    if (preferredJobTitles !== undefined) updateData.preferredJobTitles = preferredJobTitles;
+    if (preferredLocations !== undefined) {
+      // Enforce max 6 locations
+      updateData.preferredLocations = preferredLocations.slice(0, 6);
+    }
+
+    const query = isNaN(userId)
+      ? { _id: userId }
+      : { userId: Number(userId) };
+
+    const updatedUser = await User.findOneAndUpdate(
+      query,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) return res.status(404).json({ error: "User not found" });
+
+    res.status(200).json({
+      success: true,
+      message: "Preferences updated successfully",
+      user: updatedUser,
+    });
+  } catch (error) {
+    console.error("Update preferences error:", error);
+    res.status(500).json({ message: "Server error updating preferences" });
+  }
+};
+
 module.exports = {
 
   updateSocialLinks,
@@ -295,6 +333,7 @@ module.exports = {
   renameSavedSearch,
   toggleSavedJob,
   getSavedJobs,
+  updatePreferences,
 };
 
 

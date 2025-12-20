@@ -888,7 +888,7 @@ function JobFoundContent() {
           </div>
         )}
 
-        <div className="flex gap-3 mt-6 md:mt-0">
+        <div className="flex gap-3 mt-6 md:mt-8 mb-6">
           <button
             onClick={() =>
               applyJobs(

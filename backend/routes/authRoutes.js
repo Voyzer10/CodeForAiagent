@@ -13,6 +13,7 @@ const {
 const {
   updateSocialLinks,
   updateClientData,
+  updatePreferences,
 } = require("../controllers/userController.js");
 
 const {
@@ -45,6 +46,7 @@ router.get("/me", auth, getCurrentUser);
 
 router.post("/update-socials", auth, updateSocialLinks);
 router.post("/update-client", auth, updateClientData);
+router.post("/update-preferences", auth, updatePreferences);
 
 /* ======================================================
    GOOGLE LOGIN (Website Sign-in)

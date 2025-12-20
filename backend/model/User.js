@@ -90,6 +90,9 @@ const userSchema = new mongoose.Schema(
     googlePicture: { type: String, default: null }, // Google profile picture URL
 
     savedJobs: { type: Array, default: [] }, // ✅ Added savedJobs
+
+    preferredJobTitles: { type: [String], default: [] },
+    preferredLocations: { type: [String], default: [] },
   },
   { timestamps: true }
 );
