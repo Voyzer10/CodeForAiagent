@@ -1,6 +1,7 @@
 // controllers/authController.js - Force Sync
 const User = require("../model/User");
 const bcrypt = require("bcryptjs");
+const { resolveUserQuery } = require("../utils/userResolver");
 const jwt = require("jsonwebtoken");
 
 /**
