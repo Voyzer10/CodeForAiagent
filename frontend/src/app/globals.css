@@ -4,28 +4,50 @@
    Root Theme Variables
 ============================== */
 :root {
-  --brand: 59 130 246; /* blue-500 */
-  --brand-dark: 37 99 235; /* blue-600 */
-  --surface: #f8fafc; /* slate-50 */
-  --surface-dark: #1e293b; /* slate-800 */
-  --background: #f1f5f9; /* slate-100 */
-  --foreground: #0f172a; /* slate-900 */
+  --primary: #00FA92;
+  --primary-dark: #00d67d;
+  --background-dark: #0a110a;
+  --surface-dark: #121e12;
+}
+
+@theme {
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* ==============================
    Global Styles
 ============================== */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Inter, Arial, Helvetica, sans-serif;
+  background: var(--background-dark);
+  color: #ffffff;
+  font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  line-height: 1.6;
 }
 
-/* Smooth transition for everything */
+::selection {
+  background: var(--primary);
+  color: #000;
+}
 
+/* Glassmorphism */
+.glass-panel {
+  background: rgba(18, 30, 18, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(0, 250, 146, 0.3);
+  background: rgba(0, 250, 146, 0.05);
+  transform: translateY(-2px);
+}
 
 /* Remove default focus outline */
 :focus {
@@ -34,72 +56,30 @@ body {
 
 /* Add custom focus ring */
 :focus-visible {
-  @apply ring-2 ring-blue-500 ring-offset-2 ring-offset-white;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
 }
 
-/* ==============================
-   Modern Button Styles
-============================== */
-
-/* Primary Button */
-.btn-primary {
-  @apply inline-flex items-center gap-2 rounded-md 
-         bg-blue-600 px-3 py-2 text-sm font-medium text-white
-         shadow-md shadow-blue-500/20
-         hover:bg-blue-700 hover:shadow-lg
-         focus:outline-none focus:ring-2 focus:ring-blue-500 
-         disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-/* Secondary Button */
-.btn-secondary {
-  @apply inline-flex items-center gap-2 rounded-md 
-         bg-slate-200 px-3 py-2 text-sm font-medium text-slate-700
-         hover:bg-slate-300 shadow-sm;
-}
-
-/* Outline Button */
-.btn-outline {
-  @apply inline-flex items-center gap-2 rounded-md 
-         border border-slate-300 px-3 py-2 
-         text-sm font-medium text-slate-700
-         hover:bg-slate-100;
-}
-
-/* Danger Button */
-.btn-danger {
-  @apply inline-flex items-center gap-2 rounded-md 
-         bg-red-600 px-3 py-2 text-sm font-medium text-white
-         hover:bg-red-700 shadow-md shadow-red-500/20
-         focus:ring-red-500;
-}
-
-/* ==============================
-   Card / Surface Styles
-============================== */
-.card {
-  @apply bg-white p-4 rounded-xl shadow-sm border border-slate-200;
-}
-
-.card-dark {
-  @apply bg-slate-800 text-slate-100 p-4 rounded-xl shadow-lg;
-}
-
-/* ==============================
-   Inputs
-============================== */
-.input {
-  @apply w-full rounded-md border border-slate-300 bg-white 
-         px-3 py-2 text-sm text-slate-800
-         focus:ring-2 focus:ring-blue-500;
-}
-
-.input-dark {
-  @apply w-full rounded-md border border-slate-700 bg-slate-900 
-         px-3 py-2 text-sm text-slate-200
-         focus:ring-2 focus:ring-blue-400;
-}
-
-html, body {
+html,
+body {
   overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0a110a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #121e12;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 }

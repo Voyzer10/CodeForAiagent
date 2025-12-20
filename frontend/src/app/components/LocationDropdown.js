@@ -111,8 +111,10 @@ export default function LocationDropdown({ value, onChange, placeholder = "Searc
                 {error}
               </div>
             ) : loading ? (
-              <div className="relative cursor-default select-none px-3 py-2 text-gray-400">
-                Loading...
+              <div className="space-y-1 px-3 py-2 animate-pulse">
+                <div className="h-4 bg-gray-800/50 rounded w-full"></div>
+                <div className="h-4 bg-gray-800/50 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-800/50 rounded w-5/6"></div>
               </div>
             ) : results.length === 0 && query !== "" ? (
               <div className="relative cursor-default select-none px-3 py-2 text-gray-400">

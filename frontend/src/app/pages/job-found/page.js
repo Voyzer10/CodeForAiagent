@@ -8,6 +8,47 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import Alert from "../../components/Alert"; // Imported Alert
 import JobDetailsPanel from "../../components/JobDetailsPanel";
 
+const JobListItemSkeleton = () => (
+  <div className="px-4 py-3">
+    <div className="p-4 rounded-xl border border-[#1b2b27] bg-[#0c1210] flex flex-row items-start gap-4 animate-pulse">
+      {/* 1. Left: Company Logo Skeleton */}
+      <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-500/5 border border-green-500/10"></div>
+
+      {/* 2. Middle: Content Skeleton */}
+      <div className="flex-1 min-w-0 pr-12 pb-6">
+        <div className="h-4 bg-green-500/10 rounded w-3/4 mb-3"></div>
+        <div className="h-3 bg-gray-800/50 rounded w-1/2 mb-5"></div>
+
+        <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
+            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
+            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
+            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded bg-gray-800/50"></div>
+            <div className="h-2 bg-gray-800/40 rounded w-16"></div>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Actions Skeleton */}
+      <div className="absolute top-4 right-4 flex flex-col items-center gap-4 h-[calc(100%-32px)]">
+        <div className="w-4 h-4 rounded bg-gray-800/50"></div>
+        <div className="w-6 h-6 rounded bg-gray-800/50"></div>
+        <div className="mt-auto h-3 bg-gray-800/50 rounded w-16"></div>
+      </div>
+    </div>
+  </div>
+);
+
 const JobListItem = ({
   job,
   jobUUID,
@@ -149,7 +190,7 @@ const JobListItem = ({
   );
 };
 
-function JobFoundContent() {
+const JobFoundContent = () => {
   const [user, setUser] = useState(null);
   const [userJobs, setUserJobs] = useState([]);
   const [filteredJobs, setFilteredJobs] = useState([]);
@@ -496,7 +537,7 @@ function JobFoundContent() {
       }
 
       if (lastJobUUID) {
-        setResponseMessage("Waiting for N8N to prepare job email...");
+        setResponseMessage("Waiting for AI process to prepare job email...");
 
         // Poll the backend until the job (identified by jobid UUID) has email_to & email_subject
         let attempts = 0;
@@ -707,9 +748,41 @@ function JobFoundContent() {
   };
   if (loading)
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-[#0a0f0d] text-green-400">
-        <Loader2 className="animate-spin w-10 h-10 mb-4 text-green-500" />
-        <span className="text-xl font-medium animate-pulse">Loading your saved jobs...</span>
+      <div className="flex min-h-screen bg-[#0b0f0e] text-white">
+        <UserNavbar onSidebarToggle={toggleSidebar} />
+        <Sidebar isOpen={sidebarOpen} recentSearches={recentSearches} onSelectSearch={handleSearchSelect} />
+
+        <div className="flex-1 p-6 md:p-10 mt-14">
+          <div className="flex flex-col gap-6">
+            {/* Header Skeletons */}
+            <div className="flex gap-4">
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full animate-pulse"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full animate-pulse"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full animate-pulse"></div>
+            </div>
+
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Job List Skeleton */}
+              <div className="flex-1 space-y-4">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <JobListItemSkeleton key={i} />
+                ))}
+              </div>
+
+              {/* Details Panel Skeleton */}
+              <div className="hidden lg:block w-[450px] bg-[#0c1210] border border-[#1b2b27] rounded-xl p-6 h-[calc(100vh-250px)] animate-pulse">
+                <div className="h-8 bg-green-500/10 rounded w-2/3 mb-6"></div>
+                <div className="h-4 bg-gray-800/50 rounded w-1/2 mb-10"></div>
+                <div className="space-y-4">
+                  <div className="h-4 bg-gray-800/40 rounded w-full"></div>
+                  <div className="h-4 bg-gray-800/40 rounded w-full"></div>
+                  <div className="h-4 bg-gray-800/40 rounded w-3/4"></div>
+                  <div className="h-32 bg-gray-800/20 rounded w-full mt-8"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
 
@@ -931,13 +1004,23 @@ function JobFoundContent() {
 
         {/* Status Message Area */}
         {applying && (
-          <div className="mt-8 mx-auto w-full max-w-lg p-6 bg-[#0e1614] border border-green-500/30 rounded-2xl text-green-400 text-center shadow-[0_0_30px_rgba(74,222,128,0.1)] animate-in fade-in zoom-in duration-500 flex flex-col items-center gap-3">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />
-              <Loader2 className="animate-spin text-green-400 relative z-10" size={32} />
+          <div className="mt-8 mx-auto w-full max-w-lg p-6 bg-[#0e1614] border border-green-500/30 rounded-2xl text-green-400 text-center shadow-[0_0_40px_rgba(34,197,94,0.1)] animate-in fade-in zoom-in duration-500 flex flex-col items-center gap-4">
+            <div className="relative w-16 h-16 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border-2 border-green-500/10" />
+              <div className="absolute inset-0 rounded-full border-t-2 border-green-500 animate-spin" />
+              <div className="absolute inset-2 rounded-full bg-green-500/10 animate-pulse flex items-center justify-center">
+                <Building2 size={24} className="text-green-500/60" />
+              </div>
             </div>
-            <p className="font-bold text-xl tracking-wide animate-pulse">{responseMessage}</p>
-            <p className="text-sm text-gray-500">Please wait while we synchronize with the application server.</p>
+            <div className="space-y-2">
+              <p className="font-bold text-xl tracking-wide text-white">{responseMessage}</p>
+              <div className="flex flex-col gap-1 items-center">
+                <p className="text-sm text-gray-400">Our AI agents are coordinating with the application servers</p>
+                <div className="w-48 h-1 bg-gray-800 rounded-full overflow-hidden mt-2">
+                  <div className="h-full bg-green-500/50 animate-[shimmer_2s_infinite]" style={{ width: '100%', background: 'linear-gradient(90deg, transparent, rgba(34,197,94,0.4), transparent)', backgroundSize: '200% 100%' }}></div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -1000,11 +1083,27 @@ function JobFoundContent() {
                   onToggleSave={handleToggleSave}
                 />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                  <div className="w-16 h-16 mb-4 rounded-full bg-green-900/20 flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 text-green-700/50" />
+                <div className="h-full flex flex-col items-center justify-center text-gray-500 bg-[#0e1513]/30 p-12">
+                  <div className="w-full max-w-2xl space-y-10 animate-pulse opacity-20 pointer-events-none">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-4 w-2/3">
+                        <div className="h-4 bg-gray-600 rounded w-1/4"></div>
+                        <div className="h-12 bg-gray-500 rounded w-full"></div>
+                      </div>
+                      <div className="h-10 w-24 bg-gray-600 rounded-lg"></div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-4">
+                      {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-700/50 rounded-xl"></div>)}
+                    </div>
+                    <div className="h-64 bg-gray-800/20 rounded-2xl"></div>
                   </div>
-                  <p>Select a job to view details</p>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/5 backdrop-blur-[2px]">
+                    <div className="w-16 h-16 mb-4 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                      <Briefcase className="w-8 h-8 text-green-500/40" />
+                    </div>
+                    <p className="text-lg font-bold text-white/40 tracking-widest uppercase">Select a job stream</p>
+                    <p className="text-sm text-gray-600 mt-2 italic text-center max-w-xs">Pick any opportunity from the list to synchronize details and start your application process.</p>
+                  </div>
                 </div>
               )}
             </div>

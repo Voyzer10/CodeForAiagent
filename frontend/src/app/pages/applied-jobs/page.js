@@ -72,7 +72,7 @@ export default function AppliedJobs() {
 
     if (loading) {
         return (
-            <div className="min-h-screen w-full bg-[#09110f] text-white font-['Inter']">
+            <div className="min-h-screen w-full bg-[#09110f] text-white">
                 <UserNavbar onSidebarToggle={toggleSidebar} />
                 <Sidebar isOpen={sidebarOpen} onSelectSearch={() => { }} />
                 <div className="flex items-center justify-center h-screen">
@@ -84,7 +84,7 @@ export default function AppliedJobs() {
     }
 
     return (
-        <div className="min-h-screen w-full bg-[#09110f] text-white font-['Inter']">
+        <div className="min-h-screen w-full bg-[#09110f] text-white">
             <UserNavbar onSidebarToggle={toggleSidebar} />
             <Sidebar isOpen={sidebarOpen} onSelectSearch={() => { }} />
 

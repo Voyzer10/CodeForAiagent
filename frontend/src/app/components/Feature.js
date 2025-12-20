@@ -1,95 +1,72 @@
-// src/app/components/Feature.js
-import React from "react";
-import { Cpu, Filter, LayoutDashboard } from "lucide-react";
+"use client";
 
-/**
- * Feature section (JSX). No images used.
- * Tailwind classes assume Tailwind is configured in your Next.js project.
- */
+import React from "react";
 
 export default function Feature() {
-    const cards = [
+    const features = [
         {
-            id: 1,
+            icon: "cloud_download",
             title: "AI-Powered Scraping",
-            body:
-                "Advanced machine learning algorithms automatically scan and extract relevant job postings from LinkedIn with 99.7% accuracy.",
-            icon: <Cpu className="h-6 w-6" />,
+            description: "Automatically extract job listings from LinkedIn, Indeed, and Glassdoor simultaneously with zero manual effort."
         },
         {
-            id: 2,
+            icon: "tune",
             title: "Intelligent Filtering",
-            body:
-                "Smart categorization and filtering system that learns your preferences and delivers only the most relevant opportunities.",
-            icon: <Filter className="h-6 w-6" />,
+            description: "Set your criteria once. Our smart algorithms filter out 98% of irrelevant noise to present only high-value matches."
         },
         {
-            id: 3,
+            icon: "dashboard",
             title: "Automated Dashboard",
-            body:
-                "Real-time tracking dashboard with analytics, application status, and performance metrics to optimize your job search strategy.",
-            icon: <LayoutDashboard className="h-6 w-6" />,
-        },
+            description: "Track every application status, interview schedule, and follow-up reminder in one centralized, real-time command center."
+        }
+    ];
+
+    const stats = [
+        { value: "50K+", label: "Jobs Processed Daily" },
+        { value: "95%", label: "Accuracy Rate" },
+        { value: "2.5x", label: "Faster Job Discovery" }
     ];
 
     return (
-        <section className="bg-[#050807] text-white py-20">
-            <div className="max-w-7xl mx-auto px-6 flex flex-col items-center">
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-center">
-                    <span className="text-white">Smart Data.</span>{" "}
-                    <span className="text-[#00ff66]">Smarter Opportunities</span>
-                </h2>
-
-                <p className="text-center text-gray-300 mt-4 max-w-2xl mx-auto">
-                    Experience the future of job hunting with cutting-edge AI automation
-                </p>
-
-                <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {cards.map((c) => (
-                        <article
-                            key={c.id}
-                            className="group relative bg-[#07110f] border border-[#0f1f1a] rounded-xl p-6 shadow-[0_10px_30px_rgba(0,0,0,0.6)] transition-transform transform hover:-translate-y-1"
-                        >
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="flex-shrink-0">
-                                    <div className="h-11 w-11 rounded-lg bg-[#00180f] ring-2 ring-[#002815] flex items-center justify-center shadow-[0_6px_18px_rgba(0,255,102,0.06)] group-hover:shadow-[0_8px_24px_rgba(0,255,102,0.12)]">
-                                        <div className="text-[#00ff66]">{c.icon}</div>
-                                    </div>
+        <>
+            <section className="py-24 relative overflow-hidden">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-16">
+                        <h2 className="text-3xl font-bold sm:text-4xl text-white">AI-Powered Features</h2>
+                        <p className="mt-4 text-gray-400 max-w-2xl mx-auto">Everything you need to automate your job hunt and land your dream role faster.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {features.map((feature, index) => (
+                            <div key={index} className="glass-card rounded-2xl p-8 flex flex-col gap-6 group">
+                                <div className="h-12 w-12 rounded-lg bg-[#00FA92]/10 flex items-center justify-center text-[#00FA92] group-hover:bg-[#00FA92] group-hover:text-[#0a110a] transition-colors">
+                                    <span className="material-symbols-outlined text-3xl">{feature.icon}</span>
                                 </div>
-
                                 <div>
-                                    <h3 className="text-white font-semibold text-lg">
-                                        {c.title}
-                                    </h3>
-                                    <p className="mt-2 text-sm text-gray-300 max-w-md">
-                                        {c.body}
-                                    </p>
-
-                                    <a
-                                        href="#"
-                                        className="inline-flex items-center gap-2 mt-4 text-[#00ff66] font-medium text-sm"
-                                    >
-                                        Learn More
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            className="h-4 w-4"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            strokeWidth="2"
-                                        >
-                                            <path d="M5 12h14M12 5l7 7-7 7" />
-                                        </svg>
-                                    </a>
+                                    <h3 className="text-xl font-bold mb-2 text-white">{feature.title}</h3>
+                                    <p className="text-gray-400 leading-relaxed">{feature.description}</p>
                                 </div>
+                                <button className="mt-auto flex items-center text-[#00FA92] text-sm font-bold hover:text-white transition-colors">
+                                    Learn More <span className="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+                                </button>
                             </div>
-
-                            {/* subtle neon border glow (pseudo) */}
-                            <div className="pointer-events-none absolute inset-0 rounded-xl border border-transparent group-hover:border-[#003d28]/60" />
-                        </article>
-                    ))}
+                        ))}
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            {/* STATS SECTION */}
+            <section className="border-y border-white/5 bg-[#121e12]/50 py-16">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-white/10">
+                        {stats.map((stat, index) => (
+                            <div key={index} className="text-center px-4 py-2">
+                                <div className="text-4xl md:text-5xl font-bold text-white mb-2 tracking-tight">{stat.value}</div>
+                                <div className="text-[#00FA92] font-medium text-sm uppercase tracking-wider">{stat.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        </>
     );
 }

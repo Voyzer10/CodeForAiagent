@@ -10,69 +10,64 @@ export default function About() {
   ];
 
   return (
-    <section className="w-full py-12 sm:py-16 lg:py-20 bg-[#050807]">
-      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-          {/* Text Content */}
-          <div className="space-y-6 lg:space-y-8">
-            <h2 className="text-[24px] sm:text-[36px] lg:text-[48px] font-extrabold leading-[30px] sm:leading-[44px] lg:leading-[48px] text-[#ffffff] font-['Inter']">
-              Revolutionizing Job Search Automation
-            </h2>
-            <div className="space-y-6 lg:space-y-7">
-              <p className="text-[16px] sm:text-[18px] lg:text-[20px] font-normal leading-[26px] sm:leading-[30px] lg:leading-[33px] text-[#9ca3af] font-['Inter']">
-                Born from the frustration of manual job searching, JobScraper AI was created to eliminate the tedious process of browsing through hundreds of irrelevant listings.
-              </p>
-              <p className="text-[16px] sm:text-[18px] font-normal leading-[24px] sm:leading-[26px] lg:leading-[30px] text-[#9ca3af] font-['Inter']">
-                Our mission is simple: Let AI handle the searching while you focus on what matters most - preparing for your dream role and advancing your career.
-              </p>
-              {/* Stats */}
-              <div className="flex flex-col sm:flex-row gap-6 sm:gap-8 pt-4">
-                {stats.map((stat, idx) => (
-                  <div key={idx} className="text-center sm:text-left">
-                    <div className="text-[24px] sm:text-[30px] font-bold leading-[30px] sm:leading-[37px] text-[#ffffff] font-['Inter'] mb-1">
-                      {stat.number}
-                    </div>
-                    <div className="text-[14px] sm:text-[16px] font-normal leading-[18px] sm:leading-[20px] text-[#9ca3af] font-['Inter']">
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
+    <>
+      <section className="relative z-10 py-20 bg-[#121e12]/50 border-t border-white/5">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row gap-12 items-center">
+            <div className="flex-1 relative h-64 w-full md:h-96 rounded-2xl overflow-hidden border border-white/10 group">
+              {/* Abstract AI Image placeholder style using local assets or URL */}
+              <div
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+                style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuBjfK1OKNU2FQjy6ThoBDdmDV3hLLCKl5epdHXZEYFUmmw91Jgvt9xk3gwTxXtEjUq_mgVlP56kRTUAwTBHvUordO-HFVYcsSRcHZKI8xOvLs7Rxv43pOHjPayGOkv4P8_cZZvPn0EEP-L-KbaQ1Om4fkpv6QIA3N-fupKOOC8gB0lmnoc_OTv5mXOtSS7zqY1UNRDUFYJ0Rcu2fwTsTttl1bIrUJxYRBpeaQW4qilUf13DGZ_wKOhS_64OHVBV8FAa_ooUxMcNzOI")' }}
+              ></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0a110a] via-transparent to-transparent"></div>
+              <div className="absolute bottom-6 left-6 right-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="h-2 w-2 rounded-full bg-[#00FA92] animate-pulse"></span>
+                  <span className="text-xs font-mono text-[#00FA92] uppercase">Live Data Feed</span>
+                </div>
+                <div className="flex gap-2 text-white">
+                  <span className="bg-black/50 backdrop-blur px-3 py-1 rounded text-xs border border-white/10">Scraping...</span>
+                  <span className="bg-black/50 backdrop-blur px-3 py-1 rounded text-xs border border-white/10">Analyzing...</span>
+                </div>
               </div>
             </div>
-          </div>
-
-          {/* Image Card */}
-          <div
-            className="bg-[#ffffff0c] border rounded-[16px] p-6 lg:p-8"
-            style={{
-              borderColor: "#00fa924c",
-              boxShadow: "0px 0px 20px rgba(0, 250, 146, 0.1)",
-            }}
-          >
-            <Image
-              src="/about.png"
-              alt="JobScraper AI Dashboard"
-              width={800}
-              height={600}
-              className="w-full h-auto rounded-[12px] mb-6"
-            />
-            <h3 className="text-[20px] sm:text-[24px] font-bold leading-[24px] sm:leading-[30px] text-[#ffffff] font-['Inter'] text-center mb-4">
-              Your Dream Job — Found by Automation
-            </h3>
-            <div className="space-y-2">
-              <p className="text-[14px] sm:text-[16px] font-normal leading-[18px] sm:leading-[20px] text-[#9ca3af] font-['Inter']">
-                Experience the future of career advancement with our cutting‑edge
+            <div className="flex-1 space-y-6">
+              <h2 className="text-3xl md:text-4xl font-bold leading-tight text-white">
+                Smart Data. <br />
+                <span className="text-[#00FA92]">Smarter Opportunities.</span>
+              </h2>
+              <p className="text-gray-400 text-lg">
+                Stop scrolling endlessly. Our AI analyzes millions of data points to identify job openings that match your unique profile, skills, and career goals before they even trend.
               </p>
-              <p className="text-[14px] sm:text-[16px] font-normal leading-[18px] sm:leading-[20px] text-[#9ca3af] font-['Inter']">
-                AI technology that never sleeps, never misses an opportunity, and
-              </p>
-              <p className="text-[14px] sm:text-[16px] font-normal leading-[18px] sm:leading-[20px] text-[#9ca3af] font-['Inter']">
-                always works in your favor.
-              </p>
+              <ul className="space-y-4">
+                {[
+                  "Automated application tracking",
+                  "Keyword optimization for ATS",
+                  "Real-time salary insights"
+                ].map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <span className="material-symbols-outlined text-[#00FA92] mt-1">check</span>
+                    <span className="text-gray-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+
+      <section id="about" className="py-20 px-4">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[#00FA92]/10 text-[#00FA92] mb-6 shadow-[0_0_20px_rgba(0,250,146,0.1)]">
+            <span className="material-symbols-outlined">lightbulb</span>
+          </div>
+          <h2 className="text-3xl font-bold mb-6 text-white tracking-tight sm:text-4xl">Revolutionizing Job Search Automation</h2>
+          <p className="text-gray-400 leading-relaxed text-lg font-medium">
+            At JobScraper AI, we believe talent should not be wasted on refreshing job boards. Our mission is to democratize access to career opportunities by putting the same powerful AI tools used by recruiters into the hands of job seekers. We are building the future where your next career leap finds you, not the other way around.
+          </p>
+        </div>
+      </section>
+    </>
   );
 }

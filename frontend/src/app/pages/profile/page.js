@@ -42,6 +42,51 @@ import { useRouter } from "next/navigation";
 import UserNavbar from "../userpanel/Navbar";
 import Sidebar from "../userpanel/Sidebar";
 
+const ProfileSkeleton = () => (
+  <div className="min-h-screen w-full bg-[#0a0f0e] text-gray-200 animate-pulse">
+    <div className="max-w-[1240px] mx-auto px-6 pt-24 pb-16">
+      {/* Header Skeleton */}
+      <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div>
+          <div className="h-10 w-64 bg-gray-800/50 rounded-xl mb-3"></div>
+          <div className="h-4 w-48 bg-gray-800/30 rounded-lg"></div>
+        </div>
+        <div className="flex gap-3">
+          <div className="h-10 w-32 bg-gray-800/40 rounded-xl"></div>
+          <div className="h-10 w-10 bg-gray-800/40 rounded-xl"></div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="lg:col-span-8 space-y-8">
+          {/* Summary Card Skeleton */}
+          <div className="h-48 bg-[#0e1614] border border-white/5 rounded-3xl p-8">
+            <div className="flex gap-8">
+              <div className="w-28 h-28 rounded-3xl bg-gray-800/40"></div>
+              <div className="flex-1 space-y-4">
+                <div className="h-8 w-1/3 bg-gray-800/50 rounded-lg"></div>
+                <div className="h-20 bg-gray-800/20 rounded-xl"></div>
+              </div>
+            </div>
+          </div>
+          {/* Gmail Card Skeleton */}
+          <div className="h-40 bg-[#0e1614] border border-white/5 rounded-3xl p-8"></div>
+          {/* Social Row Skeletons */}
+          <div className="grid grid-cols-2 gap-8">
+            <div className="h-48 bg-[#0e1614] border border-white/5 rounded-3xl"></div>
+            <div className="h-48 bg-[#0e1614] border border-white/5 rounded-3xl"></div>
+          </div>
+        </div>
+        <div className="lg:col-span-4 space-y-8">
+          <div className="h-48 bg-[#0e1614] border border-white/5 rounded-3xl"></div>
+          <div className="h-32 bg-[#0e1614] border border-white/5 rounded-3xl"></div>
+          <div className="h-20 bg-green-500/10 rounded-3xl border border-green-500/20"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
@@ -199,13 +244,7 @@ export default function Profile() {
     await updatePreferencesOnServer(preferredJobTitles, updated);
   };
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center h-screen text-gray-400 bg-[#09110f]">
-        <Loader2 className="animate-spin w-6 h-6 mr-2" />
-        Loading profile...
-      </div>
-    );
+  if (loading) return <ProfileSkeleton />;
 
   if (error)
     return (
@@ -240,7 +279,7 @@ export default function Profile() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#0a0f0e] text-gray-200 font-['Inter'] selection:bg-green-500/30 selection:text-green-200">
+    <div className="min-h-screen w-full bg-[#0a0f0e] text-gray-200 selection:bg-green-500/30 selection:text-green-200">
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} onSelectSearch={() => { }} />
 

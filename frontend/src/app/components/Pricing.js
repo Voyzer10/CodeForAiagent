@@ -1,118 +1,82 @@
-'use client';
-// import Button from'../components/ui/Button';
+"use client";
+
+import React from "react";
 
 export default function Pricing() {
   const plans = [
     {
       name: "Starter",
       price: "$11",
-      features: [
-        "500 Career Cards",
-        "Basic AI filtering", 
-        "Email notifications"
-      ],
-      buttonText: "Get Started",
-      buttonStyle: "outline",
-      popular: false
+      features: ["100 Daily Scrapes", "Basic Filtering", "Email Support"],
+      popular: false,
     },
     {
       name: "Professional",
-      price: "$19", 
+      price: "$19",
       features: [
-        "1000 Career Cards",
-        "Advanced AI filtering",
-        "Real-time dashboard",
-        "Priority support"
+        "Unlimited Scrapes",
+        "Advanced AI Matching",
+        "Priority Alerts",
+        "Resume Optimization",
       ],
-      buttonText: "Get Started",
-      buttonStyle: "primary",
-      popular: true
+      popular: true,
     },
     {
       name: "Enterprise",
       price: "$25",
-      features: [
-        "1500 Career Cards",
-        "Custom AI training",
-        "API access",
-        "Dedicated support"
-      ],
-      buttonText: "Contact Sales", 
-      buttonStyle: "outline",
-      popular: false
-    }
-  ]
+      features: ["Everything in Pro", "API Access", "24/7 Dedicated Support"],
+      popular: false,
+    },
+  ];
 
   return (
-    <section id="pricing" className=" bg-[#030604] w-full py-12 sm:py-16 lg:py-20">
-      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
-          <h2 className="text-[24px] sm:text-[36px] lg:text-[48px] font-black leading-[30px] sm:leading-[44px] lg:leading-[48px] font-['Inter'] mb-3">
-            <span className="text-white">Choose Your</span>
-            <span className="text-[#00fa92]"> Success Plan</span>
-          </h2>
-          <p className="text-[16px] sm:text-[18px] lg:text-[20px] font-normal leading-[20px] sm:leading-[23px] lg:leading-[25px] text-[#d1d5db] text-center font-['Inter']">
-            Scale your job search automation to match your ambition
-          </p>
+    <section id="pricing" className="py-24 bg-[#121e12]/30 border-t border-white/5">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold sm:text-4xl text-white">Choose Your Success Plan</h2>
+          <p className="mt-4 text-gray-400">Scale your job search automation to match your ambition</p>
         </div>
-        
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto items-end">
           {plans.map((plan, index) => (
-            <div key={index} className="relative">
+            <div
+              key={index}
+              className={`relative p-8 rounded-2xl border transition-all duration-300 ${plan.popular
+                  ? "border-[#00FA92] bg-[#0a110a] shadow-[0_0_30px_rgba(0,250,146,0.1)] md:-translate-y-4"
+                  : "border-white/10 bg-[#0a110a]/50"
+                }`}
+            >
               {plan.popular && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
-                  <div className="bg-[#00fa92] text-[#030604] text-[14px] font-bold leading-[17px] font-['Inter'] px-[22px] py-[6px] rounded-[16px] shadow-[0px_0px_23px_#00fa9279]">
-                    MOST POPULAR
-                  </div>
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#00FA92] text-[#0a110a] px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
+                  Most Popular
                 </div>
               )}
-              
-              <div className={`bg-[#ffffff0c] ${plan.popular ? 'border-2 border-[#00fa92] shadow-[0px_0px_20px_#00fa924c]' : 'border border-[#ffffff19]'} rounded-[16px] p-6 lg:p-8 ${plan.popular ? 'transform scale-105' : ''} transition-all duration-300 hover:border-[#00fa924c]`}>
-                <div className="text-center mb-6">
-                  <h3 className="text-[20px] sm:text-[24px] font-bold leading-[24px] sm:leading-[30px] text-white font-['Inter'] mb-4">
-                    {plan.name}
-                  </h3>
-                  <div className="text-[28px] sm:text-[36px] font-black leading-[34px] sm:leading-[44px] text-white font-['Inter']">
-                    {plan.price}
-                  </div>
-                </div>
-                
-                <div className="space-y-3 mb-8">
-                  {plan.features.map((feature, featureIndex) => (
-                    <div key={featureIndex} className="flex items-center gap-3">
-                      <img 
-                        src="/images/img_i_green_a400_24x14.svg" 
-                        alt="" 
-                        className="w-[14px] h-[24px] flex-shrink-0"
-                      />
-                      <span className="text-[14px] sm:text-[16px] font-normal leading-[18px] sm:leading-[20px] text-white font-['Inter']">
-                        {feature}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                
-                {plan.buttonStyle === 'primary' ? (
-                  <button
-                    text={plan.buttonText}
-                    text_font_size="16"
-                    text_font_weight="700"
-                    text_color="#030604"
-                    fill_background_color="#00fa92"
-                    border_border_radius="24px"
-                    padding="12px 34px"
-                    className="w-full"
-                  />
-                ) : (
-                  <button className="w-full px-8 py-3 text-[16px] font-normal text-[#00fa92] border border-[#00fa92] rounded-[24px] hover:bg-[#00fa92] hover:text-[#030604] transition-all duration-200 font-['Inter']">
-                    {plan.buttonText}
-                  </button>
-                )}
+              <h3 className={`text-xl font-medium ${plan.popular ? "text-[#00FA92]" : "text-gray-300"}`}>
+                {plan.name}
+              </h3>
+              <div className="mt-4 flex items-baseline gap-1">
+                <span className="text-4xl font-bold text-white">{plan.price}</span>
+                <span className="text-gray-500">/mo</span>
               </div>
+              <ul className="mt-8 space-y-4 flex-1 mb-8">
+                {plan.features.map((feature, fIdx) => (
+                  <li key={fIdx} className="flex items-center gap-3 text-sm text-gray-400">
+                    <span className="material-symbols-outlined text-[#00FA92] text-lg">check</span>
+                    <span className={plan.popular ? "text-white" : "text-gray-400"}>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                className={`w-full py-3 rounded-lg font-bold transition-all ${plan.popular
+                    ? "bg-[#00FA92] text-[#0a110a] shadow-lg shadow-[#00FA92]/20 hover:bg-white"
+                    : "border border-white/20 text-white hover:bg-white hover:text-black"
+                  }`}
+              >
+                {plan.name === "Enterprise" ? "Contact Sales" : plan.popular ? "Start Free Trial" : "Get Started"}
+              </button>
             </div>
           ))}
         </div>
       </div>
     </section>
-  )
+  );
 }

@@ -141,10 +141,36 @@ function ApplyPageContent() {
   // LOADING UI
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen text-green-400 gap-4">
-        <Loader2 className="animate-spin w-10 h-10" />
-        <div className="text-lg font-semibold">Processing Application...</div>
-        <p className="text-sm text-gray-400">Waiting for N8N to prepare email</p>
+      <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative animate-pulse">
+        <div className="bg-[#0e1614] border border-green-900/30 rounded-xl p-8 shadow-2xl w-full max-w-3xl">
+          <div className="flex flex-col gap-4 mb-8">
+            <div className="h-8 bg-green-500/10 rounded w-2/3"></div>
+            <div className="h-4 bg-gray-800/40 rounded w-1/3"></div>
+          </div>
+
+          <div className="bg-[#0f1d19] border border-green-800/20 rounded-lg p-6 mb-8">
+            <div className="h-6 bg-green-500/5 rounded w-1/2 mb-6"></div>
+            <div className="space-y-4">
+              <div className="h-4 bg-gray-800/30 rounded w-full"></div>
+              <div className="h-4 bg-gray-800/30 rounded w-full"></div>
+              <div className="h-4 bg-gray-800/30 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-800/30 rounded w-5/6"></div>
+            </div>
+          </div>
+
+          <div className="h-14 bg-gray-800/20 rounded-lg w-full flex items-center justify-center gap-3">
+            <div className="w-6 h-6 rounded-full bg-gray-700/50"></div>
+            <div className="h-4 bg-gray-700/50 rounded w-32"></div>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center gap-2">
+            <div className="flex items-center gap-2 text-green-400/60 font-medium">
+              <Loader2 className="animate-spin w-4 h-4" />
+              <span>AI process in progress...</span>
+            </div>
+            <p className="text-xs text-gray-500 italic">Preparing your personalized application draft</p>
+          </div>
+        </div>
       </div>
     );
   }
