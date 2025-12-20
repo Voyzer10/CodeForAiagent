@@ -1,10 +1,14 @@
 // controllers/creditsController.js
 const User = require("../model/User");
+const { resolveUserQuery } = require("../utils/userResolver");
 const { logToFile, logErrorToFile } = require("../logger");
 
 exports.deductCredits = async (userId, jobCount, sessionId = null, sessionName = null, runId = null) => {
   try {
-    const user = await User.findOne({ userId }); // ✅ find by your numeric userId
+    const query = resolveUserQuery(userId);
+    if (!query) throw new Error(`Invalid user identity: ${userId}`);
+
+    const user = await User.findOne(query); // ✅ Secure lookup
     if (!user) throw new Error(`User not found: ${userId}`);
 
     if (!user.plan) user.plan = {};
@@ -82,7 +86,10 @@ exports.deductCredits = async (userId, jobCount, sessionId = null, sessionName =
 
 exports.getCredits = async (userId) => {
   try {
-    const user = await User.findOne({ userId });
+    const query = resolveUserQuery(userId);
+    if (!query) return { success: false, message: "Invalid user ID", credits: 0 };
+
+    const user = await User.findOne(query);
 
     if (!user) {
       return { success: false, message: "User not found", credits: 0 };

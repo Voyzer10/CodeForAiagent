@@ -1,5 +1,6 @@
 const User = require("../model/User");
 const mongoose = require("mongoose");
+const { resolveUserQuery } = require("../utils/userResolver");
 
 const enrichJobsWithCompanyInfo = async (jobs) => {
   if (!jobs || !jobs.length) return [];
@@ -31,14 +32,11 @@ const updateSocialLinks = async (req, res) => {
     const userId = String(req.params.userId || req.user?.id);
     if (!userId) return res.status(400).json({ error: "Missing user ID" });
 
-    // 2️⃣ Determine lookup field dynamically
-    // If your User model has a numeric "userId" field → use that.
-    // Otherwise, use MongoDB's _id field.
-    const query = isNaN(userId)
-      ? { _id: userId }
-      : { userId: Number(userId) };
+    const query = resolveUserQuery(userId);
+    if (!query) return res.status(400).json({ error: "Invalid user identity" });
 
     const user = await User.findOne(query);
+    Riverside:
     if (!user) return res.status(404).json({ error: "User not found" });
 
     // 3️⃣ Extract socials from body
@@ -92,10 +90,10 @@ const updateClientData = async (req, res) => {
 // 🟢 Get user's custom categories
 const getUserCategories = async (req, res) => {
   try {
-    const userId = Number(req.params.userId) || req.user?.id;
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(req.params.userId || req.user?.id);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     res.json({ categories: user.customCategories || [] });
@@ -111,10 +109,11 @@ const addUserCategory = async (req, res) => {
     const userId = req.user?.id;
     const { category } = req.body;
 
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(userId);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
     if (!category) return res.status(400).json({ error: "Category required" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     user.customCategories = user.customCategories || [];
@@ -138,10 +137,10 @@ const addUserCategory = async (req, res) => {
 // 🟢 Get all saved searches
 const getSavedSearches = async (req, res) => {
   try {
-    const userId = Number(req.params.userId) || req.user?.id;
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(req.params.userId || req.user?.id);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const savedSearches = user.savedSearches || [];
@@ -167,10 +166,11 @@ const saveSearch = async (req, res) => {
     const userId = req.user?.id;
     const { name, jobs, runId, sessionId } = req.body;
 
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(userId);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
     if (!name) return res.status(400).json({ error: "Search name required" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const newSearch = { name, jobs, runId: runId || sessionId, createdAt: new Date() };
@@ -191,12 +191,12 @@ const saveSearch = async (req, res) => {
 // 🟢 Delete a saved search
 const deleteSavedSearch = async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const query = resolveUserQuery(req.user?.id);
     const { name } = req.params;
 
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     user.savedSearches = (user.savedSearches || []).filter(
@@ -217,10 +217,11 @@ const renameSession = async (req, res) => {
     const userId = req.user?.id;
     const { sessionId, newName } = req.body;
 
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(userId);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
     if (!sessionId || !newName) return res.status(400).json({ error: "Session ID and new name required" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     if (user.plan && user.plan.history) {
@@ -246,10 +247,11 @@ const renameSavedSearch = async (req, res) => {
     const { name } = req.params; // Old name
     const { newName } = req.body;
 
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(userId);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
     if (!newName) return res.status(400).json({ error: "New name required" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const search = (user.savedSearches || []).find((s) => s.name === name);
@@ -271,14 +273,15 @@ const toggleSavedJob = async (req, res) => {
     const userId = req.user?.id;
     const { job } = req.body;
 
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(userId);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
     if (!job) return res.status(400).json({ error: "Job object required" });
 
     // Use jobid/id as unique identifier
     const jobUUID = job.jobid || job.jobId || job.id || job._id;
     if (!jobUUID) return res.status(400).json({ error: "Job ID missing" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     user.savedJobs = user.savedJobs || [];
@@ -304,10 +307,10 @@ const toggleSavedJob = async (req, res) => {
 // 🟢 Get all saved jobs
 const getSavedJobs = async (req, res) => {
   try {
-    const userId = Number(req.params.userId) || req.user?.id;
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    const query = resolveUserQuery(req.params.userId || req.user?.id);
+    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
 
-    const user = await User.findOne({ userId });
+    const user = await User.findOne(query);
     if (!user) return res.status(404).json({ error: "User not found" });
 
     const savedJobs = user.savedJobs || [];
@@ -335,9 +338,8 @@ const updatePreferences = async (req, res) => {
       updateData.preferredLocations = preferredLocations.slice(0, 6);
     }
 
-    const query = isNaN(userId)
-      ? { _id: userId }
-      : { userId: Number(userId) };
+    const query = resolveUserQuery(userId);
+    if (!query) return res.status(400).json({ error: "Invalid user identity" });
 
     const updatedUser = await User.findOneAndUpdate(
       query,

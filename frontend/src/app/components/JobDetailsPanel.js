@@ -45,9 +45,9 @@ function extractSections(html = "") {
     if (typeof html !== 'string') return { responsibilities: [], requirements: [], preferred: [], skills: [] };
 
     const text = html
-        .replace(/<br\s*\/?>/gi, "\n") // replace <br> with newlines
-        .replace(/<[^>]+>/g, "")       // remove other tags
-        .toLowerCase(); // keep lower case for keyword matching
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]+>/g, "")
+        .toLowerCase();
 
     const sections = {
         responsibilities: [],
@@ -56,29 +56,7 @@ function extractSections(html = "") {
         skills: []
     };
 
-    const lines = text
-        .split("\n")
-        .map(l => l.trim())
-        .filter(l => l.length > 15); // filter out short lines
-
-    let currentSection = null;
-
-    for (const line of lines) {
-        for (const [section, keywords] of Object.entries(SECTION_KEYWORDS)) {
-            if (keywords.some(k => line.includes(k))) {
-                currentSection = section;
-                break;
-            }
-        }
-
-        // Push original line content (maybe capitalised in future, but clean for now)
-        // Actually we lowercased the whole text above, which ruins display.
-        // Better strategy: Use the regex to find match indices in the *original* text? 
-        // Or just dont lowercase the whole text at start.
-        // Let's fix the logic: Don't lowercase 'text' variable for display.
-    }
-
-    // RE-IMPLEMENTATION TO PRESERVE CASE
+    // RE-IMPLEMENTATION TO PRESERVE CASE FOR DISPLAY BUT MATCH LOWERCASE
     const cleanText = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "");
     const cleanLines = cleanText.split("\n").map(l => l.trim()).filter(l => l.length > 15);
 
@@ -102,7 +80,7 @@ function extractSections(html = "") {
 }
 
 /* ---------------- MAIN COMPONENT ---------------- */
-const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onToggleSave }) => {
+const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onToggleSave, applying, isUserLoading }) => {
     // Hooks must be called unconditionally
     const descriptionHtml = job?.descriptionHtml || job?.DescriptionText || job?.description || "";
 
@@ -136,6 +114,7 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                         <div className="flex items-center gap-2 text-green-400 text-sm">
                             <div className="w-6 h-6 rounded bg-white/10 overflow-hidden flex items-center justify-center">
                                 {job.company?.logo ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
                                     <img
                                         src={job.company.logo}
                                         alt={job.company?.name || company}
@@ -218,9 +197,22 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                 <section className="flex flex-wrap gap-4 items-center justify-between p-5 rounded-xl bg-green-900/10 border border-green-800/30">
                     <button
                         onClick={() => onApply?.(job)}
-                        className="px-6 py-2.5 bg-green-600 hover:bg-green-500 text-white font-medium rounded-lg transition"
+                        disabled={applying || isUserLoading}
+                        className={`px-6 py-2.5 font-medium rounded-lg transition flex items-center gap-2 ${applying || isUserLoading
+                                ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
+                                : "bg-green-600 hover:bg-green-500 text-white"
+                            }`}
                     >
-                        Apply Now
+                        {applying ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Processing...
+                            </>
+                        ) : isUserLoading ? (
+                            "Loading..."
+                        ) : (
+                            "Apply Now"
+                        )}
                     </button>
 
                     <div className="flex items-center gap-3">
@@ -318,6 +310,7 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                     <div className="flex items-start gap-4">
                         <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden">
                             {job.company?.logo ? (
+                                /* eslint-disable-next-line @next/next/no-img-element */
                                 <img
                                     src={job.company.logo}
                                     alt={job.company?.name || company}

@@ -9,7 +9,7 @@ import {
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import axios from "axios";
-import { Mail, Loader2 } from "lucide-react";
+import { Mail, Loader2, ArrowLeft } from "lucide-react";
 import Alert from "../components/Alert";
 
 function ApplyPageContent() {
@@ -196,7 +196,14 @@ function ApplyPageContent() {
 
   return (
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative">
-      <div className="bg-[#0e1614] border border-green-900 rounded-xl p-8 shadow-2xl w-full max-w-3xl">
+      <div className="bg-[#0e1614] border border-green-900 rounded-xl p-8 shadow-2xl w-full max-w-3xl relative">
+        <button
+          onClick={() => router.push("/pages/job-found")}
+          className="absolute top-6 left-6 text-gray-400 hover:text-green-400 flex items-center gap-1.5 text-xs font-medium transition-colors group"
+        >
+          <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
+          Back to Jobs
+        </button>
         {alertState && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 w-full max-w-md">
             <Alert
@@ -208,9 +215,11 @@ function ApplyPageContent() {
           </div>
         )}
 
-        <h1 className="text-2xl font-bold text-green-400 mb-4">
-          Your Application Is Ready ✨
-        </h1>
+        <div className="mt-8">
+          <h1 className="text-2xl font-bold text-green-400 mb-4">
+            Your Application Is Ready ✨
+          </h1>
+        </div>
 
         <div className="bg-[#0f1d19] border border-green-800 rounded-lg p-5 mb-6">
           <h2 className="text-xl font-semibold text-green-300 mb-3">

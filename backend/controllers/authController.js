@@ -1,7 +1,8 @@
 // controllers/authController.js
-const User = require('../model/User');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const User = require("../models/user");
+const { resolveUserQuery } = require("../utils/userResolver");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 /**
  * sanitizeObject(input)
@@ -194,11 +195,10 @@ const getCurrentUser = async (req, res) => {
     const requester = req.user;
     console.log('🔹 Fetching current user for id:', requester?.id);
 
-    if (!requester || !requester.id) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
+    const query = resolveUserQuery(requester.id);
+    if (!query) return res.status(401).json({ message: 'Unauthorized: Invalid ID' });
 
-    const user = await User.findOne({ userId: requester.id }).select('-password');
+    const user = await User.findOne(query).select('-password');
 
     if (!user) {
       console.log('❌ User not found with ID:', requester.id);
@@ -226,19 +226,14 @@ const getUsers = async (req, res) => {
   }
 };
 
-/* ============================================================
-   GET USER BY ID
-============================================================ */
 const getUserById = async (req, res) => {
   try {
-    const userId = Number(req.params.id);
-    console.log('🔹 Fetching user by ID:', userId);
-
-    if (Number.isNaN(userId)) {
+    const query = resolveUserQuery(req.params.id);
+    if (!query) {
       return res.status(400).json({ message: 'Invalid user id' });
     }
 
-    const user = await User.findOne({ userId }).select('-password');
+    const user = await User.findOne(query).select('-password');
 
     if (!user) {
       console.log('❌ User not found:', req.params.id);
