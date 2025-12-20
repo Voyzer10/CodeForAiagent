@@ -1,5 +1,5 @@
-// controllers/authController.js
-const User = require("../model/User");  
+// controllers/authController.js - Force Sync
+const User = require("../model/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
