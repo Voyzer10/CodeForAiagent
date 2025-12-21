@@ -13,28 +13,31 @@ jobs:
       - name: 🧩 Checkout repository
         uses: actions/checkout@v4
 
-      # ✅ Secure SSH key handling (no echo, no writing secrets manually)
-      - name: 🔑 Start SSH agent and add key
-        uses: webfactory/ssh-agent@a6f90b1f127823b31d4d4a8d96047790581349bd # v0.9.0
+      - name: 🔑 Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
       - name: 🔐 Add VPS to known_hosts
-        run: |
-          ssh-keyscan -H 2.56.246.163 >> ~/.ssh/known_hosts
+        run: ssh-keyscan -H 2.56.246.163 >> ~/.ssh/known_hosts
 
-      - name: 🚀 Deploy via SSH
+      - name: 🚀 Deploy to VPS
         run: |
           ssh ansh@2.56.246.163 << 'EOF'
+            set -e
+
             cd ~/CodeForAiagent
             git pull origin main
-            
+
+            echo "🔧 Backend deploy"
             cd backend
             npm install --omit=dev
             pm2 restart backend
 
+            echo "🎨 Frontend build"
             cd ../frontend
-            npm install --omit=dev
+            npm install          # ⚠️ IMPORTANT: no --omit=dev
             npm run build
+
             pm2 restart frontend
           EOF
