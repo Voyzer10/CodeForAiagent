@@ -43,10 +43,13 @@ const SECTION_KEYWORDS = {
 function extractSections(html = "") {
     if (typeof html !== 'string') return { responsibilities: [], requirements: [], preferred: [], skills: [] };
 
-    const text = html
-        .replace(/<br\s*\/?>/gi, "\n") // NOSONAR: Safe line-break replacement
-        .replace(/<[^>]+>/g, "") // NOSONAR: Safe tag stripping (negated class)
-        .toLowerCase();
+    // 1. Convert <br> to newlines (safe simple regex)
+    const withNewlines = html.replace(/<br\s*\/?>/gi, "\n");
+
+    // 2. Strip all other tags securely using DOMPurify
+    const cleanText = DOMPurify.sanitize(withNewlines, { ALLOWED_TAGS: [] });
+
+    const text = cleanText.toLowerCase();
 
     const sections = {
         responsibilities: [],
@@ -55,8 +58,7 @@ function extractSections(html = "") {
         skills: []
     };
 
-    // RE-IMPLEMENTATION TO PRESERVE CASE FOR DISPLAY BUT MATCH LOWERCASE
-    const cleanText = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, ""); // NOSONAR: Safe replacements
+    // Split and filter lines
     const cleanLines = cleanText.split("\n").map(l => l.trim()).filter(l => l.length > 15);
 
     let currentSec = null;

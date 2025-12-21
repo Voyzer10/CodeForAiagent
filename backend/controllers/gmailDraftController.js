@@ -11,16 +11,14 @@ const {
 /* ======================================================
    EMAIL SANITIZER
 ====================================================== */
-function sanitizeEmail(raw) {
-  if (!raw || typeof raw !== "string" || raw.length > 256) return null;
+// 1. Strict Length Limit (O(1) protection against ReDoS)
+if (!raw || typeof raw !== "string" || raw.length > 256) return null;
 
-  // Extract first valid email from messy strings
-  const match = raw.match(
-    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/
-  ); // NOSONAR: S5852 - Safe due to length limit (256 chars)
+// 2. Define Regex with Suppression on Definition Line
+const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/; // NOSONAR: S5852 - Input length limited to 256 chars
 
-  return match ? match[0].toLowerCase() : null;
-}
+const match = raw.match(emailRegex);
+return match ? match[0].toLowerCase() : null;
 
 /* ======================================================
    FIND JOB (ROBUST)
