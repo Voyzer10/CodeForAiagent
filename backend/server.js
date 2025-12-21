@@ -1,10 +1,13 @@
+
+const path = require("path");
+require("dotenv").config({ path: path.join(__dirname, ".env") });
+
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const compression = require("compression");
-require("dotenv").config();
 
 const connectDB = require("./config/db");
 require("./logger");
