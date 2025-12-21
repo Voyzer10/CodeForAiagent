@@ -4,6 +4,15 @@ const Job = require("../model/application-tracking");
 const { logToFile } = require("../logger");
 
 router.post("/", async (req, res) => {
+  // 🔒 Secure Webhook: Validation
+  const incomingSecret = req.headers["x-webhook-secret"];
+  const expectedSecret = process.env.WEBHOOK_SECRET;
+
+  if (expectedSecret && incomingSecret !== expectedSecret) {
+    console.warn("⚠️ Unauthorized webhook attempt blocked.");
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
   console.log("📩 [n8nCallback] Raw body:", req.body);
 
   if (!req.body) return res.status(400).json({ message: "Empty body" });

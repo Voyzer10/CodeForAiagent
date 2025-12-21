@@ -34,5 +34,7 @@ JobSchema.index({ UserID: 1, postedAt: -1 });
 JobSchema.index({ sessionId: 1 });
 JobSchema.index({ sessionid: 1 });
 JobSchema.index({ runId: 1 });
+JobSchema.index({ companyId: 1 });
+JobSchema.index({ jobPosterId: 1 });
 
 module.exports = mongoose.models.Job || mongoose.model("Job", JobSchema);

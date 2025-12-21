@@ -8,8 +8,14 @@ const crypto = require("crypto");
    ⚡ ENCRYPTION HELPERS
 =================================================== */
 
-const ENCRYPTION_KEY =
-  process.env.ENCRYPTION_KEY || "00000000000000000000000000000000";
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY) {
+  console.error("❌ CRITICAL: ENCRYPTION_KEY is missing in environment variables.");
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("ENCRYPTION_KEY is required in production");
+  }
+}
 
 // encrypt (AES-256-GCM)
 const encrypt = (text) => {

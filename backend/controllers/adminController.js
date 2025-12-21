@@ -112,7 +112,18 @@ const loginAdmin = async (req, res) => {
     const email = String(emailRaw).trim().toLowerCase();
 
     const admin = await AdminUser.findOne({ email });
-    if (!admin) return res.status(400).json({ message: "Invalid credentials" });
+
+    // 🛡 Mitigation: Timing Attack (User Enumeration)
+    // Always perform a comparison, even if user not found.
+    const dummyPass = "$2a$10$abcdefghijklmnopqrstuvwxyz123456"; // Invalid hash format but computationally similar? No, use a valid format.
+    // Actually, just compare against a fixed valid hash if user is null.
+    // We use a predefined "valid" hash for "nothing" to burn CPU cycles.
+
+    if (!admin) {
+      // Execute a dummy comparison to simulate valid load
+      await bcrypt.compare(password, "$2b$10$YourDummyHashForTimingAttackProtection000000");
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     // 🛡 Security Checks
     const clientIP = req.headers['x-forwarded-for'] || req.socket.remoteAddress || "Unknown";

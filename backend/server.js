@@ -47,6 +47,20 @@ const limiter = rateLimit({
 app.use(limiter);
 app.use(compression());
 
+// Strict rate limiter for auth routes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // limit each IP to 20 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: "Too many login attempts, please try again later."
+});
+
+// Apply strict limits to sensitive routes
+app.use("/api/auth", authLimiter);
+app.use("/api/admin/login", authLimiter);
+app.use("/api/admin/register", authLimiter);
+
 /* =====================================================
    🌍 CORS (must be BEFORE routes)
    ===================================================== */

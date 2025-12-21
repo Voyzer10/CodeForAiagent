@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import DOMPurify from "isomorphic-dompurify";
 import {
     MapPin,
     Clock,
@@ -9,9 +10,7 @@ import {
     Building2,
     Globe,
     Users
-} from "lucide-react";
-
-/* ---------------- SECTION KEYWORDS ---------------- */
+} from "lucide-react";/* ---------------- SECTION KEYWORDS ---------------- */
 const SECTION_KEYWORDS = {
     responsibilities: [
         "responsibilities",
@@ -103,6 +102,12 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
     const formattedDate = postedAt ? new Date(postedAt).toLocaleDateString() : "Recently";
     const isActivelyHiring = job.benefits?.includes("Actively Hiring") || job.isActivelyHiring;
     const isApplied = isAppliedProp || job.isApplied;
+
+    // Sanitize with strict config
+    const sanitizedDescription = DOMPurify.sanitize(descriptionHtml, {
+        ALLOWED_TAGS: ['b', 'i', 'em', 'strong', 'a', 'p', 'ul', 'li', 'br', 'span', 'h1', 'h2', 'h3', 'h4', 'div'],
+        ALLOWED_ATTR: ['href', 'target', 'class', 'className']
+    });
 
     return (
         <div className="h-full overflow-y-auto bg-[#0e1513] text-gray-300 no-scrollbar">
@@ -199,8 +204,8 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                         onClick={() => onApply?.(job)}
                         disabled={applying || isUserLoading}
                         className={`px-6 py-2.5 font-medium rounded-lg transition flex items-center gap-2 ${applying || isUserLoading
-                                ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
-                                : "bg-green-600 hover:bg-green-500 text-white"
+                            ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
+                            : "bg-green-600 hover:bg-green-500 text-white"
                             }`}
                     >
                         {applying ? (
@@ -242,7 +247,7 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                             </h2>
                             <div
                                 className="prose prose-invert max-w-none text-sm"
-                                dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+                                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
                             />
                         </div>
 

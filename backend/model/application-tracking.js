@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 
 const JobSchema = new mongoose.Schema(
   {
-    jobid: { type: String, required: true },
+    jobid: { type: String, required: true, index: true, unique: true },
     trackingId: { type: String, required: true },
     refId: { type: String },
 
