@@ -44,8 +44,8 @@ function extractSections(html = "") {
     if (typeof html !== 'string') return { responsibilities: [], requirements: [], preferred: [], skills: [] };
 
     const text = html
-        .replace(/<br\s*\/?>/gi, "\n")
-        .replace(/<[^>]+>/g, "")
+        .replace(/<br\s*\/?>/gi, "\n") // NOSONAR: Safe line-break replacement
+        .replace(/<[^>]+>/g, "") // NOSONAR: Safe tag stripping (negated class)
         .toLowerCase();
 
     const sections = {
@@ -56,7 +56,7 @@ function extractSections(html = "") {
     };
 
     // RE-IMPLEMENTATION TO PRESERVE CASE FOR DISPLAY BUT MATCH LOWERCASE
-    const cleanText = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, "");
+    const cleanText = html.replace(/<br\s*\/?>/gi, "\n").replace(/<[^>]+>/g, ""); // NOSONAR: Safe replacements
     const cleanLines = cleanText.split("\n").map(l => l.trim()).filter(l => l.length > 15);
 
     let currentSec = null;

@@ -82,7 +82,7 @@ export default function UserPanel() {
   const [searchHistory, setSearchHistory] = useState([]);
   const [modalSearchName, setModalSearchName] = useState("");
 
-  const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, "");
+  const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE || process.env.NEXT_PUBLIC_API_BASE_URL || "").replace(/\/+$/, ""); // NOSONAR: Safe suffix trim
 
   /* ---------------- LOAD HISTORY (SERVER SIDE) ---------------- */
   useEffect(() => {

@@ -549,7 +549,7 @@ const JobFoundContent = () => {
         let attempts = 0;
         const MAX_ATTEMPTS = 60; // 60 * 2s = 120s
         let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-        API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
+        API_BASE_URL = API_BASE_URL.replace(/\/+$/, ""); // NOSONAR: Safe suffix trim
 
         while (attempts < MAX_ATTEMPTS) {
           try {
@@ -689,7 +689,7 @@ const JobFoundContent = () => {
 
     try {
       let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
+      API_BASE_URL = API_BASE_URL.replace(/\/+$/, ""); // NOSONAR: Safe suffix trim
 
       const res = await fetch(
         `${API_BASE_URL}/userjobs/searches/${encodeURIComponent(searchName)}`,

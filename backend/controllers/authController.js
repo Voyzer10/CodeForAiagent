@@ -72,8 +72,13 @@ const register = async (req, res) => {
     }
     const email = String(emailRaw).trim().toLowerCase();
 
+    // Limits input length to prevent ReDoS on password regex
+    if (password.length > 128) {
+      return res.status(400).json({ message: 'Password must be under 128 characters' });
+    }
+
     const passwordRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/; // NOSONAR: S5852 - Safe due to input length limit (128 chars)
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'All fields are required' });
