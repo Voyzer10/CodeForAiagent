@@ -9,16 +9,22 @@ const {
 } = require("./googleController");
 
 /* ======================================================
-   EMAIL SANITIZER
+   EMAIL SANITIZER (ReDoS Safe)
 ====================================================== */
-// 1. Strict Length Limit (O(1) protection against ReDoS)
-if (!raw || typeof raw !== "string" || raw.length > 256) return null;
+function sanitizeEmail(raw) {
+  // 1. Strict length & type guard (O(1))
+  if (!raw || typeof raw !== "string" || raw.length > 256) {
+    return null;
+  }
 
-// 2. Define Regex with Suppression on Definition Line
-const emailRegex = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/; // NOSONAR: S5852 - Input length limited to 256 chars
+  // 2. Safe regex (bounded input length)
+  const emailRegex =
+    /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/; // NOSONAR S5852
 
-const match = raw.match(emailRegex);
-return match ? match[0].toLowerCase() : null;
+  const match = raw.match(emailRegex);
+  return match ? match[0].toLowerCase() : null;
+}
+
 
 /* ======================================================
    FIND JOB (ROBUST)
