@@ -1,99 +1,116 @@
 const express = require("express");
 const { progressMap } = require("../model/progressStore");
+const {
+  searchErrorMap,
+  jobErrorMap,
+} = require("../model/errorStore");
 
 const router = express.Router();
 
 /* -------------------------------------------------
-   POST /api/progress/update
-   Called by n8n to update progress
+   Shared Secret Validator
+-------------------------------------------------- */
+function validateSecret(req, res) {
+  const secret = req.headers["x-n8n-secret"];
+
+  if (!secret || secret !== process.env.N8N_SECRET) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  return true;
+}
+
+/* -------------------------------------------------
+   SEARCH PROGRESS (runId)
 -------------------------------------------------- */
 router.post("/update", (req, res) => {
-  try {
-    const secret = req.headers["x-n8n-secret"];
+  if (!validateSecret(req, res)) return;
 
-    // 🔐 Secret validation
-    if (!secret) {
-      console.error("❌ Progress update failed: Missing X-N8N-SECRET");
-      return res.status(401).json({ error: "Missing secret" });
-    }
+  const { runId, progress, message, status } = req.body;
+  if (!runId) return res.status(400).json({ error: "runId missing" });
 
-    if (secret !== process.env.N8N_SECRET) {
-      console.error("❌ Progress update failed: Invalid secret");
-      return res.status(401).json({ error: "Unauthorized" });
-    }
+  progressMap.set(runId, {
+    progress: Number(progress) || 0,
+    message: message || "Working…",
+    status: status || "running",
+    updatedAt: Date.now(),
+  });
 
-    const { runId, progress, message, status } = req.body;
-
-    // 🧪 Validation
-    if (!runId) {
-      console.error("❌ Progress update failed: runId missing", req.body);
-      return res.status(400).json({ error: "runId missing" });
-    }
-
-    // ✅ Store progress
-    progressMap.set(runId, {
-      progress: Number(progress) || 0,
-      message: message || "Working…",
-      status: status || "running",
-      updatedAt: Date.now(),
-    });
-
-    console.log(
-      `📩 Progress updated | runId=${runId} | ${progress}% | ${message}`
-    );
-
-    return res.json({
-      success: true,
-      runId,
-      progress,
-    });
-  } catch (err) {
-    console.error("🔥 Progress update crash:", err);
-    return res.status(500).json({ error: "Internal server error" });
-  }
+  return res.json({ success: true });
 });
 
 /* -------------------------------------------------
-   GET /api/progress/:runId
-   Called by frontend polling
+   🚨 SEARCH ERROR (runId)
+-------------------------------------------------- */
+router.post("/error/search", (req, res) => {
+  if (!validateSecret(req, res)) return;
+
+  const { runId, code, message } = req.body;
+  if (!runId || !message) {
+    return res.status(400).json({ error: "runId & message required" });
+  }
+
+  searchErrorMap.set(runId, {
+    code: code || "SEARCH_FAILED",
+    message,
+    status: "error",
+    createdAt: Date.now(),
+  });
+
+  progressMap.set(runId, {
+    progress: 100,
+    message: "Search failed",
+    status: "error",
+    updatedAt: Date.now(),
+  });
+
+  return res.json({ success: true });
+});
+
+/* -------------------------------------------------
+   🚨 JOB ERROR (jobId)
+-------------------------------------------------- */
+router.post("/error/job", (req, res) => {
+  if (!validateSecret(req, res)) return;
+
+  const { jobId, code, message } = req.body;
+  if (!jobId || !message) {
+    return res.status(400).json({ error: "jobId & message required" });
+  }
+
+  jobErrorMap.set(jobId, {
+    code: code || "JOB_ERROR",
+    message,
+    status: "error",
+    createdAt: Date.now(),
+  });
+
+  return res.json({ success: true });
+});
+
+/* -------------------------------------------------
+   GET SEARCH PROGRESS
 -------------------------------------------------- */
 router.get("/:runId", (req, res) => {
-  try {
-    const { runId } = req.params;
+  const data = progressMap.get(req.params.runId);
+  return res.json(
+    data || { progress: 0, message: "Starting…", status: "running" }
+  );
+});
 
-    if (!runId) {
-      return res.status(400).json({
-        progress: 0,
-        message: "runId missing",
-        status: "error",
-      });
-    }
+/* -------------------------------------------------
+   GET SEARCH ERROR
+-------------------------------------------------- */
+router.get("/error/search/:runId", (req, res) => {
+  const error = searchErrorMap.get(req.params.runId);
+  return res.json(error ? { hasError: true, ...error } : { hasError: false });
+});
 
-    const data = progressMap.get(runId);
-
-    // 🟡 No progress yet (job just started)
-    if (!data) {
-      console.log(`ℹ️ Progress check: no data yet for runId=${runId}`);
-      return res.json({
-        progress: 0,
-        message: "Starting job…",
-        status: "running",
-      });
-    }
-
-    console.log(
-      `📤 Progress fetched | runId=${runId} | ${data.progress}%`
-    );
-
-    return res.json(data);
-  } catch (err) {
-    console.error("🔥 Progress fetch crash:", err);
-    return res.status(500).json({
-      progress: 0,
-      message: "Failed to fetch progress",
-      status: "error",
-    });
-  }
+/* -------------------------------------------------
+   GET JOB ERROR
+-------------------------------------------------- */
+router.get("/error/job/:jobId", (req, res) => {
+  const error = jobErrorMap.get(req.params.jobId);
+  return res.json(error ? { hasError: true, ...error } : { hasError: false });
 });
 
 module.exports = router;

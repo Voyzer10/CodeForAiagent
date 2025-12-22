@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History, AlertCircle } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -51,6 +51,7 @@ const JobListItem = ({
   isSelected,
   isApplied,
   isSaved,
+  error,
   onToggleSave,
   selectedJob,
   setSelectedJob,
@@ -130,6 +131,13 @@ const JobListItem = ({
 
           <div className="text-[13px] font-medium text-gray-400 mb-4 truncate">{job.company?.name || company}</div>
 
+          {error && (
+            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+              <AlertCircle size={16} />
+              <span className="text-xs font-bold">{error}</span>
+            </div>
+          )}
+
           {/* GRID BASED META - AUTO ADAPTIVE */}
           <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
             <div className="flex items-center gap-2 min-w-0">
@@ -206,6 +214,7 @@ const JobFoundContent = () => {
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [jobErrors, setJobErrors] = useState({});
 
   const [selectedJob, setSelectedJob] = useState(null);
   // NOTE: selectedJobs now stores UUIDs (jobid) ΓÇö consistent with n8n & DB
@@ -463,15 +472,27 @@ const JobFoundContent = () => {
 
   // FULL updated applyJobs: always send job.jobid (UUID) to n8n, poll until DB has email_to & email_subject, then redirect
   const applyJobs = async (jobsToApply) => {
-    // 1. Check Gmail Connection FIRST
-    if (!user?.gmailEmail) {
+    // 1. Check Gmail Connection (Strict Guard)
+    let gmailStatus = "not_connected";
+    if (user?.gmailEmail) {
+      if (!user.gmailTokenExpiry) {
+        gmailStatus = "expired";
+      } else {
+        const expiry = new Date(user.gmailTokenExpiry).getTime();
+        const now = Date.now();
+        if (expiry < now) {
+          gmailStatus = "expired";
+        } else {
+          gmailStatus = "active";
+        }
+      }
+    }
+
+    if (!user?.gmailEmail || gmailStatus !== "active") {
       setAlertState({
         severity: "error",
-        message: "Connect Gmail first",
+        message: "Please connect your Gmail account before applying to jobs.",
       });
-      // Allow the alert to be seen briefly, then redirect? 
-      // User asked: "if no then it will say connect Gmail first first and route to profile page"
-      // Immediate redirect might hide the alert, but let's try pushing immediately or with a tiny delay.
       setTimeout(() => {
         router.push("/pages/profile");
       }, 1500);
@@ -482,6 +503,14 @@ const JobFoundContent = () => {
       setAlertState({ severity: "warning", message: "No jobs selected!" });
       return;
     }
+
+    // Clear previous errors for selected jobs
+    const jobIdsToClear = jobsToApply.map(j => j.jobid || j.jobId || j.id || j._id);
+    setJobErrors(prev => {
+      const next = { ...prev };
+      jobIdsToClear.forEach(id => delete next[id]);
+      return next;
+    });
 
     setApplying(true);
     setResponseMessage("Your job is under processing...");
@@ -553,12 +582,32 @@ const JobFoundContent = () => {
 
         while (attempts < MAX_ATTEMPTS) {
           try {
-            const check = await fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobUUID}`, {
-              method: "GET",
-              credentials: "include",
-            });
-            const data = await check.json();
+            // Parallel Polling: Success Check & Error Check
+            const [checkRes, errorRes] = await Promise.all([
+              fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobUUID}`, {
+                method: "GET",
+                credentials: "include",
+              }),
+              fetch(`${API_BASE_URL}/progress/error/job/${lastJobUUID}`, {
+                method: "GET",
+                credentials: "include",
+              })
+            ]);
 
+            // 1. Check for Errors (Fast Fail)
+            const errorJson = await errorRes.json().catch(() => ({}));
+            if (errorJson.hasError && errorJson.code === "EMAIL_NOT_FOUND") {
+              setApplying(false);
+              setResponseMessage("");
+              setJobErrors(prev => ({
+                ...prev,
+                [lastJobUUID]: "Email not found for this job posting"
+              }));
+              return; // Stop applying
+            }
+
+            // 2. Check for Success
+            const data = await checkRes.json().catch(() => ({}));
             if (data.exists && data.job?.email_to && data.job?.email_subject) {
               console.log("≡ƒÄë Email details ready ΓÇö redirectingΓÇª");
               setResponseMessage("Redirecting to applicationΓÇª");
@@ -1082,6 +1131,7 @@ const JobFoundContent = () => {
                       isSelected={selectedJobs.includes(jobUUID)}
                       isApplied={appliedJobIds.has(jobUUID)}
                       isSaved={savedJobIds.has(jobUUID)}
+                      error={jobErrors[jobUUID]}
                       onToggleSave={handleToggleSave}
                       selectedJob={selectedJob}
                       setSelectedJob={setSelectedJob}
