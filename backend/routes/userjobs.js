@@ -8,8 +8,6 @@ const {
 const auth = require("../middleware/authMiddleware");
 const adminAuth = require("../middleware/adminMiddleware");
 const {
-  getUserCategories,
-  addUserCategory,
   getSavedSearches,
   saveSearch,
   deleteSavedSearch,
@@ -27,9 +25,7 @@ router.post("/", auth, createJob);
 // ✅ Get logged-in user’s jobs
 router.get("/", auth, getUserJobs);
 
-// ✅ User categories
-router.get("/categories/:userId", auth, getUserCategories);
-router.post("/categories/:userId", auth, addUserCategory);
+
 
 // ✅ Saved searches
 router.get("/searches", auth, getSavedSearches); // for frontend call

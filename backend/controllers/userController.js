@@ -2,117 +2,145 @@ const User = require("../model/User");
 const mongoose = require("mongoose");
 const { resolveUserQuery } = require("../utils/userResolver");
 
+/* ======================================================
+   Helper: Enrich jobs with company info
+====================================================== */
 const enrichJobsWithCompanyInfo = async (jobs) => {
-  if (!jobs || !jobs.length) return [];
+  if (!Array.isArray(jobs) || jobs.length === 0) return [];
 
-  // 1. Get unique CompanyIDs (supporting both company.CompanyID and CompanyID)
-  const companyIds = [...new Set(jobs.map(j => j.CompanyID || (j.company && j.company.CompanyID)).filter(Boolean))];
+  const companyIds = [
+    ...new Set(
+      jobs
+        .map(j => j.CompanyID || (j.company && j.company.CompanyID))
+        .filter(Boolean)
+    )
+  ];
 
   if (!companyIds.length) return jobs;
 
-  // 2. Fetch from Company-Information collection
-  const companies = await mongoose.connection.db.collection('Company-Information')
+  const companies = await mongoose.connection.db
+    .collection("Company-Information")
     .find({ CompanyID: { $in: companyIds } })
     .toArray();
 
   const companyMap = companies.reduce((acc, c) => {
-    acc[c.CompanyID] = { name: c.Comp_Name, logo: c.logo };
+    acc[c.CompanyID] = {
+      name: c.Comp_Name,
+      logo: c.logo
+    };
     return acc;
   }, {});
 
-  // 3. Re-inject into job objects
   return jobs.map(j => ({
     ...j,
-    company: companyMap[j.CompanyID || (j.company && j.company.CompanyID)] || j.company || null
+    company:
+      companyMap[j.CompanyID || (j.company && j.company.CompanyID)] ||
+      j.company ||
+      null
   }));
 };
+
+/* ======================================================
+   Update social links
+====================================================== */
 const updateSocialLinks = async (req, res) => {
   try {
-    // 1️⃣ Identify user correctly
-    const userId = String(req.params.userId || req.user?.id);
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    const query = resolveUserQuery(userId);
-    if (!query) return res.status(400).json({ error: "Invalid user identity" });
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user identity" });
+    }
 
-    const user = await User.findOne(query);
-    Riverside:
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    // 3️⃣ Extract socials from body
     const { github, linkedin } = req.body;
     const updateData = {};
     if (github !== undefined) updateData.github = github;
     if (linkedin !== undefined) updateData.linkedin = linkedin;
 
-    // 4️⃣ Update
     const updatedUser = await User.findOneAndUpdate(
       query,
       { $set: updateData },
       { new: true, runValidators: true }
     ).select("-password");
 
-    res.status(200).json({
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json({
       success: true,
       message: "Social links updated successfully",
-      user: updatedUser,
+      user: updatedUser
     });
-  } catch (error) {
-    console.error("Update socials error:", error);
-    res.status(500).json({ message: "Server error updating socials" });
+  } catch (err) {
+    console.error("Update socials error:", err);
+    res.status(500).json({ error: "Server error updating socials" });
   }
 };
 
-
-
-// Client ID nad client secret 
+/* ======================================================
+   Update client credentials
+====================================================== */
 const updateClientData = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { clientId, clientSecret } = req.body;
-
-    if (!clientId || !clientSecret)
-      return res.status(400).json({ message: "Both fields required" });
-
-    const user = await User.findByIdAndUpdate(
-      userId,
-      { clientId, clientSecret },
-      { new: true }
-    );
-
-    res.json({ message: "Client data saved", user });
-  } catch (err) {
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
-// * 🟢 Get all saved searches
-//  * GET /api/user/saved-searches/:userId
-//  * GET /api/user/saved-searches/me
-//  */
-const getSavedSearches = async (req, res) => {
-  try {
-    // 🔐 Auth required
     if (!req.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // 🔑 Resolve correct userId
+    const { clientId, clientSecret } = req.body;
+    if (!clientId || !clientSecret) {
+      return res.status(400).json({ error: "Both fields required" });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { clientId, clientSecret },
+      { new: true }
+    ).select("-password");
+
+    res.json({ success: true, message: "Client data saved", user: updatedUser });
+  } catch (err) {
+    console.error("Update client data error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/* ======================================================
+   Get saved searches
+====================================================== */
+const getSavedSearches = async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const rawUserId =
       req.params.userId === "me"
         ? req.user.id
-        : req.params.userId || req.user.id;
+        : req.params.userId ?? req.user.id;
 
     const query = resolveUserQuery(rawUserId);
     if (!query) {
       return res.status(400).json({ error: "Invalid user ID" });
     }
 
-    // 🛡️ Prevent IDOR
-    if (query.userId !== req.user.id) {
+    // 🛡️ IDOR protection (numeric + ObjectId safe)
+    if (
+      query.userId !== undefined &&
+      Number(query.userId) !== Number(req.user.id)
+    ) {
       return res.status(403).json({ error: "Forbidden" });
     }
 
-    // 🔍 Fetch user
+    if (
+      query._id !== undefined &&
+      String(query._id) !== String(req.user._id)
+    ) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
     const user = await User.findOne(query).lean();
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -122,9 +150,8 @@ const getSavedSearches = async (req, res) => {
       ? user.savedSearches
       : [];
 
-    // 🔄 Enrich searches
     const enrichedSearches = await Promise.all(
-      savedSearches.map(async (s) => ({
+      savedSearches.map(async s => ({
         ...s,
         jobs: await enrichJobsWithCompanyInfo(s.jobs || [])
       }))
@@ -137,23 +164,38 @@ const getSavedSearches = async (req, res) => {
   }
 };
 
-
-// 🟢 Save a new search
+/* ======================================================
+   Save a search
+====================================================== */
 const saveSearch = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    const { name, jobs, runId, sessionId } = req.body;
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    const query = resolveUserQuery(userId);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
-    if (!name) return res.status(400).json({ error: "Search name required" });
+    const { name, jobs, runId, sessionId } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "Search name required" });
+    }
+
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
 
     const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    const newSearch = { name, jobs, runId: runId || sessionId, createdAt: new Date() };
+    const newSearch = {
+      name,
+      jobs,
+      runId: runId || sessionId,
+      createdAt: new Date()
+    };
+
     user.savedSearches = user.savedSearches || [];
-
     user.savedSearches.unshift(newSearch);
     user.savedSearches = user.savedSearches.slice(0, 10);
 
@@ -166,19 +208,27 @@ const saveSearch = async (req, res) => {
   }
 };
 
-// 🟢 Delete a saved search
+/* ======================================================
+   Delete saved search
+====================================================== */
 const deleteSavedSearch = async (req, res) => {
   try {
-    const query = resolveUserQuery(req.user?.id);
-    const { name } = req.params;
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
 
     const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
     user.savedSearches = (user.savedSearches || []).filter(
-      (s) => s.name !== name
+      s => s.name !== req.params.name
     );
 
     await user.save();
@@ -189,51 +239,75 @@ const deleteSavedSearch = async (req, res) => {
   }
 };
 
-// 🟢 Rename a session in history
+/* ======================================================
+   Rename session
+====================================================== */
 const renameSession = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    const { sessionId, newName } = req.body;
-
-    const query = resolveUserQuery(userId);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
-    if (!sessionId || !newName) return res.status(400).json({ error: "Session ID and new name required" });
-
-    const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (user.plan && user.plan.history) {
-      const session = user.plan.history.find(h => h.sessionId === sessionId);
-      if (session) {
-        session.sessionName = newName;
-        await user.save();
-        return res.json({ success: true, message: "Session renamed", history: user.plan.history });
-      }
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
-    res.status(404).json({ error: "Session not found" });
+    const { sessionId, newName } = req.body;
+    if (!sessionId || !newName) {
+      return res.status(400).json({ error: "Session ID and new name required" });
+    }
+
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
+
+    const user = await User.findOne(query);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const session = user.plan?.history?.find(h => h.sessionId === sessionId);
+    if (!session) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+
+    session.sessionName = newName;
+    await user.save();
+
+    res.json({ success: true, message: "Session renamed", history: user.plan.history });
   } catch (err) {
     console.error("Error renaming session:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-// 🟢 Rename a saved search
+/* ======================================================
+   Rename saved search
+====================================================== */
 const renameSavedSearch = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    const { name } = req.params; // Old name
-    const { newName } = req.body;
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    const query = resolveUserQuery(userId);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
-    if (!newName) return res.status(400).json({ error: "New name required" });
+    const { newName } = req.body;
+    if (!newName) {
+      return res.status(400).json({ error: "New name required" });
+    }
+
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
 
     const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    const search = (user.savedSearches || []).find((s) => s.name === name);
-    if (!search) return res.status(404).json({ error: "Saved search not found" });
+    const search = (user.savedSearches || []).find(
+      s => s.name === req.params.name
+    );
+    if (!search) {
+      return res.status(404).json({ error: "Saved search not found" });
+    }
 
     search.name = newName;
     await user.save();
@@ -245,55 +319,74 @@ const renameSavedSearch = async (req, res) => {
   }
 };
 
-// 🟢 Toggle a saved job (Add if not exists, remove if exists)
+/* ======================================================
+   Toggle saved job
+====================================================== */
 const toggleSavedJob = async (req, res) => {
   try {
-    const userId = req.user?.id;
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
     const { job } = req.body;
+    if (!job) {
+      return res.status(400).json({ error: "Job object required" });
+    }
 
-    const query = resolveUserQuery(userId);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
-    if (!job) return res.status(400).json({ error: "Job object required" });
-
-    // Use jobid/id as unique identifier
-    const jobUUID = job.jobid || job.jobId || job.id || job._id;
-    if (!jobUUID) return res.status(400).json({ error: "Job ID missing" });
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
 
     const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const jobUUID = job.jobid || job.jobId || job.id || job._id;
+    if (!jobUUID) {
+      return res.status(400).json({ error: "Job ID missing" });
+    }
 
     user.savedJobs = user.savedJobs || [];
-    const index = user.savedJobs.findIndex(sj => (sj.jobid || sj.jobId || sj.id || sj._id) === jobUUID);
+    const index = user.savedJobs.findIndex(
+      sj => (sj.jobid || sj.jobId || sj.id || sj._id) === jobUUID
+    );
 
     if (index === -1) {
-      // Add job
       user.savedJobs.unshift(job);
-      await user.save();
-      res.json({ success: true, message: "Job saved", savedJobs: user.savedJobs });
     } else {
-      // Remove job
       user.savedJobs.splice(index, 1);
-      await user.save();
-      res.json({ success: true, message: "Job removed", savedJobs: user.savedJobs });
     }
+
+    await user.save();
+    res.json({ success: true, savedJobs: user.savedJobs });
   } catch (err) {
     console.error("Error toggling saved job:", err);
     res.status(500).json({ error: "Server error" });
   }
 };
 
-// 🟢 Get all saved jobs
+/* ======================================================
+   Get saved jobs
+====================================================== */
 const getSavedJobs = async (req, res) => {
   try {
-    const query = resolveUserQuery(req.params.userId || req.user?.id);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
 
     const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    const savedJobs = user.savedJobs || [];
-    const enrichedJobs = await enrichJobsWithCompanyInfo(savedJobs);
-
+    const enrichedJobs = await enrichJobsWithCompanyInfo(user.savedJobs || []);
     res.json({ savedJobs: enrichedJobs });
   } catch (err) {
     console.error("Error fetching saved jobs:", err);
@@ -301,23 +394,30 @@ const getSavedJobs = async (req, res) => {
   }
 };
 
-// 🟢 Update user preferences (Job Titles and Locations)
+/* ======================================================
+   Update preferences
+====================================================== */
 const updatePreferences = async (req, res) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(400).json({ error: "Missing user ID" });
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
     const { preferredJobTitles, preferredLocations } = req.body;
     const updateData = {};
 
-    if (preferredJobTitles !== undefined) updateData.preferredJobTitles = preferredJobTitles;
+    if (preferredJobTitles !== undefined) {
+      updateData.preferredJobTitles = preferredJobTitles;
+    }
+
     if (preferredLocations !== undefined) {
-      // Enforce max 6 locations
       updateData.preferredLocations = preferredLocations.slice(0, 6);
     }
 
-    const query = resolveUserQuery(userId);
-    if (!query) return res.status(400).json({ error: "Invalid user identity" });
+    const query = resolveUserQuery(req.user.id);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
 
     const updatedUser = await User.findOneAndUpdate(
       query,
@@ -325,21 +425,25 @@ const updatePreferences = async (req, res) => {
       { new: true, runValidators: true }
     ).select("-password");
 
-    if (!updatedUser) return res.status(404).json({ error: "User not found" });
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    res.status(200).json({
+    res.json({
       success: true,
       message: "Preferences updated successfully",
-      user: updatedUser,
+      user: updatedUser
     });
-  } catch (error) {
-    console.error("Update preferences error:", error);
-    res.status(500).json({ message: "Server error updating preferences" });
+  } catch (err) {
+    console.error("Update preferences error:", err);
+    res.status(500).json({ error: "Server error" });
   }
 };
 
+/* ======================================================
+   Exports
+====================================================== */
 module.exports = {
-
   updateSocialLinks,
   updateClientData,
   getSavedSearches,
@@ -349,7 +453,5 @@ module.exports = {
   renameSavedSearch,
   toggleSavedJob,
   getSavedJobs,
-  updatePreferences,
+  updatePreferences
 };
-
-
