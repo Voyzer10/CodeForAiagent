@@ -85,36 +85,18 @@ const updateClientData = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
-
-/**
- * Resolve user query safely without causing Mongoose CastError
- * @param {string|number|undefined} rawUserId
- * @returns {{ userId: number } | null}
- */
-function resolveUserQuery(rawUserId) {
-  // Numeric ID (number)
-  if (typeof rawUserId === "number") {
-    return { userId: rawUserId };
-  }
-
-  // Numeric ID (string)
-  if (typeof rawUserId === "string" && /^\d+$/.test(rawUserId)) {
-    return { userId: Number(rawUserId) };
-  }
-
-  return null;
-}
-
-
-// 🟢 Get all saved searches
+// * 🟢 Get all saved searches
+//  * GET /api/user/saved-searches/:userId
+//  * GET /api/user/saved-searches/me
+//  */
 const getSavedSearches = async (req, res) => {
   try {
-    // 🔐 Ensure authentication
+    // 🔐 Auth required
     if (!req.user?.id) {
       return res.status(401).json({ error: "Unauthorized" });
     }
 
-    // 🔑 Resolve userId correctly
+    // 🔑 Resolve correct userId
     const rawUserId =
       req.params.userId === "me"
         ? req.user.id
@@ -125,7 +107,7 @@ const getSavedSearches = async (req, res) => {
       return res.status(400).json({ error: "Invalid user ID" });
     }
 
-    // 🛡️ Prevent IDOR (users accessing other users' data)
+    // 🛡️ Prevent IDOR
     if (query.userId !== req.user.id) {
       return res.status(403).json({ error: "Forbidden" });
     }
@@ -140,7 +122,7 @@ const getSavedSearches = async (req, res) => {
       ? user.savedSearches
       : [];
 
-    // 🔄 Enrich jobs with company info
+    // 🔄 Enrich searches
     const enrichedSearches = await Promise.all(
       savedSearches.map(async (s) => ({
         ...s,
