@@ -86,69 +86,64 @@ const updateClientData = async (req, res) => {
   }
 };
 
-
-// 🟢 Get user's custom categories
-const getUserCategories = async (req, res) => {
-  try {
-    const query = resolveUserQuery(req.params.userId || req.user?.id);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
-
-    const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    res.json({ categories: user.customCategories || [] });
-  } catch (err) {
-    console.error("Error fetching categories:", err);
-    res.status(500).json({ error: "Server error" });
+/**
+ * Resolve user query safely without causing Mongoose CastError
+ * @param {string|number|undefined} rawUserId
+ * @returns {{ userId: number } | null}
+ */
+function resolveUserQuery(rawUserId) {
+  // Numeric ID (number)
+  if (typeof rawUserId === "number") {
+    return { userId: rawUserId };
   }
-};
 
-// 🟢 Add a new custom category
-const addUserCategory = async (req, res) => {
-  try {
-    const userId = req.user?.id;
-    const { category } = req.body;
-
-    const query = resolveUserQuery(userId);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
-    if (!category) return res.status(400).json({ error: "Category required" });
-
-    const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    user.customCategories = user.customCategories || [];
-
-    const exists = user.customCategories.some(
-      (c) => c.toLowerCase() === category.toLowerCase()
-    );
-
-    if (!exists) {
-      user.customCategories.push(category);
-      await user.save();
-    }
-
-    res.json({ success: true, categories: user.customCategories });
-  } catch (err) {
-    console.error("Error adding category:", err);
-    res.status(500).json({ error: "Server error" });
+  // Numeric ID (string)
+  if (typeof rawUserId === "string" && /^\d+$/.test(rawUserId)) {
+    return { userId: Number(rawUserId) };
   }
-};
+
+  return null;
+}
+
 
 // 🟢 Get all saved searches
 const getSavedSearches = async (req, res) => {
   try {
-    const query = resolveUserQuery(req.params.userId || req.user?.id);
-    if (!query) return res.status(400).json({ error: "Missing or invalid user ID" });
+    // 🔐 Ensure authentication
+    if (!req.user?.id) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
 
-    const user = await User.findOne(query);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    // 🔑 Resolve userId correctly
+    const rawUserId =
+      req.params.userId === "me"
+        ? req.user.id
+        : req.params.userId || req.user.id;
 
-    const savedSearches = user.savedSearches || [];
+    const query = resolveUserQuery(rawUserId);
+    if (!query) {
+      return res.status(400).json({ error: "Invalid user ID" });
+    }
 
-    // Enriched with company info
+    // 🛡️ Prevent IDOR (users accessing other users' data)
+    if (query.userId !== req.user.id) {
+      return res.status(403).json({ error: "Forbidden" });
+    }
+
+    // 🔍 Fetch user
+    const user = await User.findOne(query).lean();
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const savedSearches = Array.isArray(user.savedSearches)
+      ? user.savedSearches
+      : [];
+
+    // 🔄 Enrich jobs with company info
     const enrichedSearches = await Promise.all(
       savedSearches.map(async (s) => ({
-        ...s.toObject ? s.toObject() : s, // handle both Mongoose subdocs and plain objects
+        ...s,
         jobs: await enrichJobsWithCompanyInfo(s.jobs || [])
       }))
     );
@@ -159,6 +154,7 @@ const getSavedSearches = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
 
 // 🟢 Save a new search
 const saveSearch = async (req, res) => {
@@ -364,8 +360,6 @@ module.exports = {
 
   updateSocialLinks,
   updateClientData,
-  getUserCategories,
-  addUserCategory,
   getSavedSearches,
   saveSearch,
   deleteSavedSearch,
