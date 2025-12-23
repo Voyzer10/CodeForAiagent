@@ -906,10 +906,10 @@ const JobFoundContent = () => {
         </div>
       )}
 
-      {/* MAIN CONTENT CONTAINER - STABLE WIDTH, NO SIDBAR SHIFT */}
-      <div className="flex-1 h-screen overflow-y-auto no-scrollbar relative bg-[#0b0f0e] w-full max-w-[1600px] mx-auto">
-        {/* CLEAR NAVBAR WITH COMPACT TOP MARGIN TO MATCH SKELETON */}
-        <div className="flex flex-col gap-5 mt-20 lg:mt-24 px-4 lg:px-8">
+      {/* MAIN CONTENT CONTAINER - STABLE FULL WIDTH, NO SIDEBAR SHIFT */}
+      <div className="flex-1 h-screen overflow-y-auto no-scrollbar relative bg-[#0b0f0e] w-full">
+        {/* MATCHING SKELETON GRID - NO SIDE GUTTERS ON LAPTOP */}
+        <div className="flex flex-col gap-5 mt-20 lg:mt-24 px-4 lg:px-6">
           <div className="flex flex-col gap-4 w-full">
             <h2 className="text-xl font-bold text-green-400 flex items-center gap-3">
               <History size={20} className="text-green-500" />
@@ -1054,8 +1054,8 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        {/* COMPACT APPLY BUTTONS ROW - MATCHING SKELETON SCALE */}
-        <div className="flex flex-row gap-3 mt-4 mb-5 h-10 px-4 lg:px-8">
+        {/* FLEX-1 APPLY BUTTONS ROW - MATCHING SKELETON SCALE 1:1 */}
+        <div className="flex flex-row gap-3 mt-2 mb-5 h-10 px-0">
           <button
             onClick={() =>
               applyJobs(
@@ -1113,13 +1113,13 @@ const JobFoundContent = () => {
         )}
 
         {/* MAIN DATA SECTION - RESTORED 1:2 PROPORTIONS (1/3 LIST, 2/3 DETAIL) */}
-        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800/30 rounded-xl overflow-hidden mt-1 mx-4 lg:mx-8 bg-[#0b0f0e] shadow-2xl mb-12">
+        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800/10 rounded-xl overflow-hidden mt-1 bg-[#0b0f0e] shadow-2xl mb-12">
           {/* Job List Sidebar */}
           <div
             ref={parentRef}
-            className={`w-full lg:w-1/3 m-0 overflow-y-auto custom-scrollbar
+            className={`w-full lg:w-1/3 m-0 overflow-y-auto no-scrollbar
              h-[60vh] lg:h-full
-             border-b lg:border-b-0 lg:border-r border-green-800/20 bg-[#0b0f0e]
+             border-b lg:border-b-0 lg:border-r border-green-800/10 bg-[#0b0f0e]
              ${selectedJob ? 'hidden lg:block' : 'block'}`}
           >
             {filteredJobs.length === 0 ? (
