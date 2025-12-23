@@ -1055,7 +1055,7 @@ const JobFoundContent = () => {
         )}
 
         {/* COMPACT APPLY BUTTONS ROW - MATCHING SKELETON SCALE */}
-        <div className="flex flex-row gap-3 mt-2 lg:mt-4 mb-4 h-10 px-4 lg:px-8">
+        <div className="flex flex-row gap-3 mt-4 mb-5 h-10 px-4 lg:px-8">
           <button
             onClick={() =>
               applyJobs(
@@ -1113,7 +1113,7 @@ const JobFoundContent = () => {
         )}
 
         {/* MAIN DATA SECTION - RESTORED 1:2 PROPORTIONS (1/3 LIST, 2/3 DETAIL) */}
-        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800/30 rounded-xl overflow-hidden mt-2 mx-4 lg:mx-8 bg-[#0b0f0e] shadow-2xl mb-12">
+        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800/30 rounded-xl overflow-hidden mt-1 mx-4 lg:mx-8 bg-[#0b0f0e] shadow-2xl mb-12">
           {/* Job List Sidebar */}
           <div
             ref={parentRef}
@@ -1224,27 +1224,52 @@ const JobFound = () => {
   return (
     <Suspense fallback={
       <div className="flex min-h-screen bg-[#0b0f0e] text-white">
+        {/* Navbar Skeleton */}
         <div className="h-20 w-full fixed top-0 border-b border-white/10 bg-[#121e12]/60 z-50"></div>
-        <div className="w-64 h-full fixed left-0 border-r border-white/10 bg-[#0a0f0d] hidden md:block pt-20"></div>
 
-        <div className="flex-1 p-6 md:p-10 mt-14 ml-0 md:ml-64 animate-pulse">
-          <div className="flex flex-col gap-6">
-            <div className="flex gap-4">
-              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
-              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
-              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+        {/* Sidebar Space (Hidden on mobile) */}
+        <div className="w-72 h-full fixed left-0 border-r border-white/10 bg-[#07110f] hidden lg:block z-50 -translate-x-full"></div>
+
+        {/* Main Content Area */}
+        <div className="flex-1 h-screen overflow-hidden relative bg-[#0b0f0e] w-full max-w-[1600px] mx-auto animate-pulse">
+          <div className="flex flex-col gap-5 mt-20 lg:mt-24 px-4 lg:px-8">
+            {/* Header / Saved Searches Title */}
+            <div className="flex flex-col gap-4">
+              <div className="h-7 w-48 bg-green-500/10 rounded-md"></div>
+              {/* Pills Row */}
+              <div className="flex gap-3 overflow-hidden">
+                <div className="h-10 w-28 bg-gray-800/40 rounded-full flex-shrink-0"></div>
+                <div className="h-10 w-32 bg-gray-800/40 rounded-full flex-shrink-0"></div>
+                <div className="h-10 w-24 bg-gray-800/40 rounded-full flex-shrink-0"></div>
+                <div className="h-10 w-32 bg-gray-800/40 rounded-full flex-shrink-0"></div>
+              </div>
             </div>
 
-            <div className="flex flex-col lg:flex-row border border-green-800/30 rounded-lg overflow-hidden h-[75vh]">
-              <div className="w-full lg:w-1/3 border-r border-green-800/30 bg-[#0b0f0e] p-4 space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="h-32 bg-gray-800/20 rounded-xl"></div>
+            {/* Apply Buttons Row */}
+            <div className="flex gap-3 h-10 mt-4 mb-5">
+              <div className="flex-1 bg-gray-800/20 border border-gray-700/20 rounded-lg"></div>
+              <div className="flex-1 bg-gray-800/20 border border-gray-700/20 rounded-lg"></div>
+            </div>
+
+            {/* Main Data Split Box */}
+            <div className="flex flex-col lg:flex-row border border-green-800/20 rounded-xl overflow-hidden h-[75vh] mx-0">
+              {/* Job List Component */}
+              <div className="w-full lg:w-1/3 border-r border-green-800/10 bg-[#0b0f0e] h-full overflow-hidden">
+                {[1, 2, 3].map((i) => (
+                  <JobListItemSkeleton key={i} />
                 ))}
               </div>
-              <div className="hidden lg:block lg:w-2/3 bg-[#0e1513] p-8 space-y-8">
-                <div className="h-12 bg-gray-800/40 rounded w-1/2"></div>
+              {/* Job Detail Area */}
+              <div className="hidden lg:block lg:w-2/3 bg-[#0a0f0d] p-10 space-y-8">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-4 w-2/3">
+                    <div className="h-4 bg-gray-800/40 rounded w-1/4"></div>
+                    <div className="h-12 bg-gray-800/40 rounded w-full"></div>
+                  </div>
+                  <div className="h-10 w-32 bg-gray-800/40 rounded-lg"></div>
+                </div>
                 <div className="grid grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-800/30 rounded-xl"></div>)}
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-gray-800/20 rounded-xl"></div>)}
                 </div>
                 <div className="h-64 bg-gray-800/10 rounded-2xl"></div>
               </div>
