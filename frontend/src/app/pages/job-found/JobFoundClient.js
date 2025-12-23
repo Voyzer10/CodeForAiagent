@@ -1158,10 +1158,12 @@ const JobFoundContent = () => {
           </div>
 
 
-          {/* Job Details Main Area */}
-          <div className={`w-full md:flex-1 lg:w-2/3 h-[50vh] md:h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/20 relative
-            ${selectedJob ? 'block fixed inset-0 z-50 md:static md:block' : 'hidden md:block'}`}>
-            <div className="absolute inset-0 overflow-hidden flex flex-col bg-[#0b0f0e]">
+          {/* Job Details Main Area - Stays in flex flow on desktop, overlay on mobile */}
+          <div className={`w-full md:flex-1 lg:w-2/3 h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/20 relative
+            ${selectedJob
+              ? 'block fixed inset-0 z-[60] md:static md:z-0'
+              : 'hidden md:block'}`}>
+            <div className="absolute inset-0 overflow-hidden flex flex-col bg-[#0b0f0e] md:relative md:h-full">
 
               {/* Mobile Back Button (Visible on screens smaller than md) */}
               <div className="md:hidden p-4 border-b border-green-800/30 flex items-center bg-[#0b0f0e]">
