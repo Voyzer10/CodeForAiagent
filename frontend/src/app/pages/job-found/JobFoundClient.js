@@ -906,15 +906,15 @@ const JobFoundContent = () => {
         </div>
       )}
 
-      <div className={`flex-1 p-3 md:p-8 relative bg-[#0b0f0e] w-full max-w-[100vw] overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''}`}>
+      <div className="flex-1 p-3 lg:p-6 lg:pb-0 relative bg-[#0b0f0e] w-full max-w-[1600px] mx-auto overflow-hidden">
         {/* CLEAR NAVBAR WITH ADEQUATE TOP MARGIN */}
-        <div className="flex justify-between items-start flex-wrap gap-4 mt-16 md:mt-24">
-          <div className="flex flex-col gap-5 w-full">
-            <h2 className="text-xl font-bold text-green-400 px-3 flex items-center gap-3">
+        <div className="flex justify-between items-start flex-wrap gap-4 mt-16 lg:mt-20 px-2 lg:px-4">
+          <div className="flex flex-col gap-4 w-full">
+            <h2 className="text-xl font-bold text-green-400 px-1 flex items-center gap-3">
               <History size={20} className="text-green-500" />
               Saved Searches
             </h2>
-            <div className="flex overflow-x-auto md:flex-wrap gap-3 px-3 pb-6 no-scrollbar scroll-smooth w-full">
+            <div className="flex overflow-x-auto md:flex-wrap gap-3 px-1 pb-4 no-scrollbar scroll-smooth w-full">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
                 className={`px-6 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg whitespace-nowrap ${activeSearch === "All Jobs"
@@ -1053,7 +1053,7 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-row gap-3 mt-6 md:mt-8 mb-6 h-12">
+        <div className="flex flex-row gap-3 mt-4 mb-4 h-10 px-2 lg:px-4">
           <button
             onClick={() =>
               applyJobs(
@@ -1065,11 +1065,11 @@ const JobFoundContent = () => {
               )
             }
             disabled={!selectedJobs.length || applying}
-            className={`flex-1 h-full px-2 sm:px-4 text-[11px] sm:text-sm rounded-md border transition flex items-center justify-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
+            className={`flex-1 h-full px-4 text-xs lg:text-sm rounded-md border transition flex items-center justify-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
               }`}
           >
             {applying ? (
-              <Loader2 className="animate-spin" size={16} />
+              <Loader2 className="animate-spin" size={14} />
             ) : (
               <span className="truncate">Apply Now ({selectedJobs.length})</span>
             )}
@@ -1078,10 +1078,10 @@ const JobFoundContent = () => {
           <button
             onClick={() => applyJobs(userJobs)}
             disabled={applying}
-            className="flex-1 h-full px-2 sm:px-4 text-[11px] sm:text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center justify-center gap-2 disabled:bg-gray-800/40 disabled:text-gray-500 disabled:border-gray-700 cursor-pointer disabled:cursor-not-allowed"
+            className="flex-1 h-full px-4 text-xs lg:text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center justify-center gap-2 disabled:bg-gray-800/40 disabled:text-gray-500 disabled:border-gray-700 cursor-pointer disabled:cursor-not-allowed"
           >
             {applying ? (
-              <Loader2 className="animate-spin" size={16} />
+              <Loader2 className="animate-spin" size={14} />
             ) : (
               <span className="truncate">Apply All</span>
             )}
@@ -1110,14 +1110,14 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row md:h-[78vh] border border-green-800/40 rounded-xl overflow-hidden mt-6 bg-[#0b0f0e] shadow-2xl">
+        <div className="flex flex-col lg:flex-row lg:h-[78vh] border border-green-800/40 rounded-xl overflow-hidden mt-1 lg:mt-2 mx-2 lg:mx-4 bg-[#0b0f0e] shadow-2xl">
           {/* Job List Sidebar */}
           <div
             ref={parentRef}
-            className={`w-full md:w-[350px] lg:w-1/3 m-0 overflow-y-auto custom-scrollbar
-             h-[60vh] md:h-full
-             border-b md:border-b-0 md:border-r border-green-800/30 bg-[#0b0f0e]
-             ${selectedJob ? 'hidden md:block' : 'block'}`}
+            className={`w-full lg:w-[480px] m-0 overflow-y-auto custom-scrollbar
+             h-[60vh] lg:h-full
+             border-b lg:border-b-0 lg:border-r border-green-800/20 bg-[#0b0f0e]
+             ${selectedJob ? 'hidden lg:block' : 'block'}`}
           >
             {filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
@@ -1159,11 +1159,11 @@ const JobFoundContent = () => {
 
 
           {/* Job Details Main Area - Stays in flex flow on desktop, overlay on mobile */}
-          <div className={`w-full md:flex-1 lg:w-2/3 h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/20 relative
+          <div className={`w-full lg:flex-1 h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/10 relative
             ${selectedJob
-              ? 'block fixed inset-0 z-[60] md:static md:z-0'
-              : 'hidden md:block'}`}>
-            <div className="absolute inset-0 overflow-hidden flex flex-col bg-[#0b0f0e] md:relative md:h-full">
+              ? 'block fixed inset-0 z-[60] lg:static lg:z-0'
+              : 'hidden lg:block'}`}>
+            <div className="absolute inset-0 overflow-hidden flex flex-col bg-[#0b0f0e] lg:relative lg:h-full">
 
               {/* Mobile Back Button (Visible on screens smaller than md) */}
               <div className="md:hidden p-4 border-b border-green-800/30 flex items-center bg-[#0b0f0e]">
