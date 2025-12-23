@@ -95,24 +95,31 @@ const JobListItem = ({
         onClick={() => setSelectedJob(job)}
       >
         {/* 1. Left: Company Logo */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform overflow-hidden bg-white/5">
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform overflow-hidden bg-white/5 relative">
           {job.company?.logo ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={job.company.logo}
               alt={job.company?.name || company}
               className="w-full h-full object-contain p-1"
-              onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-6 h-6 text-green-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
             />
-          ) : (
+          ) : null}
+          <div
+            style={{ display: job.company?.logo ? 'none' : 'flex' }}
+            className="w-full h-full items-center justify-center"
+          >
             <Building2 size={24} />
-          )}
+          </div>
         </div>
 
         {/* 2. Middle: Content */}
         <div className="flex-1 min-w-0 pr-12 pb-6 text-left">
           <div className="flex flex-wrap items-start gap-2 mb-2">
-            <h3 className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight">
+            <h3 className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight line-clamp-2 break-words">
               {title}
             </h3>
             <div className="flex flex-wrap gap-1.5 shrink-0 pt-0.5">
@@ -328,7 +335,10 @@ const JobFoundContent = () => {
         }
 
         if (jobsData.jobs?.length > 0) {
-          setSelectedJob((prev) => prev || jobsData.jobs[0]);
+          // Only auto-select first job on Desktop to avoid hiding list on mobile
+          if (window.innerWidth >= 1024) {
+            setSelectedJob((prev) => prev || jobsData.jobs[0]);
+          }
         }
 
         const searchesRes = await fetch(`${API_BASE_URL}/userjobs/searches/${userId}`, {
@@ -1110,7 +1120,7 @@ const JobFoundContent = () => {
           <div
             ref={parentRef}
             className={`w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
-             max-h-[calc(100vh-200px)] lg:max-h-full
+             h-[60vh] lg:h-full
              border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]
              ${selectedJob ? 'hidden lg:block' : 'block'}`}
           >
@@ -1154,7 +1164,7 @@ const JobFoundContent = () => {
 
 
           {/* Job Details */}
-          <div className={`w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative
+          <div className={`w-full lg:w-2/3 h-[50vh] lg:h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/30 relative
             ${selectedJob ? 'block fixed inset-0 z-50 lg:static lg:block' : 'hidden lg:block'}`}>
             <div className="absolute inset-0 overflow-hidden flex flex-col bg-[#0b0f0e]">
 
@@ -1179,7 +1189,7 @@ const JobFoundContent = () => {
                   isUserLoading={loading}
                 />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500 bg-[#0e1513]/30 p-12">
+                <div className="h-full flex flex-col items-center justify-center text-gray-500 bg-[#0a0f0d] p-12">
                   <div className="w-full max-w-2xl space-y-10 animate-pulse opacity-20 pointer-events-none">
                     <div className="flex justify-between items-start">
                       <div className="space-y-4 w-2/3">

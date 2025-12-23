@@ -76,7 +76,7 @@ export default function LoginPage() {
       />
 
       {/* Main Login Card */}
-      <div className="w-[448px] text-white">
+      <div className="w-full max-w-[448px] text-white z-10">
         {/* Logo */}
         <div className="flex flex-col items-center mb-6 py-2">
           <div
@@ -98,11 +98,11 @@ export default function LoginPage() {
         </div>
 
         {/* Glass Card */}
-        <div className="rounded-[16px] border border-white/10 bg-white/5 shadow-[0_0_20px_rgba(0,250,146,0.3)] p-[33px]">
+        <div className="rounded-[16px] border border-white/10 bg-white/5 shadow-[0_0_20px_rgba(0,250,146,0.3)] p-6 sm:p-[33px]">
           {/* Welcome */}
           <div className="mb-6 text-center">
-            <div className="text-[24px] font-bold">Welcome Back</div>
-            <div className="mt-2 text-[14px] text-[#9CA3AF]">
+            <div className="text-[20px] sm:text-[24px] font-bold">Welcome Back</div>
+            <div className="mt-2 text-[13px] sm:text-[14px] text-[#9CA3AF]">
               Log in to continue your AI-powered job automation journey
             </div>
           </div>
@@ -172,20 +172,20 @@ export default function LoginPage() {
           </form>
 
           {/* Social Buttons */}
-          <div className="mt-10 grid gap-3">
+          <div className="mt-8 flex flex-col gap-3">
             {/* GOOGLE LOGIN BUTTON */}
             <button
               onClick={handleGoogleConnect}
-              className="h-[54px] w-[350px] max-w-full mx-auto rounded-[12px] border border-white/10 bg-white/10 text-white flex items-center justify-center gap-3 hover:bg-white/20 transition-all"
+              className="h-[52px] sm:h-[54px] w-full max-w-[350px] mx-auto rounded-[12px] border border-white/10 bg-white/10 text-white flex items-center justify-center gap-3 hover:bg-white/20 transition-all font-medium"
             >
-              <FcGoogle size={18} />
-              <span className="text-[16px]">Continue with Google</span>
+              <FcGoogle size={20} />
+              <span className="text-[15px] sm:text-[16px]">Continue with Google</span>
             </button>
 
             {/* LinkedIn Button */}
-            <button className="h-[54px] w-[350px] max-w-full mx-auto rounded-[12px] border border-white/10 bg-white/10 text-white flex items-center justify-center gap-3">
-              <Linkedin size={16} />
-              <span className="text-[16px]">Continue with LinkedIn</span>
+            <button className="h-[52px] sm:h-[54px] w-full max-w-[350px] mx-auto rounded-[12px] border border-white/10 bg-white/10 text-white flex items-center justify-center gap-3 hover:bg-white/20 transition-all font-medium opacity-80 cursor-not-allowed">
+              <Linkedin size={18} className="text-[#0077b5]" />
+              <span className="text-[15px] sm:text-[16px]">Continue with LinkedIn</span>
             </button>
           </div>
         </div>

@@ -140,22 +140,29 @@ export default function SavedJobs() {
                                             className="group bg-[#0e1513] border border-green-800/20 rounded-2xl p-4 sm:p-5 hover:border-green-500/40 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-4 sm:gap-6 shadow-lg shadow-black/20"
                                         >
                                             {/* Company Icon / Logo */}
-                                            <div className="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center text-green-400 flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                                            <div className="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center text-green-400 flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden relative">
                                                 {job.company?.logo ? (
                                                     <img
                                                         src={job.company.logo}
                                                         alt={job.company?.name || company}
                                                         className="w-full h-full object-contain p-1.5"
-                                                        onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-8 h-8 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'flex';
+                                                        }}
                                                     />
-                                                ) : (
+                                                ) : null}
+                                                <div
+                                                    style={{ display: job.company?.logo ? 'none' : 'flex' }}
+                                                    className="w-full h-full items-center justify-center"
+                                                >
                                                     <Building2 size={28} />
-                                                )}
+                                                </div>
                                             </div>
 
                                             {/* Content */}
                                             <div className="flex-1 min-w-0">
-                                                <h3 className="text-lg font-bold text-white group-hover:text-green-400 transition-colors truncate">
+                                                <h3 className="text-lg font-bold text-white group-hover:text-green-400 transition-colors break-words line-clamp-2 pr-4">
                                                     {title}
                                                 </h3>
                                                 <div className="text-green-400 font-medium text-sm mb-3 truncate">{job.company?.name || company}</div>

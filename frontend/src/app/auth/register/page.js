@@ -101,16 +101,16 @@ export default function RegisterPage() {
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00FA92] to-[#00C775] shadow-[0_0_20px_rgba(0,250,146,0.3),0_0_40px_rgba(0,250,146,0.1)]" />
                 <span className="text-white font-semibold text-[20px] leading-[1.4]">LinkedIn AI Scraper</span>
             </div>
-            <div className="w-[448px] bg-[rgba(3,6,4,0.8)] border border-[rgba(0,250,146,0.2)] shadow-2xl rounded-[16px] px-[33px] pt-[33px] pb-10">
+            <div className="w-full max-w-[448px] bg-[rgba(3,6,4,0.8)] border border-[rgba(0,250,146,0.2)] shadow-2xl rounded-[16px] px-6 sm:px-[33px] pt-8 sm:pt-[33px] pb-10 z-10 transition-all duration-300">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00FA92] to-[#00C775] shadow-[0_0_20px_rgba(0,250,146,0.3),0_0_40px_rgba(0,250,146,0.1)]" />
                     <h1 className="text-[20px] leading-[1.4] font-semibold text-white">JobScraper AI</h1>
                 </div>
                 <div className="mt-2 h-1 w-16 bg-gradient-to-r from-transparent via-[#00FA92] to-transparent rounded-full mx-auto" />
 
-                <div className="mt-8 text-center">
-                    <h2 className="text-2xl font-semibold text-white">Create Your AI-Powered Account</h2>
-                    <p className="mt-2 text-sm text-gray-400">Connect your data once — let our agent handle the rest.</p>
+                <div className="mt-8 text-center px-2">
+                    <h2 className="text-xl sm:text-2xl font-semibold text-white">Create Your AI-Powered Account</h2>
+                    <p className="mt-2 text-[13px] sm:text-sm text-gray-400">Connect your data once — let our agent handle the rest.</p>
                 </div>
 
                 <form className="mt-8 space-y-5" onSubmit={handleSubmit}>

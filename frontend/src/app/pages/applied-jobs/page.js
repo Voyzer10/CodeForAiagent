@@ -160,19 +160,26 @@ export default function AppliedJobs() {
                                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                                     <div className="flex-1 w-full">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                            <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                                                 {job.company?.logo ? (
                                                     <img
                                                         src={job.company.logo}
-                                                        alt={job.company?.name}
+                                                        alt={job.company?.name || "Company"}
                                                         className="w-full h-full object-contain p-1"
-                                                        onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-5 h-5 text-green-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'flex';
+                                                        }}
                                                     />
-                                                ) : (
+                                                ) : null}
+                                                <div
+                                                    style={{ display: job.company?.logo ? 'none' : 'flex' }}
+                                                    className="w-full h-full items-center justify-center"
+                                                >
                                                     <Building2 size={20} className="text-green-500/60" />
-                                                )}
+                                                </div>
                                             </div>
-                                            <h3 className="text-lg font-semibold text-white break-words">
+                                            <h3 className="text-lg font-semibold text-white break-words line-clamp-2">
                                                 {job.email_subject || 'Application Draft'}
                                             </h3>
                                         </div>
