@@ -246,7 +246,7 @@ export default function LoginForm() {
                 {/* Sign Up Link */}
                 <div className="mt-6 text-center">
                     <span className="text-[14px] text-[#9CA3AF]">
-                        Don't have an account?{" "}
+                        Don&apos;t have an account?{" "}
                     </span>
                     <button
                         onClick={() => router.push("/auth/register")}

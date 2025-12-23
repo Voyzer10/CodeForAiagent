@@ -906,17 +906,18 @@ const JobFoundContent = () => {
         </div>
       )}
 
-      <div className="flex-1 p-3 md:p-10 relative bg-[#0b0f0e] w-full max-w-[100vw] overflow-hidden">
-        <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
-          <div className="flex flex-col gap-4 w-full">
-            <h2 className="text-lg font-bold text-green-400 px-3 flex items-center gap-2">
-              <History size={18} className="text-green-500" />
+      <div className={`flex-1 p-3 md:p-8 relative bg-[#0b0f0e] w-full max-w-[100vw] overflow-hidden transition-all duration-300 ${sidebarOpen ? 'md:ml-72' : ''}`}>
+        {/* CLEAR NAVBAR WITH ADEQUATE TOP MARGIN */}
+        <div className="flex justify-between items-start flex-wrap gap-4 mt-16 md:mt-24">
+          <div className="flex flex-col gap-5 w-full">
+            <h2 className="text-xl font-bold text-green-400 px-3 flex items-center gap-3">
+              <History size={20} className="text-green-500" />
               Saved Searches
             </h2>
-            <div className="flex overflow-x-auto sm:flex-wrap gap-3 px-3 pb-3 no-scrollbar scroll-smooth w-full">
+            <div className="flex overflow-x-auto md:flex-wrap gap-3 px-3 pb-6 no-scrollbar scroll-smooth w-full">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg ${activeSearch === "All Jobs"
+                className={`px-6 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg whitespace-nowrap ${activeSearch === "All Jobs"
                   ? "bg-[#0e1a16] text-green-400 border-green-500/50 shadow-[0_0_15px_rgba(74,222,128,0.2)] scale-105"
                   : "bg-[#111a17] border-[#1b2b27] text-gray-400 hover:border-green-500/30 hover:bg-[#16211e]"
                   }`}
@@ -978,10 +979,10 @@ const JobFoundContent = () => {
                         <>
                           <button
                             onClick={() => handleSearchSelect(search)}
-                            className="px-5 py-2.5 text-xs font-bold text-left truncate max-w-[200px] flex items-center gap-2"
+                            className="px-5 py-2.5 text-xs font-bold text-left whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] flex items-center gap-2"
                           >
                             {search.name}
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? "bg-green-500/10 text-green-400" : "bg-gray-800 text-gray-500"}`}>
+                            <span className={`flex-shrink-0 px-2.5 py-0.5 rounded-full text-[10px] ${isActive ? "bg-green-500/10 text-green-400" : "bg-gray-800/50 text-gray-500"}`}>
                               {jobCount}
                             </span>
                           </button>
@@ -1109,14 +1110,14 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6 bg-[#0b0f0e]">
-          {/* Job List */}
+        <div className="flex flex-col md:flex-row md:h-[78vh] border border-green-800/40 rounded-xl overflow-hidden mt-6 bg-[#0b0f0e] shadow-2xl">
+          {/* Job List Sidebar */}
           <div
             ref={parentRef}
-            className={`w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
-             h-[60vh] lg:h-full
-             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]
-             ${selectedJob ? 'hidden lg:block' : 'block'}`}
+            className={`w-full md:w-[350px] lg:w-1/3 m-0 overflow-y-auto custom-scrollbar
+             h-[60vh] md:h-full
+             border-b md:border-b-0 md:border-r border-green-800/30 bg-[#0b0f0e]
+             ${selectedJob ? 'hidden md:block' : 'block'}`}
           >
             {filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
@@ -1157,13 +1158,13 @@ const JobFoundContent = () => {
           </div>
 
 
-          {/* Job Details */}
-          <div className={`w-full lg:w-2/3 h-[50vh] lg:h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/30 relative
-            ${selectedJob ? 'block fixed inset-0 z-50 lg:static lg:block' : 'hidden lg:block'}`}>
+          {/* Job Details Main Area */}
+          <div className={`w-full md:flex-1 lg:w-2/3 h-[50vh] md:h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/20 relative
+            ${selectedJob ? 'block fixed inset-0 z-50 md:static md:block' : 'hidden md:block'}`}>
             <div className="absolute inset-0 overflow-hidden flex flex-col bg-[#0b0f0e]">
 
-              {/* Mobile Back Button */}
-              <div className="lg:hidden p-4 border-b border-green-800/30 flex items-center bg-[#0b0f0e]">
+              {/* Mobile Back Button (Visible on screens smaller than md) */}
+              <div className="md:hidden p-4 border-b border-green-800/30 flex items-center bg-[#0b0f0e]">
                 <button
                   onClick={() => setSelectedJob(null)}
                   className="flex items-center gap-2 text-green-400 font-semibold"
