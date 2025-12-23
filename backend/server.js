@@ -59,10 +59,15 @@ const authLimiter = rateLimit({
   message: "Too many login attempts, please try again later."
 });
 
-// Apply strict limits to sensitive routes
-app.use("/api/auth", authLimiter);
+// Apply strict limits to sensitive routes, EXCEPT OAuth callbacks
+// This prevents handshakes from being blocked mid-flow due to rate limits
+app.use("/api/auth/login", authLimiter);
+app.use("/api/auth/register", authLimiter);
 app.use("/api/admin/login", authLimiter);
 app.use("/api/admin/register", authLimiter);
+
+// For standard auth endpoints, let's also be slightly more lenient to avoid accidental blocks
+// The main 'limiter' still applies to all routes including these.
 
 /* =====================================================
    🌍 CORS (must be BEFORE routes)

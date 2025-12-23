@@ -85,7 +85,7 @@ const JobListItem = ({
     >
       <div
         className={`group relative p-4 rounded-xl border transition-all duration-300
-          flex flex-col sm:flex-row items-start gap-4 cursor-pointer
+          flex flex-col sm:flex-row items-start gap-4 cursor-pointer min-h-[150px] sm:min-h-0
           ${isSelected
             ? "bg-green-900/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
             : selectedJob === job
@@ -386,8 +386,8 @@ const JobFoundContent = () => {
   const rowVirtualizer = useVirtualizer({
     count: filteredJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 200,
-    overscan: 8,
+    estimateSize: () => 280, // Even larger to prevent mobile overlap
+    overscan: 12,
   });
 
   // Γ£à Reset selected jobs when search/session changes
@@ -913,7 +913,7 @@ const JobFoundContent = () => {
               <History size={18} className="text-green-500" />
               Saved Searches
             </h2>
-            <div className="flex flex-wrap gap-3 px-3">
+            <div className="flex overflow-x-auto sm:flex-wrap gap-3 px-3 pb-3 no-scrollbar scroll-smooth w-full">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
                 className={`px-5 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg ${activeSearch === "All Jobs"
@@ -1052,7 +1052,7 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3 mt-6 md:mt-8 mb-6">
+        <div className="flex flex-row gap-3 mt-6 md:mt-8 mb-6 h-12">
           <button
             onClick={() =>
               applyJobs(
@@ -1064,31 +1064,25 @@ const JobFoundContent = () => {
               )
             }
             disabled={!selectedJobs.length || applying}
-            className={`w-full sm:w-auto px-4 py-3 sm:py-2 text-sm rounded-md border transition flex items-center justify-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+            className={`flex-1 h-full px-2 sm:px-4 text-[11px] sm:text-sm rounded-md border transition flex items-center justify-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
               }`}
           >
             {applying ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                Processing...
-              </>
+              <Loader2 className="animate-spin" size={16} />
             ) : (
-              `Apply Now (${selectedJobs.length})`
+              <span className="truncate">Apply Now ({selectedJobs.length})</span>
             )}
           </button>
 
           <button
             onClick={() => applyJobs(userJobs)}
             disabled={applying}
-            className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center justify-center gap-2 disabled:bg-gray-700/20 disabled:text-gray-500 disabled:border-gray-600 cursor-pointer disabled:cursor-not-allowed"
+            className="flex-1 h-full px-2 sm:px-4 text-[11px] sm:text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center justify-center gap-2 disabled:bg-gray-800/40 disabled:text-gray-500 disabled:border-gray-700 cursor-pointer disabled:cursor-not-allowed"
           >
             {applying ? (
-              <>
-                <Loader2 className="animate-spin" size={16} />
-                Processing...
-              </>
+              <Loader2 className="animate-spin" size={16} />
             ) : (
-              "Apply All"
+              <span className="truncate">Apply All</span>
             )}
           </button>
         </div>

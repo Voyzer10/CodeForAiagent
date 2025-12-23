@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Mail, Lock, Linkedin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Mail, Lock, Linkedin, AlertCircle } from "lucide-react";
 import { FcGoogle } from "react-icons/fc";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -15,9 +16,47 @@ export default function LoginPage() {
   if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
   while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
+  // Check for OAuth errors from callback
+  useEffect(() => {
+    const errorParam = searchParams?.get("error");
+    if (errorParam) {
+      let userMessage = "";
+
+      switch (errorParam) {
+        case "invalid_grant":
+          userMessage = "Your sign-in session expired. Please try again.";
+          break;
+        case "no_code":
+          userMessage = "Authentication failed. Please try signing in again.";
+          break;
+        case "config_error":
+          userMessage = "Authentication service is temporarily unavailable. Please try again later.";
+          break;
+        case "network_error":
+          userMessage = "We're having trouble connecting. Please check your internet and try again.";
+          break;
+        case "auth_failed":
+          userMessage = "Unable to sign in with Google. Please try again or use email/password.";
+          break;
+        default:
+          userMessage = "Authentication failed. Please try again.";
+      }
+
+      setError(userMessage);
+
+      // Clear error from URL after showing it
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("error");
+        window.history.replaceState({}, "", url.toString());
+      }, 100);
+    }
+  }, [searchParams]);
+
   // NORMAL EMAIL/PASSWORD LOGIN
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null); // Clear previous errors
 
     try {
       const res = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -30,18 +69,27 @@ export default function LoginPage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Login failed");
+        // User-friendly error messages
+        if (data.message?.includes("Invalid credentials")) {
+          setError("Invalid email or password. Please try again.");
+        } else if (data.message?.includes("required")) {
+          setError("Please enter both email and password.");
+        } else {
+          setError(data.message || "Login failed. Please try again.");
+        }
         return;
       }
 
       router.push("/pages/userpanel");
     } catch (err) {
-      setError("Something went wrong. Try again.");
+      console.error("Login error:", err);
+      setError("We're having trouble connecting. Please check your internet and try again.");
     }
   };
 
   // GOOGLE LOGIN START
   const handleGoogleConnect = () => {
+    setError(null); // Clear any existing errors
     window.location.href = `${API_BASE_URL}/auth/login/google`;
   };
 
@@ -99,6 +147,7 @@ export default function LoginPage() {
 
         {/* Glass Card */}
         <div className="rounded-[16px] border border-white/10 bg-white/5 shadow-[0_0_20px_rgba(0,250,146,0.3)] p-6 sm:p-[33px]">
+
           {/* Welcome */}
           <div className="mb-6 text-center">
             <div className="text-[20px] sm:text-[24px] font-bold">Welcome Back</div>
@@ -106,6 +155,24 @@ export default function LoginPage() {
               Log in to continue your AI-powered job automation journey
             </div>
           </div>
+
+          {/* Error Alert */}
+          {error && (
+            <div className="mb-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-red-200 font-medium">{error}</p>
+              </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-300 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          )}
 
           {/* LOGIN FORM */}
           <form className="space-y-[24px]" onSubmit={handleSubmit}>

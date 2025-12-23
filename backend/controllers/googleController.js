@@ -3,6 +3,7 @@ const { google } = require("googleapis");
 const User = require("../model/User");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const AuthEventLogger = require("../utils/authEventLogger");
 
 /* ===================================================
    ⚡ ENCRYPTION HELPERS
@@ -90,12 +91,96 @@ exports.googleLoginRedirect = async (req, res) => {
   }
 };
 
+// Helper: Retry OAuth token exchange with exponential backoff
+async function getTokenWithRetry(oauthClient, code, maxRetries = 3) {
+  let lastError = null;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`🔄 OAuth token exchange attempt ${attempt}/${maxRetries}`);
+      const { tokens } = await oauthClient.getToken(code);
+      console.log("✅ OAuth token exchange successful");
+      return { success: true, tokens };
+    } catch (err) {
+      lastError = err;
+      const errorMsg = (err?.message || "").toLowerCase();
+      const errorCode = err?.code;
+
+      // Classify error types
+      if (errorMsg.includes("invalid_grant")) {
+        console.error(`⚠️ invalid_grant error (attempt ${attempt}):`, {
+          error: err.message,
+          code: errorCode,
+          hint: "OAuth code may be expired, reused, or clock skew issue"
+        });
+
+        // Don't retry invalid_grant - it won't succeed
+        return {
+          success: false,
+          error: "invalid_grant",
+          message: "Authentication code expired or already used. Please try signing in again.",
+          userMessage: "Authentication session expired. Please try again."
+        };
+      }
+
+      if (errorMsg.includes("redirect_uri_mismatch")) {
+        console.error("❌ redirect_uri_mismatch - Configuration error");
+        return {
+          success: false,
+          error: "config_error",
+          message: "OAuth configuration error",
+          userMessage: "Authentication service temporarily unavailable. Please contact support."
+        };
+      }
+
+      // Network or temporary errors - retry with backoff
+      if (attempt < maxRetries) {
+        const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        console.warn(`⏳ Retrying in ${backoffMs}ms due to: ${err.message}`);
+        await new Promise(resolve => setTimeout(resolve, backoffMs));
+      }
+    }
+  }
+
+  // All retries failed
+  console.error("❌ All OAuth token exchange attempts failed:", lastError?.message);
+  return {
+    success: false,
+    error: "network_error",
+    message: lastError?.message || "Unknown error",
+    userMessage: "We're having trouble connecting. Please try again in a moment."
+  };
+}
+
 // Google Login Callback
 exports.googleLoginCallback = async (req, res) => {
+  const startTime = Date.now();
+  let frontend = process.env.FRONTEND_URL;
+  if (frontend.endsWith("/")) {
+    frontend = frontend.slice(0, -1);
+  }
+
   try {
     const code = req.query.code;
 
-    const { tokens } = await loginClient.getToken(code);
+    if (!code) {
+      console.error("❌ No authorization code received");
+      AuthEventLogger.logOAuthFail("google", "/auth/login/google/callback", "no_code", "No authorization code", req);
+      return res.redirect(`${frontend}/auth/login?error=no_code`);
+    }
+
+    // Attempt token exchange with retry logic
+    const result = await getTokenWithRetry(loginClient, code);
+
+    if (!result.success) {
+      // Log OAuth failure
+      const errorType = result.error || "unknown";
+      console.error(`❌ OAuth failed: ${errorType}`);
+      AuthEventLogger.logOAuthFail("google", "/auth/login/google/callback", result.error, result.message, req);
+      return res.redirect(`${frontend}/auth/login?error=${errorType}`);
+    }
+
+    const { tokens } = result;
     loginClient.setCredentials(tokens);
 
     const oauth2 = google.oauth2({ auth: loginClient, version: "v2" });
@@ -114,12 +199,14 @@ exports.googleLoginCallback = async (req, res) => {
         password: crypto.randomBytes(32).toString("hex"),
         googlePicture: picture,
       });
+      console.log(`✅ New user created via Google OAuth: ${email}`);
     } else {
       // Update picture if user already exists
       if (picture && user.googlePicture !== picture) {
         user.googlePicture = picture;
         await user.save();
       }
+      console.log(`✅ Existing user logged in: ${email}`);
     }
 
     const token = jwt.sign(
@@ -128,15 +215,17 @@ exports.googleLoginCallback = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    let frontend = process.env.FRONTEND_URL;
-    if (frontend.endsWith("/")) {
-      frontend = frontend.slice(0, -1);
-    }
+    // Log successful OAuth + login
+    const processingTime = Date.now() - startTime;
+    AuthEventLogger.logOAuthSuccess("google", "/auth/login/google/callback", user.userId, req, processingTime);
+
     return res.redirect(`${frontend}/auth/google?token=${encodeURIComponent(token)}`);
 
   } catch (err) {
-    console.error("❌ Google Login Callback Error:", err);
-    return res.status(500).send("Login Failed");
+    console.error("❌ Google Login Callback Critical Error:", err);
+    AuthEventLogger.logOAuthFail("google", "/auth/login/google/callback", "critical_error", err.message, req);
+    // Redirect with generic error - don't expose internal details
+    return res.redirect(`${frontend}/auth/login?error=auth_failed`);
   }
 };
 
@@ -177,11 +266,29 @@ exports.gmailRedirect = async (req, res) => {
 
 // Gmail OAuth Callback
 exports.gmailCallback = async (req, res) => {
+  let frontend = process.env.FRONTEND_URL;
+  if (frontend.endsWith("/")) {
+    frontend = frontend.slice(0, -1);
+  }
+
   try {
     const code = req.query.code;
     const userId = Number(req.query.state);
 
-    const { tokens } = await gmailClient.getToken(code);
+    if (!code) {
+      console.error("❌ No authorization code in Gmail callback");
+      return res.redirect(`${frontend}/gmail-connected?success=0&error=no_code`);
+    }
+
+    // Use retry logic for Gmail token exchange too
+    const result = await getTokenWithRetry(gmailClient, code);
+
+    if (!result.success) {
+      console.error(`❌ Gmail OAuth failed: ${result.error}`);
+      return res.redirect(`${frontend}/gmail-connected?success=0&error=${result.error}`);
+    }
+
+    const { tokens } = result;
     gmailClient.setCredentials(tokens);
 
     const oauth2 = google.oauth2({ auth: gmailClient, version: "v2" });
@@ -193,11 +300,7 @@ exports.gmailCallback = async (req, res) => {
 
     if (!user) {
       console.error("❌ User not found for userId:", userId);
-      let frontend = process.env.FRONTEND_URL;
-      if (frontend.endsWith("/")) {
-        frontend = frontend.slice(0, -1);
-      }
-      return res.redirect(`${frontend}/gmail-connected?success=0`);
+      return res.redirect(`${frontend}/gmail-connected?success=0&error=user_not_found`);
     }
 
     user.gmailEmail = gmailEmail;
@@ -227,19 +330,12 @@ exports.gmailCallback = async (req, res) => {
 
     await user.save();
 
-    let frontend = process.env.FRONTEND_URL;
-    if (frontend.endsWith("/")) {
-      frontend = frontend.slice(0, -1);
-    }
+    console.log(`✅ Gmail connected successfully for user ${userId}`);
     return res.redirect(`${frontend}/gmail-connected?success=1`);
 
   } catch (err) {
-    console.error("❌ Gmail Callback Error:", err);
-    let frontend = process.env.FRONTEND_URL;
-    if (frontend.endsWith("/")) {
-      frontend = frontend.slice(0, -1);
-    }
-    return res.redirect(`${frontend}/gmail-connected?success=0`);
+    console.error("❌ Gmail Callback Critical Error:", err);
+    return res.redirect(`${frontend}/gmail-connected?success=0&error=critical`);
   }
 };
 

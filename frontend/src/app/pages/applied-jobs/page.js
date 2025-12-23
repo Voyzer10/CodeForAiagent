@@ -160,12 +160,12 @@ export default function AppliedJobs() {
                                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                                     <div className="flex-1 w-full">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <div className="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
+                                            <div className="w-12 h-12 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden flex-shrink-0 relative">
                                                 {job.company?.logo ? (
                                                     <img
                                                         src={job.company.logo}
                                                         alt={job.company?.name || "Company"}
-                                                        className="w-full h-full object-contain p-1"
+                                                        className="w-full h-full object-contain p-1.5"
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
                                                             e.target.nextSibling.style.display = 'flex';
@@ -176,7 +176,7 @@ export default function AppliedJobs() {
                                                     style={{ display: job.company?.logo ? 'none' : 'flex' }}
                                                     className="w-full h-full items-center justify-center"
                                                 >
-                                                    <Building2 size={20} className="text-green-500/60" />
+                                                    <Building2 size={24} className="text-green-500/60" />
                                                 </div>
                                             </div>
                                             <h3 className="text-lg font-semibold text-white break-words line-clamp-2">
@@ -184,7 +184,7 @@ export default function AppliedJobs() {
                                             </h3>
                                         </div>
                                         {job.company?.name && (
-                                            <div className="text-[#00fa92] text-sm font-medium mb-3 ml-12 -mt-1">{job.company.name}</div>
+                                            <div className="text-[#00fa92] text-sm font-medium mb-3 pl-14 -mt-1">{job.company.name}</div>
                                         )}
 
                                         {/* Recipient Email */}

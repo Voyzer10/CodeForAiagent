@@ -3,6 +3,7 @@ const User = require("../model/User");
 const bcrypt = require("bcryptjs");
 const { resolveUserQuery } = require("../utils/userResolver");
 const jwt = require("jsonwebtoken");
+const AuthEventLogger = require("../utils/authEventLogger");
 
 /**
  * sanitizeObject(input)
@@ -129,12 +130,14 @@ const register = async (req, res) => {
    LOGIN USER
 ============================================================ */
 const login = async (req, res) => {
+  const startTime = Date.now();
   try {
     const safeBody = sanitizeObject(req.body || {});
     const password = typeof safeBody.password === 'string' ? safeBody.password : '';
     const emailRaw = safeBody.email;
 
     if (typeof emailRaw !== 'string' || emailRaw.length > 254) {
+      AuthEventLogger.logLoginFail('Invalid email format', req);
       return res.status(400).json({ message: 'Invalid email' });
     }
     const email = String(emailRaw).trim().toLowerCase();
@@ -142,22 +145,26 @@ const login = async (req, res) => {
     console.log('🔹 Login attempt for:', email);
 
     if (!email || !password) {
+      AuthEventLogger.logLoginFail('Email and password required', req);
       return res.status(400).json({ message: 'Email and password required' });
     }
 
     if (!isValidEmail(email)) {
+      AuthEventLogger.logLoginFail('Invalid email format', req);
       return res.status(400).json({ message: 'Invalid email format' });
     }
 
     const user = await User.findOne({ email });
     if (!user) {
       console.log('❌ User not found:', email);
+      AuthEventLogger.logLoginFail('User not found', req);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       console.log('❌ Invalid password attempt for:', email);
+      AuthEventLogger.logLoginFail('Invalid password', req);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
@@ -177,6 +184,10 @@ const login = async (req, res) => {
       maxAge: 4 * 60 * 60 * 1000,
     });
 
+    // Log successful login
+    const processingTime = Date.now() - startTime;
+    AuthEventLogger.logLoginSuccess(user.userId ?? user._id, req, processingTime);
+
     return res.json({
       message: 'Login successful',
       user: {
@@ -188,6 +199,7 @@ const login = async (req, res) => {
     });
   } catch (err) {
     console.error('❌ Login error:', err);
+    AuthEventLogger.logLoginFail(`Server error: ${err.message}`, req);
     return res.status(500).json({ message: 'Server error' });
   }
 };
