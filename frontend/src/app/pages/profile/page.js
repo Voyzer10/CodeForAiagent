@@ -283,12 +283,20 @@ export default function Profile() {
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} onSelectSearch={() => { }} />
 
-      <main className="max-w-[1240px] mx-auto px-6 pt-24 pb-16 transition-all duration-300">
+      {/* Mobile Sidebar Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={toggleSidebar}
+        />
+      )}
+
+      <main className="max-w-[1240px] mx-auto px-4 sm:px-6 pt-24 pb-16 transition-all duration-300">
 
         {/* --- PAGE HEADER --- */}
         <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
               Profile Dashboard
             </h1>
             <p className="text-gray-500 mt-2 font-medium">Manage your account settings and preferences</p>
@@ -315,20 +323,20 @@ export default function Profile() {
           <div className="lg:col-span-8 space-y-8">
 
             {/* 1. User Summary Card */}
-            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-2xl relative overflow-hidden group">
+            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-2xl relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-green-500/5 blur-3xl -mr-16 -mt-16 group-hover:bg-green-500/10 transition-all duration-700"></div>
 
               <div className="flex flex-col md:flex-row items-center md:items-start gap-8 relative">
                 {/* Avatar Section */}
                 <div className="relative group/avatar">
-                  <div className="w-28 h-28 rounded-3xl overflow-hidden border-2 border-green-500/20 bg-[#070c0b] shadow-xl relative">
+                  <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-3xl overflow-hidden border-2 border-green-500/20 bg-[#070c0b] shadow-xl relative">
                     {user.googlePicture ? (
                       <Image
                         src={user.googlePicture}
-                        width={112}
-                        height={112}
+                        width={80}
+                        height={80}
                         alt="Profile"
-                        className="object-cover group-hover/avatar:scale-110 transition-transform duration-500"
+                        className="w-20 h-20 sm:w-28 sm:h-28 object-cover group-hover/avatar:scale-110 transition-transform duration-500"
                         unoptimized
                       />
                     ) : (
@@ -358,8 +366,8 @@ export default function Profile() {
                         <button onClick={() => setEditingName(false)} className="p-2 bg-red-500/10 text-red-400 rounded-lg"><X size={18} /></button>
                       </div>
                     ) : (
-                      <div className="flex items-center justify-center md:justify-start gap-3">
-                        <h2 className="text-3xl font-bold text-white tracking-tight">{user.name}</h2>
+                      <div className="flex flex-col sm:flex-row items-center justify-center md:justify-start gap-3">
+                        <h2 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{user.name}</h2>
                         <button onClick={() => setEditingName(true)} className="text-gray-600 hover:text-green-400 p-1 transition-colors">
                           <Pencil size={18} />
                         </button>
@@ -389,7 +397,7 @@ export default function Profile() {
             </div>
 
             {/* 2. Gmail Section */}
-            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
+            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-xl">
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h3 className="text-lg font-bold text-white">Gmail Integration</h3>
@@ -435,7 +443,7 @@ export default function Profile() {
             {/* 3. Social & Resume Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Social Profiles */}
-              <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
+              <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-xl">
                 <h3 className="text-lg font-bold text-white mb-6">Social Profiles</h3>
                 <div className="space-y-6">
                   {["github", "linkedin"].map((platform) => (
@@ -471,7 +479,7 @@ export default function Profile() {
               </div>
 
               {/* Resume Section */}
-              <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
+              <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-xl">
                 <h3 className="text-lg font-bold text-white mb-6">Resume Asset</h3>
                 <div className="bg-black/20 rounded-2xl p-6 border border-white/5 flex flex-col items-center text-center">
                   <div className="w-16 h-16 rounded-2xl bg-green-500/10 flex items-center justify-center text-green-400 mb-4 shadow-inner">
@@ -494,7 +502,7 @@ export default function Profile() {
             </div>
 
             {/* 4. Preferences Section */}
-            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
+            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-xl">
               <h3 className="text-lg font-bold text-white mb-6">Job Application Preferences</h3>
               <div className="space-y-8">
                 {/* Job Titles */}
@@ -583,7 +591,7 @@ export default function Profile() {
           <div className="lg:col-span-4 space-y-8">
 
             {/* Account Summary */}
-            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
+            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-xl">
               <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Account Summary</h3>
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -605,7 +613,7 @@ export default function Profile() {
             </div>
 
             {/* Security Card */}
-            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
+            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-xl">
               <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6 border-b border-white/5 pb-4">Security</h3>
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
@@ -622,7 +630,7 @@ export default function Profile() {
             </div>
 
             {/* Help Card */}
-            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-8 shadow-xl">
+            <div className="bg-[#0e1614] border border-white/5 rounded-3xl p-4 sm:p-8 shadow-xl">
               <div className="flex items-center gap-3 text-white mb-2">
                 <div className="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center text-gray-400">
                   <Info size={16} />

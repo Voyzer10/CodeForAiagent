@@ -113,10 +113,10 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
 
     return (
         <div className="h-full overflow-y-auto bg-[#0e1513] text-gray-300 no-scrollbar">
-            <div className="max-w-5xl mx-auto p-6 md:p-8 space-y-10">
+            <div className="max-w-5xl mx-auto p-4 md:p-8 space-y-6 md:space-y-10">
 
                 {/* ================= HEADER (REFINED) ================= */}
-                <header className="space-y-6 border-b border-green-800/30 pb-10">
+                <header className="space-y-6 border-b border-green-800/30 pb-6 md:pb-10">
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-2 text-green-400 text-sm">
                             <div className="w-6 h-6 rounded bg-white/10 overflow-hidden flex items-center justify-center">
@@ -151,7 +151,7 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
 
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-3xl md:text-5xl font-bold text-white leading-tight">
+                            <h1 className="text-2xl md:text-5xl font-bold text-white leading-tight">
                                 {title}
                             </h1>
                         </div>
@@ -201,13 +201,13 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                 </header>
 
                 {/* ================= ACTION BAR ================= */}
-                <section className="flex flex-wrap gap-4 items-center justify-between p-5 rounded-xl bg-green-900/10 border border-green-800/30">
+                <section className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 sm:p-5 rounded-xl bg-green-900/10 border border-green-800/30">
                     <button
                         onClick={() => onApply?.(job)}
                         disabled={applying || isUserLoading}
-                        className={`px-6 py-2.5 font-medium rounded-lg transition flex items-center gap-2 ${applying || isUserLoading
+                        className={`w-full sm:w-auto px-6 py-3 sm:py-2.5 font-bold sm:font-medium rounded-lg transition flex items-center justify-center gap-2 ${applying || isUserLoading
                             ? "bg-gray-700/50 text-gray-400 cursor-not-allowed border border-gray-600"
-                            : "bg-green-600 hover:bg-green-500 text-white"
+                            : "bg-green-600 hover:bg-green-500 text-white shadow-lg shadow-green-600/20"
                             }`}
                     >
                         {applying ? (
@@ -222,15 +222,15 @@ const JobDetailsPanel = ({ job, onApply, isApplied: isAppliedProp, isSaved, onTo
                         )}
                     </button>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center sm:justify-end gap-3 w-full sm:w-auto">
                         <button
                             onClick={() => onToggleSave(job)}
-                            className={`p-2 rounded-lg transition-all flex items-center gap-2 text-sm font-medium ${isSaved ? 'bg-green-500/10 text-green-400' : 'bg-gray-800/50 text-gray-400 hover:text-green-400 hover:bg-green-500/5'}`}
+                            className={`flex-1 sm:flex-none p-2.5 sm:p-2 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-medium ${isSaved ? 'bg-green-500/10 text-green-400' : 'bg-gray-800/50 text-gray-400 hover:text-green-400 hover:bg-green-500/5'}`}
                         >
                             <Bookmark size={18} fill={isSaved ? "currentColor" : "none"} />
-                            {isSaved ? "Saved" : "Save this job"}
+                            {isSaved ? "Saved" : "Save job"}
                         </button>
-                        <button className="p-2 rounded-lg border border-green-800/50">
+                        <button className="p-2.5 sm:p-2 rounded-lg border border-green-800/50 text-gray-400">
                             <MoreHorizontal size={18} />
                         </button>
                     </div>

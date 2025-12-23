@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History, AlertCircle, ArrowLeft } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -85,7 +85,7 @@ const JobListItem = ({
     >
       <div
         className={`group relative p-4 rounded-xl border transition-all duration-300
-          flex flex-row items-start gap-4 cursor-pointer
+          flex flex-col sm:flex-row items-start gap-4 cursor-pointer
           ${isSelected
             ? "bg-green-900/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
             : selectedJob === job
@@ -879,6 +879,14 @@ const JobFoundContent = () => {
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} recentSearches={recentSearches} onSelectSearch={handleSearchSelect} />
 
+      {/* Mobile Sidebar Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={toggleSidebar}
+        />
+      )}
+
       {/* ALERT CONTAINER */}
       {alertState && (
         <div className="fixed top-20 right-5 z-50 w-full max-w-md">
@@ -888,7 +896,7 @@ const JobFoundContent = () => {
         </div>
       )}
 
-      <div className="flex-1 p-6 md:p-10 relative bg-[#0b0f0e]">
+      <div className="flex-1 p-3 md:p-10 relative bg-[#0b0f0e] w-full max-w-[100vw] overflow-hidden">
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
           <div className="flex flex-col gap-4 w-full">
             <h2 className="text-lg font-bold text-green-400 px-3 flex items-center gap-2">
@@ -1034,7 +1042,7 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex gap-3 mt-6 md:mt-8 mb-6">
+        <div className="flex flex-col sm:flex-row gap-3 mt-6 md:mt-8 mb-6">
           <button
             onClick={() =>
               applyJobs(
@@ -1046,7 +1054,7 @@ const JobFoundContent = () => {
               )
             }
             disabled={!selectedJobs.length || applying}
-            className={`px-3 py-2 text-sm rounded-md border transition flex items-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
+            className={`w-full sm:w-auto px-4 py-3 sm:py-2 text-sm rounded-md border transition flex items-center justify-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-700/20 border-gray-600 text-gray-500 cursor-not-allowed"
               }`}
           >
             {applying ? (
@@ -1062,7 +1070,7 @@ const JobFoundContent = () => {
           <button
             onClick={() => applyJobs(userJobs)}
             disabled={applying}
-            className="px-3 py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center gap-2 disabled:bg-gray-700/20 disabled:text-gray-500 disabled:border-gray-600 cursor-pointer disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-4 py-3 sm:py-2 text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center justify-center gap-2 disabled:bg-gray-700/20 disabled:text-gray-500 disabled:border-gray-600 cursor-pointer disabled:cursor-not-allowed"
           >
             {applying ? (
               <>
@@ -1101,9 +1109,10 @@ const JobFoundContent = () => {
           {/* Job List */}
           <div
             ref={parentRef}
-            className="w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
-             max-h-[40vh] lg:max-h-full
-             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]"
+            className={`w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
+             max-h-[calc(100vh-200px)] lg:max-h-full
+             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]
+             ${selectedJob ? 'hidden lg:block' : 'block'}`}
           >
             {filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
@@ -1145,9 +1154,20 @@ const JobFoundContent = () => {
 
 
           {/* Job Details */}
-          {/* Job Details */}
-          <div className="hidden lg:block w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative">
-            <div className="absolute inset-0 overflow-hidden">
+          <div className={`w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative
+            ${selectedJob ? 'block fixed inset-0 z-50 lg:static lg:block' : 'hidden lg:block'}`}>
+            <div className="absolute inset-0 overflow-hidden flex flex-col bg-[#0b0f0e]">
+
+              {/* Mobile Back Button */}
+              <div className="lg:hidden p-4 border-b border-green-800/30 flex items-center bg-[#0b0f0e]">
+                <button
+                  onClick={() => setSelectedJob(null)}
+                  className="flex items-center gap-2 text-green-400 font-semibold"
+                >
+                  <ArrowLeft size={20} />
+                  Back to Jobs
+                </button>
+              </div>
               {selectedJob ? (
                 <JobDetailsPanel
                   job={selectedJob}

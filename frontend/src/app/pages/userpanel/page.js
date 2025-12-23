@@ -297,6 +297,14 @@ export default function UserPanel() {
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} />
 
+      {/* Mobile Sidebar Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={toggleSidebar}
+        />
+      )}
+
       {alertState && (
         <div className="fixed top-24 z-50 w-full max-w-lg px-4">
           <Alert severity={alertState.severity} onClose={() => setAlertState(null)}>
@@ -306,25 +314,25 @@ export default function UserPanel() {
       )}
 
       {/* Header text */}
-      <div className="text-center mt-24 mb-10">
-        <h1 className="text-4xl font-extrabold text-white mb-4 tracking-tight">
+      <div className="text-center mt-20 sm:mt-24 mb-6 sm:mb-10 px-2">
+        <h1 className="text-2xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
           Smarter Job Search <span className="text-green-500">Starts Here</span>
         </h1>
-        <p className="text-gray-400 max-w-xl mx-auto text-lg">
+        <p className="text-gray-400 max-w-xl mx-auto text-sm sm:text-lg">
           Connect your profiles and let our AI agents handle the heavy lifting of finding your next career move.
         </p>
       </div>
 
-      <div className="w-full max-w-2xl space-y-10">
+      <div className="w-full max-w-2xl space-y-6 sm:space-y-10">
         {/* Main Form Card */}
-        <div className="bg-[#1F2937]/40 backdrop-blur-md border border-[#2d3b4d] rounded-2xl shadow-2xl p-8 relative overflow-hidden">
+        <div className="bg-[#1F2937]/40 backdrop-blur-md border border-[#2d3b4d] rounded-2xl shadow-2xl p-4 sm:p-8 relative overflow-hidden">
           {/* Subtle decorative glow */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-green-500/5 blur-[80px] rounded-full"></div>
 
           <form onSubmit={handleSubmit} className="relative z-10 flex flex-col gap-6">
             {/* Job Title & Recommendations */}
             <div className="space-y-3">
-              <label className="text-gray-400 text-base font-medium flex items-center gap-2">
+              <label className="text-gray-400 text-sm sm:text-base font-medium flex items-center gap-2">
                 <Briefcase size={14} className="text-green-500" />
                 Job Title
               </label>
@@ -373,7 +381,7 @@ export default function UserPanel() {
             {/* Social Links - Stacked */}
             <div className="flex flex-col gap-6">
               <div className="space-y-3">
-                <label className="text-gray-400 text-base font-medium flex items-center gap-2">
+                <label className="text-gray-400 text-sm sm:text-base font-medium flex items-center gap-2">
                   <LinkedInSVG className="text-[#4ADE80]" />
                   LinkedIn URL
                 </label>
@@ -390,7 +398,7 @@ export default function UserPanel() {
               </div>
 
               <div className="space-y-3">
-                <label className="text-gray-400 text-base font-medium flex items-center gap-2">
+                <label className="text-gray-400 text-sm sm:text-base font-medium flex items-center gap-2">
                   <GithubSVG className="text-[#4ADE80]" />
                   GitHub URL
                 </label>
@@ -406,9 +414,8 @@ export default function UserPanel() {
               </div>
             </div>
 
-            {/* Count */}
             <div className="space-y-3">
-              <label className="text-gray-400 text-base font-medium">Number of Jobs to Fetch</label>
+              <label className="text-gray-400 text-sm sm:text-base font-medium">Number of Jobs to Fetch</label>
               <div className="flex items-center gap-4">
                 <input
                   type="number"
@@ -450,7 +457,7 @@ export default function UserPanel() {
 
         {/* Progress Display Panel */}
         {(loading || jobFinished) && (
-          <div className="bg-[#1F2937]/40 backdrop-blur-md border border-[#2d3b4d] rounded-2xl p-10 shadow-2xl animate-in fade-in slide-in-from-top-6 duration-700">
+          <div className="bg-[#1F2937]/40 backdrop-blur-md border border-[#2d3b4d] rounded-2xl p-6 sm:p-10 shadow-2xl animate-in fade-in slide-in-from-top-6 duration-700">
             {!jobFinished ? (
               <div className="flex flex-col items-center text-center space-y-8">
                 <div className="relative w-32 h-32">
@@ -509,8 +516,8 @@ export default function UserPanel() {
                 </div>
 
                 <div className="space-y-3">
-                  <h2 className="text-3xl font-black text-white">Search Completed!</h2>
-                  <p className="text-gray-400 max-w-md mx-auto leading-relaxed text-lg">
+                  <h2 className="text-2xl sm:text-3xl font-black text-white">Search Completed!</h2>
+                  <p className="text-gray-400 max-w-md mx-auto leading-relaxed text-sm sm:text-lg">
                     Your search for <span className="text-green-400 font-bold">“{jobTitle}”</span> in <span className="text-green-400 font-bold">“{location}”</span> has been completed successfully.
                   </p>
                 </div>
@@ -638,7 +645,7 @@ export default function UserPanel() {
 
       {/* Profile Summary Footer */}
       {user && (
-        <div className="mt-16 p-6 bg-[#1F2937]/20 border border-[#2d3b4d] rounded-2xl shadow-xl w-full max-w-2xl flex flex-wrap gap-8 items-center justify-center md:justify-between text-sm filter grayscale hover:grayscale-0 transition-all duration-700 opacity-50 hover:opacity-100">
+        <div className="mt-10 sm:mt-16 p-4 sm:p-6 bg-[#1F2937]/20 border border-[#2d3b4d] rounded-2xl shadow-xl w-full max-w-2xl flex flex-wrap gap-6 sm:gap-8 items-center justify-center md:justify-between text-sm filter grayscale hover:grayscale-0 transition-all duration-700 opacity-50 hover:opacity-100">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center text-black font-bold">
               {user.name?.[0] || 'U'}

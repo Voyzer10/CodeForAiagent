@@ -9,11 +9,17 @@ import {
   Activity,
   Server,
   ShieldCheck,
-  Search
+  Search,
+  Menu,
+  X
 } from "lucide-react";
+import { useState } from "react";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
   const links = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -27,8 +33,16 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
+      {/* Sidebar Backdrop (Mobile) */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-screen w-72 bg-white border-r border-slate-200 shadow-sm z-20">
+      <aside className={`fixed left-0 top-0 h-screen w-72 bg-white border-r border-slate-200 shadow-sm z-40 transition-transform duration-300 ease-in-out ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="px-6 py-6 border-b border-slate-100 flex items-center gap-3">
           <div className="h-8 w-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-lg shadow-md shadow-blue-200">
             A
@@ -49,9 +63,10 @@ export default function AdminLayout({ children }) {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setSidebarOpen(false)}
                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${active
-                    ? "bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  ? "bg-blue-50 text-blue-700 shadow-sm ring-1 ring-blue-100"
+                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
               >
                 <Icon className={`h-5 w-5 ${active ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"}`} />
@@ -71,17 +86,26 @@ export default function AdminLayout({ children }) {
       </aside>
 
       {/* Content area */}
-      <div className="flex-1 ml-72 flex flex-col min-h-screen">
+      <div className="flex-1 lg:ml-72 flex flex-col min-h-screen w-full min-w-0">
         {/* Topbar */}
         <header className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm supports-[backdrop-filter]:bg-white/60">
-          <div className="px-8 py-4 flex items-center justify-between">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2 text-sm text-slate-500 mb-0.5">
-                <span>Admin</span>
-                <span className="text-slate-300">/</span>
-                <span className="text-slate-900 font-medium">
-                  {links.find(l => l.href === pathname)?.label || "Panel"}
-                </span>
+          <div className="px-4 sm:px-8 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleSidebar}
+                className="lg:hidden p-2 -ml-2 rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+                aria-label="Toggle Menu"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-2 text-sm text-slate-500 mb-0.5">
+                  <span>Admin</span>
+                  <span className="text-slate-300">/</span>
+                  <span className="text-slate-900 font-medium">
+                    {links.find(l => l.href === pathname)?.label || "Panel"}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -109,7 +133,7 @@ export default function AdminLayout({ children }) {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 px-8 py-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+        <main className="flex-1 px-4 sm:px-8 py-6 sm:py-8 animate-in fade-in slide-in-from-bottom-2 duration-500 w-full overflow-hidden">
           {children}
         </main>
       </div>

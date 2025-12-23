@@ -104,17 +104,25 @@ export default function AppliedJobs() {
             <UserNavbar onSidebarToggle={toggleSidebar} />
             <Sidebar isOpen={sidebarOpen} onSelectSearch={() => { }} />
 
-            <main className="max-w-[1200px] mx-auto px-6 py-10">
+            {/* Mobile Sidebar Backdrop */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+                    onClick={toggleSidebar}
+                />
+            )}
+
+            <main className="max-w-[1200px] mx-auto px-4 sm:px-6 py-10">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-extrabold text-white mb-2">Applied Jobs</h1>
+                    <h1 className="text-2xl sm:text-4xl font-extrabold text-white mb-2">Applied Jobs</h1>
                     <p className="text-[#9ca3af]">
                         Track all jobs where you&apos;ve created Gmail drafts
                     </p>
                 </div>
 
                 {/* Stats Card */}
-                <div className="mb-6 bg-gradient-to-r from-[#0a2f23] to-[#062217] border border-[#11221b] rounded-xl p-6">
+                <div className="mb-6 bg-gradient-to-r from-[#0a2f23] to-[#062217] border border-[#11221b] rounded-xl p-4 sm:p-6">
                     <div className="flex items-center gap-4">
                         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#00fa92] to-[#4ade80] flex items-center justify-center">
                             <CheckCircle2 className="w-8 h-8 text-[#030604]" />
@@ -147,7 +155,7 @@ export default function AppliedJobs() {
                         {appliedJobs.map((job, index) => (
                             <div
                                 key={job._id || index}
-                                className="bg-[#0b1512] border border-[#11221b] rounded-xl p-6 hover:border-[#00fa92]/30 transition-all duration-300"
+                                className="bg-[#0b1512] border border-[#11221b] rounded-xl p-4 sm:p-6 hover:border-[#00fa92]/30 transition-all duration-300"
                             >
                                 <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                                     <div className="flex-1 w-full">

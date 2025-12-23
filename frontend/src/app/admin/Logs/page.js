@@ -62,7 +62,15 @@ export default function LogsPage() {
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} />
 
-      <div className="flex-1 p-6 md:p-10 relative pt-24">
+      {/* Mobile Sidebar Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={toggleSidebar}
+        />
+      )}
+
+      <div className="flex-1 p-4 md:p-10 relative pt-24 min-w-0">
         <div className="max-w-7xl mx-auto space-y-6">
 
           {/* Header / Controls */}
@@ -78,8 +86,8 @@ export default function LogsPage() {
               <button
                 onClick={() => setView("normal")}
                 className={`px-4 py-2 rounded-md text-sm font-semibold transition-all ${view === "normal"
-                    ? "bg-green-600 text-white shadow-lg"
-                    : "text-gray-400 hover:text-white hover:bg-white/5"
+                  ? "bg-green-600 text-white shadow-lg"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
                   }`}
               >
                 Standard Logs
@@ -87,8 +95,8 @@ export default function LogsPage() {
               <button
                 onClick={() => setView("error")}
                 className={`px-4 py-2 rounded-md text-sm font-semibold transition-all flex items-center gap-2 ${view === "error"
-                    ? "bg-red-600 text-white shadow-lg"
-                    : "text-gray-400 hover:text-red-400 hover:bg-white/5"
+                  ? "bg-red-600 text-white shadow-lg"
+                  : "text-gray-400 hover:text-red-400 hover:bg-white/5"
                   }`}
               >
                 <AlertTriangle size={14} />

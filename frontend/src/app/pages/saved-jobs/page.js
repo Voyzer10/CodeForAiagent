@@ -65,10 +65,19 @@ export default function SavedJobs() {
     return (
         <div className="flex h-screen bg-[#0a0f0d] text-white">
             <Sidebar isOpen={sidebarOpen} />
+
+            {/* Mobile Sidebar Backdrop */}
+            {sidebarOpen && (
+                <div
+                    className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+                    onClick={toggleSidebar}
+                />
+            )}
+
             <div className="flex-1 flex flex-col min-w-0 transition-all duration-300 relative">
                 <UserNavbar onSidebarToggle={toggleSidebar} />
 
-                <main className="flex-1 pt-24 px-6 md:px-10 overflow-auto no-scrollbar pb-10">
+                <main className="flex-1 pt-24 px-4 sm:px-10 overflow-auto no-scrollbar pb-10">
                     <div className="max-w-5xl mx-auto">
                         {/* Header */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
@@ -77,7 +86,7 @@ export default function SavedJobs() {
                                     <ArrowLeft size={16} />
                                     Back to Job Search
                                 </Link>
-                                <h1 className="text-3xl font-bold text-white flex items-center gap-3">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-white flex items-center gap-3">
                                     <Bookmark className="text-green-500" />
                                     Saved Jobs
                                 </h1>
@@ -128,7 +137,7 @@ export default function SavedJobs() {
                                     return (
                                         <div
                                             key={jobUUID}
-                                            className="group bg-[#0e1513] border border-green-800/20 rounded-2xl p-5 hover:border-green-500/40 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-6 shadow-lg shadow-black/20"
+                                            className="group bg-[#0e1513] border border-green-800/20 rounded-2xl p-4 sm:p-5 hover:border-green-500/40 transition-all duration-300 flex flex-col md:flex-row items-start md:items-center gap-4 sm:gap-6 shadow-lg shadow-black/20"
                                         >
                                             {/* Company Icon / Logo */}
                                             <div className="w-14 h-14 bg-green-500/10 border border-green-500/20 rounded-xl flex items-center justify-center text-green-400 flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
