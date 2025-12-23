@@ -906,15 +906,16 @@ const JobFoundContent = () => {
         </div>
       )}
 
-      <div className="flex-1 p-3 lg:p-6 lg:pb-0 relative bg-[#0b0f0e] w-full max-w-[1600px] mx-auto overflow-hidden">
-        {/* CLEAR NAVBAR WITH ADEQUATE TOP MARGIN */}
-        <div className="flex justify-between items-start flex-wrap gap-4 mt-16 lg:mt-20 px-2 lg:px-4">
+      {/* MAIN CONTENT CONTAINER - STABLE WIDTH, NO SIDBAR SHIFT */}
+      <div className="flex-1 h-screen overflow-y-auto no-scrollbar relative bg-[#0b0f0e] w-full max-w-[1600px] mx-auto">
+        {/* CLEAR NAVBAR WITH COMPACT TOP MARGIN TO MATCH SKELETON */}
+        <div className="flex flex-col gap-5 mt-20 lg:mt-24 px-4 lg:px-8">
           <div className="flex flex-col gap-4 w-full">
-            <h2 className="text-xl font-bold text-green-400 px-1 flex items-center gap-3">
+            <h2 className="text-xl font-bold text-green-400 flex items-center gap-3">
               <History size={20} className="text-green-500" />
               Saved Searches
             </h2>
-            <div className="flex overflow-x-auto md:flex-wrap gap-3 px-1 pb-4 no-scrollbar scroll-smooth w-full">
+            <div className="flex overflow-x-auto lg:flex-wrap gap-3 pb-2 no-scrollbar scroll-smooth w-full">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
                 className={`px-6 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg whitespace-nowrap ${activeSearch === "All Jobs"
@@ -1053,7 +1054,8 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-row gap-3 mt-4 mb-4 h-10 px-2 lg:px-4">
+        {/* COMPACT APPLY BUTTONS ROW - MATCHING SKELETON SCALE */}
+        <div className="flex flex-row gap-3 mt-2 lg:mt-4 mb-4 h-10 px-4 lg:px-8">
           <button
             onClick={() =>
               applyJobs(
@@ -1065,7 +1067,7 @@ const JobFoundContent = () => {
               )
             }
             disabled={!selectedJobs.length || applying}
-            className={`flex-1 h-full px-4 text-xs lg:text-sm rounded-md border transition flex items-center justify-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700 text-green-300 hover:bg-green-700/50" : "bg-gray-800/40 border-gray-700 text-gray-500 cursor-not-allowed"
+            className={`flex-1 h-full px-6 text-xs lg:text-sm font-semibold rounded-lg border transition-all duration-300 flex items-center justify-center gap-2 ${selectedJobs.length && !applying ? "bg-green-700/30 border-green-700/50 text-green-300 hover:bg-green-700/50" : "bg-gray-800/40 border-gray-700/30 text-gray-500 cursor-not-allowed"
               }`}
           >
             {applying ? (
@@ -1078,7 +1080,7 @@ const JobFoundContent = () => {
           <button
             onClick={() => applyJobs(userJobs)}
             disabled={applying}
-            className="flex-1 h-full px-4 text-xs lg:text-sm rounded-md bg-green-700/20 border border-green-700 text-green-300 hover:bg-green-700/40 transition flex items-center justify-center gap-2 disabled:bg-gray-800/40 disabled:text-gray-500 disabled:border-gray-700 cursor-pointer disabled:cursor-not-allowed"
+            className="flex-1 h-full px-6 text-xs lg:text-sm font-semibold rounded-lg bg-green-700/20 border border-green-700/50 text-green-300 hover:bg-green-700/40 transition-all duration-300 flex items-center justify-center gap-2 disabled:bg-gray-800/40 disabled:text-gray-500 disabled:border-gray-700/30 cursor-pointer disabled:cursor-not-allowed"
           >
             {applying ? (
               <Loader2 className="animate-spin" size={14} />
@@ -1110,11 +1112,12 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row lg:h-[78vh] border border-green-800/40 rounded-xl overflow-hidden mt-1 lg:mt-2 mx-2 lg:mx-4 bg-[#0b0f0e] shadow-2xl">
+        {/* MAIN DATA SECTION - RESTORED 1:2 PROPORTIONS (1/3 LIST, 2/3 DETAIL) */}
+        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800/30 rounded-xl overflow-hidden mt-2 mx-4 lg:mx-8 bg-[#0b0f0e] shadow-2xl mb-12">
           {/* Job List Sidebar */}
           <div
             ref={parentRef}
-            className={`w-full lg:w-[480px] m-0 overflow-y-auto custom-scrollbar
+            className={`w-full lg:w-1/3 m-0 overflow-y-auto custom-scrollbar
              h-[60vh] lg:h-full
              border-b lg:border-b-0 lg:border-r border-green-800/20 bg-[#0b0f0e]
              ${selectedJob ? 'hidden lg:block' : 'block'}`}
@@ -1158,8 +1161,8 @@ const JobFoundContent = () => {
           </div>
 
 
-          {/* Job Details Main Area - Stays in flex flow on desktop, overlay on mobile */}
-          <div className={`w-full lg:flex-1 h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/10 relative
+          {/* Job Details Main Area - Restored 2/3 width for visual parity with skeleton */}
+          <div className={`w-full lg:w-2/3 h-full overflow-hidden bg-[#0a0f0d] border-l border-green-800/10 relative
             ${selectedJob
               ? 'block fixed inset-0 z-[60] lg:static lg:z-0'
               : 'hidden lg:block'}`}>
