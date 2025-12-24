@@ -1,12 +1,12 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History, AlertCircle, ArrowLeft } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import Alert from "../../components/Alert"; // Imported Alert
 import JobDetailsPanel from "../../components/JobDetailsPanel";
-import { useVirtualizer } from "@tanstack/react-virtual";
 
 const JobListItemSkeleton = () => (
   <div className="px-4 py-3">
@@ -51,7 +51,6 @@ const JobListItem = ({
   isSelected,
   isApplied,
   isSaved,
-  error,
   onToggleSave,
   selectedJob,
   setSelectedJob,
@@ -84,7 +83,7 @@ const JobListItem = ({
       className="px-4 py-3"
     >
       <div
-        className={`group relative p-4 rounded-xl transition-all duration-300 border
+        className={`group relative p-4 rounded-xl border transition-all duration-300
           flex flex-row items-start gap-4 cursor-pointer
           ${isSelected
             ? "bg-green-900/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
@@ -95,34 +94,24 @@ const JobListItem = ({
         onClick={() => setSelectedJob(job)}
       >
         {/* 1. Left: Company Logo */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform overflow-hidden bg-white/5 relative">
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform overflow-hidden bg-white/5">
           {job.company?.logo ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={job.company.logo}
               alt={job.company?.name || company}
               className="w-full h-full object-contain p-1"
-              onError={(e) => {
-                e.target.style.display = 'none';
-                e.target.nextSibling.style.display = 'flex';
-              }}
+              onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-6 h-6 text-green-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
             />
-          ) : null}
-          <div
-            style={{ display: job.company?.logo ? 'none' : 'flex' }}
-            className="w-full h-full items-center justify-center"
-          >
+          ) : (
             <Building2 size={24} />
-          </div>
+          )}
         </div>
 
         {/* 2. Middle: Content */}
         <div className="flex-1 min-w-0 pr-12 pb-6 text-left">
           <div className="flex flex-wrap items-start gap-2 mb-2">
-            <h3
-              className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight truncate max-w-xs"
-              title={title}
-            >
+            <h3 className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight">
               {title}
             </h3>
             <div className="flex flex-wrap gap-1.5 shrink-0 pt-0.5">
@@ -140,13 +129,6 @@ const JobListItem = ({
           </div>
 
           <div className="text-[13px] font-medium text-gray-400 mb-4 truncate">{job.company?.name || company}</div>
-
-          {error && (
-            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
-              <AlertCircle size={16} />
-              <span className="text-xs font-bold">{error}</span>
-            </div>
-          )}
 
           {/* GRID BASED META - AUTO ADAPTIVE */}
           <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
@@ -224,7 +206,6 @@ const JobFoundContent = () => {
   const [applying, setApplying] = useState(false);
   const [error, setError] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [jobErrors, setJobErrors] = useState({});
 
   const [selectedJob, setSelectedJob] = useState(null);
   // NOTE: selectedJobs now stores UUIDs (jobid) ΓÇö consistent with n8n & DB
@@ -234,7 +215,6 @@ const JobFoundContent = () => {
 
   const [responseMessage, setResponseMessage] = useState(""); // For status box text
   const [alertState, setAlertState] = useState(null);
-  const [showMobileDetails, setShowMobileDetails] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -339,10 +319,7 @@ const JobFoundContent = () => {
         }
 
         if (jobsData.jobs?.length > 0) {
-          // Only auto-select first job on Desktop to avoid hiding list on mobile
-          if (window.innerWidth >= 1024) {
-            setSelectedJob((prev) => prev || jobsData.jobs[0]);
-          }
+          setSelectedJob((prev) => prev || jobsData.jobs[0]);
         }
 
         const searchesRes = await fetch(`${API_BASE_URL}/userjobs/searches/${userId}`, {
@@ -387,12 +364,11 @@ const JobFoundContent = () => {
 
   const parentRef = useRef(null);
 
-  // Restore virtualizer for performance with variable content
   const rowVirtualizer = useVirtualizer({
     count: filteredJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 195, // Set a large enough value for tallest card (adjust as needed)
-    overscan: 12,
+    estimateSize: () => 200,
+    overscan: 8,
   });
 
   // Γ£à Reset selected jobs when search/session changes
@@ -487,27 +463,15 @@ const JobFoundContent = () => {
 
   // FULL updated applyJobs: always send job.jobid (UUID) to n8n, poll until DB has email_to & email_subject, then redirect
   const applyJobs = async (jobsToApply) => {
-    // 1. Check Gmail Connection (Strict Guard)
-    let gmailStatus = "not_connected";
-    if (user?.gmailEmail) {
-      if (!user.gmailTokenExpiry) {
-        gmailStatus = "expired";
-      } else {
-        const expiry = new Date(user.gmailTokenExpiry).getTime();
-        const now = Date.now();
-        if (expiry < now) {
-          gmailStatus = "expired";
-        } else {
-          gmailStatus = "active";
-        }
-      }
-    }
-
-    if (!user?.gmailEmail || gmailStatus !== "active") {
+    // 1. Check Gmail Connection FIRST
+    if (!user?.gmailEmail) {
       setAlertState({
         severity: "error",
-        message: "Please connect your Gmail account before applying to jobs.",
+        message: "Connect Gmail first",
       });
+      // Allow the alert to be seen briefly, then redirect? 
+      // User asked: "if no then it will say connect Gmail first first and route to profile page"
+      // Immediate redirect might hide the alert, but let's try pushing immediately or with a tiny delay.
       setTimeout(() => {
         router.push("/pages/profile");
       }, 1500);
@@ -518,14 +482,6 @@ const JobFoundContent = () => {
       setAlertState({ severity: "warning", message: "No jobs selected!" });
       return;
     }
-
-    // Clear previous errors for selected jobs
-    const jobIdsToClear = jobsToApply.map(j => j.jobid || j.jobId || j.id || j._id);
-    setJobErrors(prev => {
-      const next = { ...prev };
-      jobIdsToClear.forEach(id => delete next[id]);
-      return next;
-    });
 
     setApplying(true);
     setResponseMessage("Your job is under processing...");
@@ -593,36 +549,16 @@ const JobFoundContent = () => {
         let attempts = 0;
         const MAX_ATTEMPTS = 60; // 60 * 2s = 120s
         let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-        while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+        API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
 
         while (attempts < MAX_ATTEMPTS) {
           try {
-            // Parallel Polling: Success Check & Error Check
-            const [checkRes, errorRes] = await Promise.all([
-              fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobUUID}`, {
-                method: "GET",
-                credentials: "include",
-              }),
-              fetch(`${API_BASE_URL}/progress/error/job/${lastJobUUID}`, {
-                method: "GET",
-                credentials: "include",
-              })
-            ]);
+            const check = await fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobUUID}`, {
+              method: "GET",
+              credentials: "include",
+            });
+            const data = await check.json();
 
-            // 1. Check for Errors (Fast Fail)
-            const errorJson = await errorRes.json().catch(() => ({}));
-            if (errorJson.hasError && errorJson.code === "EMAIL_NOT_FOUND") {
-              setApplying(false);
-              setResponseMessage("");
-              setJobErrors(prev => ({
-                ...prev,
-                [lastJobUUID]: "Email not found for this job posting"
-              }));
-              return; // Stop applying
-            }
-
-            // 2. Check for Success
-            const data = await checkRes.json().catch(() => ({}));
             if (data.exists && data.job?.email_to && data.job?.email_subject) {
               console.log("≡ƒÄë Email details ready ΓÇö redirectingΓÇª");
               setResponseMessage("Redirecting to applicationΓÇª");
@@ -676,7 +612,7 @@ const JobFoundContent = () => {
   };
 
   const handleSearchSelect = (search) => {
-    console.log("🔍 Saved search clicked:", search);
+    console.log("≡ƒöì Saved search clicked:", search);
 
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
@@ -685,72 +621,58 @@ const JobFoundContent = () => {
       return;
     }
 
-    // Identify jobs: Priority 1: Use jobs already stored in the search object
-    if (search.jobs && Array.isArray(search.jobs) && search.jobs.length > 0) {
-      console.log("📦 Using jobs stored in search object:", search.jobs.length);
-      const normalized = normalizeJobs(search.jobs);
-      setFilteredJobs(normalized);
-      setActiveSearch(search.name);
-      setCurrentSession(null);
-      return;
-    }
-
-    // Priority 2: Filter userJobs matches by runId/sessionId
-    const searchId = search.runId || search.sessionId || search.sessionid;
-    if (!searchId) {
-      console.warn("⚠️ Saved search has no identifier:", search);
+    // ≡ƒöÑ IMPORTANT FIX
+    if (!search?.runId) {
+      console.warn("ΓÜá∩╕Å Saved search has no runId:", search);
       setFilteredJobs([]);
-      setActiveSearch(search.name || "Unknown Search");
       return;
     }
 
     const matchedJobs = userJobs.filter((job) => {
       return (
-        job.runId === searchId ||
-        job.sessionId === searchId ||
-        job.sessionid === searchId
+        job.runId === search.runId ||
+        job.sessionId === search.runId ||
+        job.sessionid === search.runId
       );
     });
 
-    console.log("⚡ Search ID:", searchId, "| Matched:", matchedJobs.length);
+    console.log("≡ƒåö Search runId:", search.runId);
+    console.log("≡ƒôª Matched jobs count:", matchedJobs.length);
+
     setFilteredJobs(matchedJobs);
     setActiveSearch(search.name);
     setCurrentSession(null);
   };
 
-  const handleSessionSelect = (session) => {
-    console.log("🌊 [handleSessionSelect] Wave clicked:", session);
 
-    const sessionId = session.sessionId || session.runId || session.sessionid;
+
+  const handleSessionSelect = (session) => {
+    console.log("≡ƒòÆ [handleSessionSelect] Called with session:", session);
+
+    const sessionId = session.sessionId;
     const sessionTime = new Date(session.timestamp).getTime();
 
     setCurrentSession(session);
 
-    // Filter by any of the possible session/run identifiers
-    let sessionJobs = userJobs.filter((job) =>
-      job.sessionId === sessionId ||
-      job.sessionid === sessionId ||
-      job.runId === sessionId
-    );
+    let sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
+    console.log(`≡ƒöì Exact ID match for sessionId="${sessionId}": ${sessionJobs.length} jobs`);
 
-    console.log(`🔍 ID match for "${sessionId}": ${sessionJobs.length} jobs`);
-
-    // Time-based fallback if no exact ID matches found
-    if (sessionJobs.length === 0 && !isNaN(sessionTime)) {
-      console.warn("🕒 No exact ID matches. Trying time-based matching...");
+    if (sessionJobs.length === 0) {
+      console.warn("ΓÜá∩╕Å No jobs found by Session ID. Trying time-based matching...");
       sessionJobs = userJobs.filter((job) => {
         const jobTime = new Date(job.postedAt || job.createdAt || job.datePosted).getTime();
         if (isNaN(jobTime)) return false;
 
         const diff = Math.abs(jobTime - sessionTime);
-        return diff < 10 * 60 * 1000; // 10 minute window
+        return diff < 10 * 60 * 1000;
       });
-      console.log(`🕒 Time-match (10min): ${sessionJobs.length} jobs`);
+      console.log(`≡ƒòÉ Time-based match: ${sessionJobs.length} jobs found`);
     }
 
     setFilteredJobs(sessionJobs);
     const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
     setActiveSearch(`Session: ${displayName}`);
+    console.log(`Γ£à Session "${displayName}" selected, showing ${sessionJobs.length} jobs`);
   };
 
   const handleDeleteSearch = async (searchName) => {
@@ -767,7 +689,7 @@ const JobFoundContent = () => {
 
     try {
       let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-      while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+      API_BASE_URL = API_BASE_URL.replace(/\/+$/, "");
 
       const res = await fetch(
         `${API_BASE_URL}/userjobs/searches/${encodeURIComponent(searchName)}`,
@@ -830,14 +752,6 @@ const JobFoundContent = () => {
       setAlertState({ severity: "error", message: err.message });
     }
   };
-
-  // When selectedJob changes on mobile, show details overlay
-  useEffect(() => {
-    if (selectedJob && window.innerWidth < 1024) {
-      setShowMobileDetails(true);
-    }
-  }, [selectedJob]);
-
   if (loading)
     return (
       <div className="flex min-h-screen bg-[#0b0f0e] text-white">
@@ -849,7 +763,7 @@ const JobFoundContent = () => {
             {/* Header Skeletons - Filter Pills */}
             <div className="flex flex-wrap gap-4 items-center">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-10 w-32 bg-gray-800/40 rounded-full flex-shrink-0 animate-pulse"></div>
+                <div key={i} className="h-10 w-32 bg-gray-800/40 border border-gray-800/50 rounded-full animate-pulse"></div>
               ))}
             </div>
 
@@ -916,14 +830,6 @@ const JobFoundContent = () => {
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} recentSearches={recentSearches} onSelectSearch={handleSearchSelect} />
 
-      {/* Mobile Sidebar Backdrop */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
-          onClick={toggleSidebar}
-        />
-      )}
-
       {/* ALERT CONTAINER */}
       {alertState && (
         <div className="fixed top-20 right-5 z-50 w-full max-w-md">
@@ -933,8 +839,7 @@ const JobFoundContent = () => {
         </div>
       )}
 
-      {/* MAIN CONTENT CONTAINER - STABLE WIDTH, NO SIDEBAR SHIFT */}
-      <div className="flex-1 p-6 md:p-10 relative bg-[#0f0e0e]">
+      <div className="flex-1 p-6 md:p-10 relative bg-[#0b0f0e]">
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
           <div className="flex flex-col gap-4 w-full">
             <h2 className="text-lg font-bold text-green-400 px-3 flex items-center gap-2">
@@ -944,7 +849,7 @@ const JobFoundContent = () => {
             <div className="flex flex-wrap gap-3 px-3">
               <button
                 onClick={() => handleSearchSelect("All Jobs")}
-                className={`px-6 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg whitespace-nowrap ${activeSearch === "All Jobs"
+                className={`px-5 py-2.5 rounded-full text-xs font-bold border transition-all duration-300 flex items-center gap-2 shadow-lg ${activeSearch === "All Jobs"
                   ? "bg-[#0e1a16] text-green-400 border-green-500/50 shadow-[0_0_15px_rgba(74,222,128,0.2)] scale-105"
                   : "bg-[#111a17] border-[#1b2b27] text-gray-400 hover:border-green-500/30 hover:bg-[#16211e]"
                   }`}
@@ -1006,10 +911,10 @@ const JobFoundContent = () => {
                         <>
                           <button
                             onClick={() => handleSearchSelect(search)}
-                            className="px-5 py-2.5 text-xs font-bold text-left whitespace-nowrap overflow-hidden text-ellipsis max-w-[180px] flex items-center gap-2"
+                            className="px-5 py-2.5 text-xs font-bold text-left truncate max-w-[200px] flex items-center gap-2"
                           >
                             {search.name}
-                            <span className={`flex-shrink-0 px-2.5 py-0.5 rounded-full text-[10px] ${isActive ? "bg-green-500/10 text-green-400" : "bg-gray-800/50 text-gray-500"}`}>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? "bg-green-500/10 text-green-400" : "bg-gray-800 text-gray-500"}`}>
                               {jobCount}
                             </span>
                           </button>
@@ -1147,10 +1052,9 @@ const JobFoundContent = () => {
           {/* Job List */}
           <div
             ref={parentRef}
-            className={`w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
+            className="w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
              max-h-[40vh] lg:max-h-full
-             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]
-             ${selectedJob ? 'hidden lg:block' : 'block'}`}
+             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]"
           >
             {filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
@@ -1167,6 +1071,7 @@ const JobFoundContent = () => {
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                   const job = filteredJobs[virtualRow.index];
                   const jobUUID = job.jobid || job.jobId || job.id || job._id || virtualRow.index;
+
                   return (
                     <JobListItem
                       key={jobUUID}
@@ -1177,7 +1082,6 @@ const JobFoundContent = () => {
                       isSelected={selectedJobs.includes(jobUUID)}
                       isApplied={appliedJobIds.has(jobUUID)}
                       isSaved={savedJobIds.has(jobUUID)}
-                      error={jobErrors[jobUUID]}
                       onToggleSave={handleToggleSave}
                       selectedJob={selectedJob}
                       setSelectedJob={setSelectedJob}
@@ -1190,14 +1094,9 @@ const JobFoundContent = () => {
           </div>
 
 
-          {/* Job Details (desktop) */}
-          <div
-            className={`
-              w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-t lg:border-t-0 lg:border-l border-green-800/30 relative
-              ${selectedJob ? 'block' : 'hidden lg:block'}
-              mt-4 lg:mt-0
-            `}
-          >
+          {/* Job Details */}
+          {/* Job Details */}
+          <div className="hidden lg:block w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative">
             <div className="absolute inset-0 overflow-hidden">
               {selectedJob ? (
                 <JobDetailsPanel
@@ -1222,7 +1121,7 @@ const JobFoundContent = () => {
                     <div className="grid grid-cols-4 gap-4">
                       {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-700/50 rounded-xl"></div>)}
                     </div>
-                    <div className="h-64 bg-gray-800/10 rounded-2xl"></div>
+                    <div className="h-64 bg-gray-800/20 rounded-2xl"></div>
                   </div>
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/5 backdrop-blur-[2px]">
                     <div className="w-16 h-16 mb-4 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
@@ -1236,37 +1135,6 @@ const JobFoundContent = () => {
             </div>
           </div>
         </div>
-
-        {/* Mobile Full-Screen Job Details Overlay */}
-        {showMobileDetails && selectedJob && (
-          <div className="fixed inset-0 z-50 bg-[#0b0f0e] flex flex-col overflow-y-auto animate-in fade-in">
-            <div className="flex items-center p-4 border-b border-green-800 bg-[#0e1513]">
-              <button
-                className="mr-2 p-2 rounded-full bg-green-900/20 text-green-400"
-                onClick={() => {
-                  setShowMobileDetails(false);
-                  setSelectedJob(null);
-                }}
-                aria-label="Back"
-              >
-                <ArrowLeft size={22} />
-              </button>
-              <span className="font-bold text-lg text-green-400">Job Details</span>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <JobDetailsPanel
-                job={selectedJob}
-                onApply={(job) => applyJobs([job])}
-                isApplied={appliedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
-                isSaved={savedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
-                onToggleSave={handleToggleSave}
-                applying={applying}
-                isUserLoading={loading}
-              />
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   );
@@ -1276,52 +1144,27 @@ const JobFound = () => {
   return (
     <Suspense fallback={
       <div className="flex min-h-screen bg-[#0b0f0e] text-white">
-        {/* Navbar Skeleton */}
         <div className="h-20 w-full fixed top-0 border-b border-white/10 bg-[#121e12]/60 z-50"></div>
+        <div className="w-64 h-full fixed left-0 border-r border-white/10 bg-[#0a0f0d] hidden md:block pt-20"></div>
 
-        {/* Sidebar Space (Hidden on mobile) */}
-        <div className="w-72 h-full fixed left-0 border-r border-white/10 bg-[#07110f] hidden lg:block z-50 -translate-x-full"></div>
-
-        {/* Main Content Area */}
-        <div className="flex-1 h-screen overflow-hidden relative bg-[#0b0f0e] w-full max-w-[1600px] mx-auto animate-pulse">
-          <div className="flex flex-col gap-5 mt-20 lg:mt-24 px-4 lg:px-8">
-            {/* Header / Saved Searches Title */}
-            <div className="flex flex-col gap-4">
-              <div className="h-7 w-48 bg-green-500/10 rounded-md"></div>
-              {/* Pills Row */}
-              <div className="flex gap-3 overflow-hidden">
-                <div className="h-10 w-28 bg-gray-800/40 rounded-full flex-shrink-0"></div>
-                <div className="h-10 w-32 bg-gray-800/40 rounded-full flex-shrink-0"></div>
-                <div className="h-10 w-24 bg-gray-800/40 rounded-full flex-shrink-0"></div>
-                <div className="h-10 w-32 bg-gray-800/40 rounded-full flex-shrink-0"></div>
-              </div>
+        <div className="flex-1 p-6 md:p-10 mt-14 ml-0 md:ml-64 animate-pulse">
+          <div className="flex flex-col gap-6">
+            <div className="flex gap-4">
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
+              <div className="h-10 w-32 bg-gray-800/50 rounded-full"></div>
             </div>
 
-            {/* Apply Buttons Row */}
-            <div className="flex gap-3 h-10 mt-4 mb-5">
-              <div className="flex-1 bg-gray-800/20 border border-gray-700/20 rounded-lg"></div>
-              <div className="flex-1 bg-gray-800/20 border border-gray-700/20 rounded-lg"></div>
-            </div>
-
-            {/* Main Data Split Box */}
-            <div className="flex flex-col lg:flex-row border border-green-800/20 rounded-xl overflow-hidden h-[75vh] mx-0">
-              {/* Job List Component */}
-              <div className="w-full lg:w-1/3 border-r border-green-800/10 bg-[#0b0f0e] h-full overflow-hidden">
-                {[1, 2, 3].map((i) => (
-                  <JobListItemSkeleton key={i} />
+            <div className="flex flex-col lg:flex-row border border-green-800/30 rounded-lg overflow-hidden h-[75vh]">
+              <div className="w-full lg:w-1/3 border-r border-green-800/30 bg-[#0b0f0e] p-4 space-y-4">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="h-32 bg-gray-800/20 rounded-xl"></div>
                 ))}
               </div>
-              {/* Job Detail Area */}
-              <div className="hidden lg:block lg:w-2/3 bg-[#0a0f0d] p-10 space-y-8">
-                <div className="flex justify-between items-start">
-                  <div className="space-y-4 w-2/3">
-                    <div className="h-4 bg-gray-800/40 rounded w-1/4"></div>
-                    <div className="h-12 bg-gray-800/40 rounded w-full"></div>
-                  </div>
-                  <div className="h-10 w-32 bg-gray-800/40 rounded-lg"></div>
-                </div>
+              <div className="hidden lg:block lg:w-2/3 bg-[#0e1513] p-8 space-y-8">
+                <div className="h-12 bg-gray-800/40 rounded w-1/2"></div>
                 <div className="grid grid-cols-4 gap-4">
-                  {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-gray-800/20 rounded-xl"></div>)}
+                  {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-800/30 rounded-xl"></div>)}
                 </div>
                 <div className="h-64 bg-gray-800/10 rounded-2xl"></div>
               </div>
@@ -1336,4 +1179,3 @@ const JobFound = () => {
 };
 
 export default JobFound;
-
