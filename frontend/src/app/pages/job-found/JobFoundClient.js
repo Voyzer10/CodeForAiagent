@@ -81,7 +81,7 @@ const JobListItem = ({
         width: "100%",
         transform: `translateY(${virtualRow.start}px)`,
       }}
-      className="px-4 py-2"
+      className="px-4 py-3"
     >
       <div
         className={`group relative p-4 rounded-xl border transition-all duration-300
@@ -386,7 +386,7 @@ const JobFoundContent = () => {
   const rowVirtualizer = useVirtualizer({
     count: filteredJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 170, // Optimized for laptop cards to eliminate excessive gaps
+    estimateSize: () => 190, // Increased slightly for better spacing
     overscan: 12,
   });
 
@@ -1116,14 +1116,14 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6 bg-[#0b0f0e]">
+        <div className="flex flex-col lg:flex-row lg:h-[75vh] min-h-[60vh] lg:min-h-0 border border-green-800 rounded-lg overflow-hidden mt-6 bg-[#0b0f0e]">
           {/* Job List */}
           <div
             ref={parentRef}
-            className="w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
-             max-h-[40vh] lg:max-h-full
+            className={`w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
+             max-h-[50vh] lg:max-h-full
              border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]
-             ${selectedJob ? 'hidden lg:block' : 'block'}"
+             ${selectedJob ? 'hidden lg:block' : 'block'}`}
           >
             {filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
@@ -1165,8 +1165,20 @@ const JobFoundContent = () => {
 
 
           {/* Job Details */}
-          <div className="hidden lg:block w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative">
-            <div className="absolute inset-0 overflow-hidden">
+          <div className={`${selectedJob ? 'block fixed inset-0 z-[60] lg:static lg:z-0' : 'hidden lg:block'} w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative`}>
+            <div className="absolute inset-0 overflow-hidden flex flex-col">
+              {/* Mobile Back Button */}
+              {selectedJob && (
+                <div className="lg:hidden p-4 border-b border-green-800/30 flex items-center bg-[#0b0f0e]">
+                  <button
+                    onClick={() => setSelectedJob(null)}
+                    className="flex items-center gap-2 text-green-400 font-semibold"
+                  >
+                    <ArrowLeft size={20} />
+                    Back to Jobs
+                  </button>
+                </div>
+              )}
               {selectedJob ? (
                 <JobDetailsPanel
                   job={selectedJob}
