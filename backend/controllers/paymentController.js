@@ -9,14 +9,17 @@ let razorpayInstance = null;
    🧠 Lazy Razorpay Initialization (SAFE)
    ===================================================== */
 function getRazorpay() {
-  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+  const keyId = process.env.RAZORPAY_KEY_ID;
+  const keySecret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
+
+  if (!keyId || !keySecret) {
     throw new Error("Razorpay environment variables missing");
   }
 
   if (!razorpayInstance) {
     razorpayInstance = new Razorpay({
-      key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_KEY_SECRET,
+      key_id: keyId,
+      key_secret: keySecret,
     });
   }
 
@@ -110,8 +113,9 @@ const verifyPayment = async (req, res) => {
     }
 
     const sign = `${razorpay_order_id}|${razorpay_payment_id}`;
+    const secretKey = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET_KEY;
     const expectedSign = crypto
-      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", secretKey)
       .update(sign)
       .digest("hex");
 

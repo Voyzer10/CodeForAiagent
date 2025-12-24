@@ -155,8 +155,8 @@ async function getTokenWithRetry(oauthClient, code, maxRetries = 3) {
 // Google Login Callback
 exports.googleLoginCallback = async (req, res) => {
   const startTime = Date.now();
-  let frontend = process.env.FRONTEND_URL;
-  if (frontend.endsWith("/")) {
+  let frontend = process.env.FRONTEND_URL || "http://localhost:3000";
+  if (frontend && frontend.endsWith("/")) {
     frontend = frontend.slice(0, -1);
   }
 
@@ -266,8 +266,8 @@ exports.gmailRedirect = async (req, res) => {
 
 // Gmail OAuth Callback
 exports.gmailCallback = async (req, res) => {
-  let frontend = process.env.FRONTEND_URL;
-  if (frontend.endsWith("/")) {
+  let frontend = process.env.FRONTEND_URL || "http://localhost:3000";
+  if (frontend && frontend.endsWith("/")) {
     frontend = frontend.slice(0, -1);
   }
 

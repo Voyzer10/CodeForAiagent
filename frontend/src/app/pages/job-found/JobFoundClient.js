@@ -4,9 +4,9 @@ import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Cloc
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useVirtualizer } from "@tanstack/react-virtual";
 import Alert from "../../components/Alert"; // Imported Alert
 import JobDetailsPanel from "../../components/JobDetailsPanel";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 const JobListItemSkeleton = () => (
   <div className="px-4 py-3">
@@ -84,7 +84,7 @@ const JobListItem = ({
       className="px-4 py-3"
     >
       <div
-        className={`group relative p-4 rounded-xl border transition-all duration-300
+        className={`group relative p-4 rounded-xl transition-all duration-300 border
           flex flex-row items-start gap-4 cursor-pointer
           ${isSelected
             ? "bg-green-900/10 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.05)]"
@@ -119,7 +119,10 @@ const JobListItem = ({
         {/* 2. Middle: Content */}
         <div className="flex-1 min-w-0 pr-12 pb-6 text-left">
           <div className="flex flex-wrap items-start gap-2 mb-2">
-            <h3 className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight">
+            <h3
+              className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight truncate max-w-xs"
+              title={title}
+            >
               {title}
             </h3>
             <div className="flex flex-wrap gap-1.5 shrink-0 pt-0.5">
@@ -231,6 +234,7 @@ const JobFoundContent = () => {
 
   const [responseMessage, setResponseMessage] = useState(""); // For status box text
   const [alertState, setAlertState] = useState(null);
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -383,10 +387,11 @@ const JobFoundContent = () => {
 
   const parentRef = useRef(null);
 
+  // Restore virtualizer for performance with variable content
   const rowVirtualizer = useVirtualizer({
     count: filteredJobs.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 190, // Increased slightly for better spacing
+    estimateSize: () => 195, // Set a large enough value for tallest card (adjust as needed)
     overscan: 12,
   });
 
@@ -691,7 +696,9 @@ const JobFoundContent = () => {
       return (
         job.runId === search.runId ||
         job.sessionId === search.runId ||
-        job.sessionid === search.runId
+        job.sessionid === search.runId ||
+        job.runId === search.sessionId ||
+        job.sessionId === search.sessionId
       );
     });
 
@@ -811,6 +818,14 @@ const JobFoundContent = () => {
       setAlertState({ severity: "error", message: err.message });
     }
   };
+
+  // When selectedJob changes on mobile, show details overlay
+  useEffect(() => {
+    if (selectedJob && window.innerWidth < 1024) {
+      setShowMobileDetails(true);
+    }
+  }, [selectedJob]);
+
   if (loading)
     return (
       <div className="flex min-h-screen bg-[#0b0f0e] text-white">
@@ -822,7 +837,7 @@ const JobFoundContent = () => {
             {/* Header Skeletons - Filter Pills */}
             <div className="flex flex-wrap gap-4 items-center">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-10 w-32 bg-gray-800/40 border border-gray-800/50 rounded-full animate-pulse"></div>
+                <div key={i} className="h-10 w-32 bg-gray-800/40 rounded-full flex-shrink-0 animate-pulse"></div>
               ))}
             </div>
 
@@ -907,7 +922,7 @@ const JobFoundContent = () => {
       )}
 
       {/* MAIN CONTENT CONTAINER - STABLE WIDTH, NO SIDEBAR SHIFT */}
-      <div className="flex-1 p-6 md:p-10 relative bg-[#0b0f0e]">
+      <div className="flex-1 p-6 md:p-10 relative bg-[#0f0e0e]">
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
           <div className="flex flex-col gap-4 w-full">
             <h2 className="text-lg font-bold text-green-400 px-3 flex items-center gap-2">
@@ -1116,12 +1131,12 @@ const JobFoundContent = () => {
           </div>
         )}
 
-        <div className="flex flex-col lg:flex-row lg:h-[75vh] min-h-[60vh] lg:min-h-0 border border-green-800 rounded-lg overflow-hidden mt-6 bg-[#0b0f0e]">
+        <div className="flex flex-col lg:flex-row lg:h-[75vh] border border-green-800 rounded-lg overflow-hidden mt-6 bg-[#0b0f0e]">
           {/* Job List */}
           <div
             ref={parentRef}
             className={`w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
-             max-h-[50vh] lg:max-h-full
+             max-h-[40vh] lg:max-h-full
              border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]
              ${selectedJob ? 'hidden lg:block' : 'block'}`}
           >
@@ -1140,7 +1155,6 @@ const JobFoundContent = () => {
                 {rowVirtualizer.getVirtualItems().map((virtualRow) => {
                   const job = filteredJobs[virtualRow.index];
                   const jobUUID = job.jobid || job.jobId || job.id || job._id || virtualRow.index;
-
                   return (
                     <JobListItem
                       key={jobUUID}
@@ -1162,23 +1176,17 @@ const JobFoundContent = () => {
               </div>
             )}
           </div>
+          
 
-
-          {/* Job Details */}
-          <div className={`${selectedJob ? 'block fixed inset-0 z-[60] lg:static lg:z-0' : 'hidden lg:block'} w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative`}>
-            <div className="absolute inset-0 overflow-hidden flex flex-col">
-              {/* Mobile Back Button */}
-              {selectedJob && (
-                <div className="lg:hidden p-4 border-b border-green-800/30 flex items-center bg-[#0b0f0e]">
-                  <button
-                    onClick={() => setSelectedJob(null)}
-                    className="flex items-center gap-2 text-green-400 font-semibold"
-                  >
-                    <ArrowLeft size={20} />
-                    Back to Jobs
-                  </button>
-                </div>
-              )}
+          {/* Job Details (desktop) */}
+          <div
+            className={`
+              w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-t lg:border-t-0 lg:border-l border-green-800/30 relative
+              ${selectedJob ? 'block' : 'hidden lg:block'}
+              mt-4 lg:mt-0
+            `}
+          >
+            <div className="absolute inset-0 overflow-hidden">
               {selectedJob ? (
                 <JobDetailsPanel
                   job={selectedJob}
@@ -1202,7 +1210,7 @@ const JobFoundContent = () => {
                     <div className="grid grid-cols-4 gap-4">
                       {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-gray-700/50 rounded-xl"></div>)}
                     </div>
-                    <div className="h-64 bg-gray-800/20 rounded-2xl"></div>
+                    <div className="h-64 bg-gray-800/10 rounded-2xl"></div>
                   </div>
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/5 backdrop-blur-[2px]">
                     <div className="w-16 h-16 mb-4 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center">
@@ -1216,6 +1224,37 @@ const JobFoundContent = () => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Full-Screen Job Details Overlay */}
+        {showMobileDetails && selectedJob && (
+          <div className="fixed inset-0 z-50 bg-[#0b0f0e] flex flex-col overflow-y-auto animate-in fade-in">
+            <div className="flex items-center p-4 border-b border-green-800 bg-[#0e1513]">
+              <button
+                className="mr-2 p-2 rounded-full bg-green-900/20 text-green-400"
+                onClick={() => {
+                  setShowMobileDetails(false);
+                  setSelectedJob(null);
+                }}
+                aria-label="Back"
+              >
+                <ArrowLeft size={22} />
+              </button>
+              <span className="font-bold text-lg text-green-400">Job Details</span>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <JobDetailsPanel
+                job={selectedJob}
+                onApply={(job) => applyJobs([job])}
+                isApplied={appliedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
+                isSaved={savedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
+                onToggleSave={handleToggleSave}
+                applying={applying}
+                isUserLoading={loading}
+              />
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
