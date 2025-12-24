@@ -676,7 +676,7 @@ const JobFoundContent = () => {
   };
 
   const handleSearchSelect = (search) => {
-    console.log("≡ƒöì Saved search clicked:", search);
+    console.log("🔍 Saved search clicked:", search);
 
     if (search === "All Jobs") {
       setFilteredJobs(userJobs);
@@ -685,60 +685,72 @@ const JobFoundContent = () => {
       return;
     }
 
-    // ≡ƒöÑ IMPORTANT FIX
-    if (!search?.runId) {
-      console.warn("ΓÜá∩╕Å Saved search has no runId:", search);
+    // Identify jobs: Priority 1: Use jobs already stored in the search object
+    if (search.jobs && Array.isArray(search.jobs) && search.jobs.length > 0) {
+      console.log("📦 Using jobs stored in search object:", search.jobs.length);
+      const normalized = normalizeJobs(search.jobs);
+      setFilteredJobs(normalized);
+      setActiveSearch(search.name);
+      setCurrentSession(null);
+      return;
+    }
+
+    // Priority 2: Filter userJobs matches by runId/sessionId
+    const searchId = search.runId || search.sessionId || search.sessionid;
+    if (!searchId) {
+      console.warn("⚠️ Saved search has no identifier:", search);
       setFilteredJobs([]);
+      setActiveSearch(search.name || "Unknown Search");
       return;
     }
 
     const matchedJobs = userJobs.filter((job) => {
       return (
-        job.runId === search.runId ||
-        job.sessionId === search.runId ||
-        job.sessionid === search.runId ||
-        job.runId === search.sessionId ||
-        job.sessionId === search.sessionId
+        job.runId === searchId ||
+        job.sessionId === searchId ||
+        job.sessionid === searchId
       );
     });
 
-    console.log("≡ƒåö Search runId:", search.runId);
-    console.log("≡ƒôª Matched jobs count:", matchedJobs.length);
-
+    console.log("⚡ Search ID:", searchId, "| Matched:", matchedJobs.length);
     setFilteredJobs(matchedJobs);
     setActiveSearch(search.name);
     setCurrentSession(null);
   };
 
-
-
   const handleSessionSelect = (session) => {
-    console.log("≡ƒòÆ [handleSessionSelect] Called with session:", session);
+    console.log("🌊 [handleSessionSelect] Wave clicked:", session);
 
-    const sessionId = session.sessionId;
+    const sessionId = session.sessionId || session.runId || session.sessionid;
     const sessionTime = new Date(session.timestamp).getTime();
 
     setCurrentSession(session);
 
-    let sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
-    console.log(`≡ƒöì Exact ID match for sessionId="${sessionId}": ${sessionJobs.length} jobs`);
+    // Filter by any of the possible session/run identifiers
+    let sessionJobs = userJobs.filter((job) =>
+      job.sessionId === sessionId ||
+      job.sessionid === sessionId ||
+      job.runId === sessionId
+    );
 
-    if (sessionJobs.length === 0) {
-      console.warn("ΓÜá∩╕Å No jobs found by Session ID. Trying time-based matching...");
+    console.log(`🔍 ID match for "${sessionId}": ${sessionJobs.length} jobs`);
+
+    // Time-based fallback if no exact ID matches found
+    if (sessionJobs.length === 0 && !isNaN(sessionTime)) {
+      console.warn("🕒 No exact ID matches. Trying time-based matching...");
       sessionJobs = userJobs.filter((job) => {
         const jobTime = new Date(job.postedAt || job.createdAt || job.datePosted).getTime();
         if (isNaN(jobTime)) return false;
 
         const diff = Math.abs(jobTime - sessionTime);
-        return diff < 10 * 60 * 1000;
+        return diff < 10 * 60 * 1000; // 10 minute window
       });
-      console.log(`≡ƒòÉ Time-based match: ${sessionJobs.length} jobs found`);
+      console.log(`🕒 Time-match (10min): ${sessionJobs.length} jobs`);
     }
 
     setFilteredJobs(sessionJobs);
     const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
     setActiveSearch(`Session: ${displayName}`);
-    console.log(`Γ£à Session "${displayName}" selected, showing ${sessionJobs.length} jobs`);
   };
 
   const handleDeleteSearch = async (searchName) => {
@@ -1176,7 +1188,7 @@ const JobFoundContent = () => {
               </div>
             )}
           </div>
-          
+
 
           {/* Job Details (desktop) */}
           <div
