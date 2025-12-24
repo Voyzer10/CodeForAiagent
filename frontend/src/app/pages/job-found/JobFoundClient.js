@@ -1,12 +1,13 @@
 "use client";
 import { useState, useEffect, useRef, Suspense } from "react";
-import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History } from "lucide-react";
+import { Loader2, CheckCircle, Pencil, Trash2, X, Check, Building2, MapPin, Clock, Briefcase, ChevronRight, Bookmark, History, ArrowLeft, AlertCircle } from "lucide-react";
 import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import Alert from "../../components/Alert"; // Imported Alert
 import JobDetailsPanel from "../../components/JobDetailsPanel";
+import { normalizeJobs, getFilteredJobsBySearch, getFilteredJobsBySession } from "../../../lib/jobSearchEngine";
 
 const JobListItemSkeleton = () => (
   <div className="px-4 py-3">
@@ -51,6 +52,7 @@ const JobListItem = ({
   isSelected,
   isApplied,
   isSaved,
+  error,
   onToggleSave,
   selectedJob,
   setSelectedJob,
@@ -94,24 +96,34 @@ const JobListItem = ({
         onClick={() => setSelectedJob(job)}
       >
         {/* 1. Left: Company Logo */}
-        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform overflow-hidden bg-white/5">
+        <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-green-900/10 border border-green-800/30 flex items-center justify-center text-green-400 group-hover:scale-105 transition-transform overflow-hidden bg-white/5 relative">
           {job.company?.logo ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={job.company.logo}
               alt={job.company?.name || company}
               className="w-full h-full object-contain p-1"
-              onError={(e) => { e.target.onerror = null; e.target.src = ""; e.target.parentElement.innerHTML = '<svg class="w-6 h-6 text-green-400" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2" ry="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01"/><path d="M16 6h.01"/><path d="M12 6h.01"/><path d="M12 10h.01"/><path d="M12 14h.01"/><path d="M16 10h.01"/><path d="M16 14h.01"/><path d="M8 10h.01"/><path d="M8 14h.01"/></svg>'; }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                e.target.nextSibling.style.display = 'flex';
+              }}
             />
-          ) : (
+          ) : null}
+          <div
+            style={{ display: job.company?.logo ? 'none' : 'flex' }}
+            className="w-full h-full items-center justify-center"
+          >
             <Building2 size={24} />
-          )}
+          </div>
         </div>
 
         {/* 2. Middle: Content */}
         <div className="flex-1 min-w-0 pr-12 pb-6 text-left">
           <div className="flex flex-wrap items-start gap-2 mb-2">
-            <h3 className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight">
+            <h3
+              className="text-[16px] font-bold text-white group-hover:text-green-400 transition-colors leading-tight truncate max-w-xs"
+              title={title}
+            >
               {title}
             </h3>
             <div className="flex flex-wrap gap-1.5 shrink-0 pt-0.5">
@@ -129,6 +141,13 @@ const JobListItem = ({
           </div>
 
           <div className="text-[13px] font-medium text-gray-400 mb-4 truncate">{job.company?.name || company}</div>
+
+          {error && (
+            <div className="flex items-center gap-2 mb-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400">
+              <AlertCircle size={14} />
+              <span className="text-[10px] font-bold">{error}</span>
+            </div>
+          )}
 
           {/* GRID BASED META - AUTO ADAPTIVE */}
           <div className="grid grid-cols-2 gap-y-2.5 gap-x-4">
@@ -211,10 +230,12 @@ const JobFoundContent = () => {
   // NOTE: selectedJobs now stores UUIDs (jobid) ΓÇö consistent with n8n & DB
   const [selectedJobs, setSelectedJobs] = useState([]);
   const [appliedJobIds, setAppliedJobIds] = useState(new Set());
-  const [savedJobIds, setSavedJobIds] = useState(new Set()); // Γ£à Added savedJobIds state
+  const [savedJobIds, setSavedJobIds] = useState(new Set()); // ✅ Added savedJobIds state
 
   const [responseMessage, setResponseMessage] = useState(""); // For status box text
   const [alertState, setAlertState] = useState(null);
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
+  const [jobErrors, setJobErrors] = useState({}); // Tracking errors at job level
 
   const toggleSidebar = () => setSidebarOpen((prev) => !prev);
 
@@ -483,6 +504,14 @@ const JobFoundContent = () => {
       return;
     }
 
+    // Clear previous errors for selected jobs (UI Improvement)
+    const jobIdsToClear = jobsToApply.map(j => j.jobid || j.jobId || j.id || j._id);
+    setJobErrors(prev => {
+      const next = { ...prev };
+      jobIdsToClear.forEach(id => delete next[id]);
+      return next;
+    });
+
     setApplying(true);
     setResponseMessage("Your job is under processing...");
 
@@ -553,11 +582,31 @@ const JobFoundContent = () => {
 
         while (attempts < MAX_ATTEMPTS) {
           try {
-            const check = await fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobUUID}`, {
-              method: "GET",
-              credentials: "include",
-            });
-            const data = await check.json();
+            // Parallel Polling: Success Check & Error Check (UI Improvement)
+            const [checkRes, errorRes] = await Promise.all([
+              fetch(`${API_BASE_URL}/applied-jobs/check/${lastJobUUID}`, {
+                method: "GET",
+                credentials: "include",
+              }),
+              fetch(`${API_BASE_URL}/progress/error/job/${lastJobUUID}`, {
+                method: "GET",
+                credentials: "include",
+              })
+            ]);
+
+            // 1. Check for Errors (Fast Fail UI)
+            const errorJson = await errorRes.json().catch(() => ({}));
+            if (errorJson.hasError && errorJson.code === "EMAIL_NOT_FOUND") {
+              setApplying(false);
+              setResponseMessage("");
+              setJobErrors(prev => ({
+                ...prev,
+                [lastJobUUID]: "Email not found for this job posting"
+              }));
+              return;
+            }
+
+            const data = await checkRes.json().catch(() => ({}));
 
             if (data.exists && data.job?.email_to && data.job?.email_subject) {
               console.log("≡ƒÄë Email details ready ΓÇö redirectingΓÇª");
@@ -612,67 +661,17 @@ const JobFoundContent = () => {
   };
 
   const handleSearchSelect = (search) => {
-    console.log("≡ƒöì Saved search clicked:", search);
-
-    if (search === "All Jobs") {
-      setFilteredJobs(userJobs);
-      setActiveSearch("All Jobs");
-      setCurrentSession(null);
-      return;
-    }
-
-    // ≡ƒöÑ IMPORTANT FIX
-    if (!search?.runId) {
-      console.warn("ΓÜá∩╕Å Saved search has no runId:", search);
-      setFilteredJobs([]);
-      return;
-    }
-
-    const matchedJobs = userJobs.filter((job) => {
-      return (
-        job.runId === search.runId ||
-        job.sessionId === search.runId ||
-        job.sessionid === search.runId
-      );
-    });
-
-    console.log("≡ƒåö Search runId:", search.runId);
-    console.log("≡ƒôª Matched jobs count:", matchedJobs.length);
-
-    setFilteredJobs(matchedJobs);
-    setActiveSearch(search.name);
-    setCurrentSession(null);
+    const result = getFilteredJobsBySearch(search, userJobs);
+    setFilteredJobs(result.filteredJobs);
+    setActiveSearch(result.activeSearch);
+    setCurrentSession(result.currentSession);
   };
 
-
-
   const handleSessionSelect = (session) => {
-    console.log("≡ƒòÆ [handleSessionSelect] Called with session:", session);
-
-    const sessionId = session.sessionId;
-    const sessionTime = new Date(session.timestamp).getTime();
-
+    const result = getFilteredJobsBySession(session, userJobs);
+    setFilteredJobs(result.filteredJobs);
+    setActiveSearch(result.activeSearch);
     setCurrentSession(session);
-
-    let sessionJobs = userJobs.filter((job) => job.sessionId === sessionId);
-    console.log(`≡ƒöì Exact ID match for sessionId="${sessionId}": ${sessionJobs.length} jobs`);
-
-    if (sessionJobs.length === 0) {
-      console.warn("ΓÜá∩╕Å No jobs found by Session ID. Trying time-based matching...");
-      sessionJobs = userJobs.filter((job) => {
-        const jobTime = new Date(job.postedAt || job.createdAt || job.datePosted).getTime();
-        if (isNaN(jobTime)) return false;
-
-        const diff = Math.abs(jobTime - sessionTime);
-        return diff < 10 * 60 * 1000;
-      });
-      console.log(`≡ƒòÉ Time-based match: ${sessionJobs.length} jobs found`);
-    }
-
-    setFilteredJobs(sessionJobs);
-    const displayName = session.sessionName || new Date(session.timestamp).toLocaleString();
-    setActiveSearch(`Session: ${displayName}`);
-    console.log(`Γ£à Session "${displayName}" selected, showing ${sessionJobs.length} jobs`);
   };
 
   const handleDeleteSearch = async (searchName) => {
@@ -708,6 +707,13 @@ const JobFoundContent = () => {
       setAlertState({ severity: "error", message: err.message });
     }
   };
+
+  // UI Effect: Auto-show mobile overlay when a job is selected on mobile
+  useEffect(() => {
+    if (selectedJob && window.innerWidth < 1024) {
+      setShowMobileDetails(true);
+    }
+  }, [selectedJob]);
 
   const startRenaming = (e, searchName) => {
     e.stopPropagation();
@@ -830,6 +836,14 @@ const JobFoundContent = () => {
       <UserNavbar onSidebarToggle={toggleSidebar} />
       <Sidebar isOpen={sidebarOpen} recentSearches={recentSearches} onSelectSearch={handleSearchSelect} />
 
+      {/* Mobile Sidebar Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden backdrop-blur-sm"
+          onClick={toggleSidebar}
+        />
+      )}
+
       {/* ALERT CONTAINER */}
       {alertState && (
         <div className="fixed top-20 right-5 z-50 w-full max-w-md">
@@ -839,7 +853,8 @@ const JobFoundContent = () => {
         </div>
       )}
 
-      <div className="flex-1 p-6 md:p-10 relative bg-[#0b0f0e]">
+      {/* MAIN CONTENT CONTAINER - STABLE WIDTH, NO SIDEBAR SHIFT */}
+      <div className="flex-1 p-6 md:p-10 relative bg-[#0f0e0e]">
         <div className="flex justify-between items-start flex-wrap gap-4 mt-14 ">
           <div className="flex flex-col gap-4 w-full">
             <h2 className="text-lg font-bold text-green-400 px-3 flex items-center gap-2">
@@ -1052,9 +1067,10 @@ const JobFoundContent = () => {
           {/* Job List */}
           <div
             ref={parentRef}
-            className="w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
+            className={`w-full lg:w-1/3 m-0 lg:m-0 overflow-y-auto custom-scrollbar
              max-h-[40vh] lg:max-h-full
-             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]"
+             border-b lg:border-b-0 lg:border-r border-green-800/50 bg-[#0b0f0e]
+             ${selectedJob ? 'hidden lg:block' : 'block'}`}
           >
             {filteredJobs.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500 gap-4">
@@ -1082,6 +1098,7 @@ const JobFoundContent = () => {
                       isSelected={selectedJobs.includes(jobUUID)}
                       isApplied={appliedJobIds.has(jobUUID)}
                       isSaved={savedJobIds.has(jobUUID)}
+                      error={jobErrors[jobUUID]}
                       onToggleSave={handleToggleSave}
                       selectedJob={selectedJob}
                       setSelectedJob={setSelectedJob}
@@ -1095,8 +1112,12 @@ const JobFoundContent = () => {
 
 
           {/* Job Details */}
-          {/* Job Details */}
-          <div className="hidden lg:block w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-l border-green-800/30 relative">
+          <div
+            className={`w-full lg:w-2/3 h-full overflow-hidden bg-[#0b0f0e] border-t lg:border-t-0 lg:border-l border-green-800/30 relative
+              ${selectedJob ? 'block' : 'hidden lg:block'}
+              mt-4 lg:mt-0
+            `}
+          >
             <div className="absolute inset-0 overflow-hidden">
               {selectedJob ? (
                 <JobDetailsPanel
@@ -1135,6 +1156,36 @@ const JobFoundContent = () => {
             </div>
           </div>
         </div>
+
+        {/* Mobile Full-Screen Job Details Overlay */}
+        {showMobileDetails && selectedJob && (
+          <div className="fixed inset-0 z-50 bg-[#0b0f0e] flex flex-col overflow-y-auto animate-in fade-in">
+            <div className="flex items-center p-4 border-b border-green-800 bg-[#0e1513]">
+              <button
+                className="mr-2 p-2 rounded-full bg-green-900/20 text-green-400"
+                onClick={() => {
+                  setShowMobileDetails(false);
+                  setSelectedJob(null);
+                }}
+                aria-label="Back"
+              >
+                <ArrowLeft size={22} className="lucide lucide-arrow-left" />
+              </button>
+              <span className="font-bold text-lg text-green-400">Job Details</span>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <JobDetailsPanel
+                job={selectedJob}
+                onApply={(job) => applyJobs([job])}
+                isApplied={appliedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
+                isSaved={savedJobIds.has(selectedJob.jobid || selectedJob.jobId || selectedJob.id || selectedJob._id)}
+                onToggleSave={handleToggleSave}
+                applying={applying}
+                isUserLoading={loading}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
