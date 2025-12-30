@@ -119,14 +119,14 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           {/* User Panel */}
           <li>
             <Link
-              href="/pages/userpanel"
-              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/userpanel')
+              href="/userpanel"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/userpanel')
                 ? 'bg-green-900/10 border-r-2 border-green-500'
                 : 'hover:bg-green-900/5'
                 }`}
             >
-              <User className={`w-5 h-5 ${isActive('/pages/userpanel') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
-              <span className={`text-sm ${isActive('/pages/userpanel') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+              <User className={`w-5 h-5 ${isActive('/userpanel') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/userpanel') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 User Panel
               </span>
             </Link>
@@ -135,14 +135,14 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           {/* Profile */}
           <li>
             <Link
-              href="/pages/profile"
-              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/profile')
+              href="/profile"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/profile')
                 ? 'bg-green-900/10 border-r-2 border-green-500'
                 : 'hover:bg-green-900/5'
                 }`}
             >
-              <User className={`w-5 h-5 ${isActive('/pages/profile') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
-              <span className={`text-sm ${isActive('/pages/profile') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+              <User className={`w-5 h-5 ${isActive('/profile') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/profile') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 Profile
               </span>
             </Link>
@@ -151,14 +151,14 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           {/* Job Found */}
           <li>
             <Link
-              href="/pages/job-found"
-              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/job-found')
+              href="/job-found"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/job-found')
                 ? 'bg-green-900/10 border-r-2 border-green-500'
                 : 'hover:bg-green-900/5'
                 }`}
             >
-              <Briefcase className={`w-5 h-5 ${isActive('/pages/job-found') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
-              <span className={`text-sm ${isActive('/pages/job-found') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+              <Briefcase className={`w-5 h-5 ${isActive('/job-found') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/job-found') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 Job Found
               </span>
             </Link>
@@ -167,14 +167,14 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           {/* Job Applied */}
           <li>
             <Link
-              href="/pages/applied-jobs"
-              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/applied-jobs')
+              href="/applied-jobs"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/applied-jobs')
                 ? 'bg-green-900/10 border-r-2 border-green-500'
                 : 'hover:bg-green-900/5'
                 }`}
             >
-              <Send className={`w-5 h-5 ${isActive('/pages/applied-jobs') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
-              <span className={`text-sm ${isActive('/pages/applied-jobs') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+              <Send className={`w-5 h-5 ${isActive('/applied-jobs') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/applied-jobs') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 Job Applied
               </span>
             </Link>
@@ -183,14 +183,14 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           {/* Saved Jobs */}
           <li>
             <Link
-              href="/pages/saved-jobs"
-              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/saved-jobs')
+              href="/saved-jobs"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/saved-jobs')
                 ? 'bg-green-900/10 border-r-2 border-green-500'
                 : 'hover:bg-green-900/5'
                 }`}
             >
-              <Bookmark className={`w-5 h-5 ${isActive('/pages/saved-jobs') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
-              <span className={`text-sm ${isActive('/pages/saved-jobs') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+              <Bookmark className={`w-5 h-5 ${isActive('/saved-jobs') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/saved-jobs') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 Saved Jobs
               </span>
             </Link>
@@ -210,14 +210,14 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           {/* Settings */}
           <li>
             <Link
-              href="/pages/settings"
-              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/settings')
+              href="/settings"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/settings')
                 ? 'bg-green-900/10 border-r-2 border-green-500'
                 : 'hover:bg-green-900/5'
                 }`}
             >
-              <Settings className={`w-5 h-5 ${isActive('/pages/settings') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
-              <span className={`text-sm ${isActive('/pages/settings') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+              <Settings className={`w-5 h-5 ${isActive('/settings') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/settings') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
                 Settings
               </span>
             </Link>
@@ -259,7 +259,7 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
                 credentials: "include",
               });
               if (res.ok) {
-                window.location.href = "/pages/auth/login";
+                window.location.href = "/auth/login";
               }
             } catch (e) {
               console.error("Logout failed", e);

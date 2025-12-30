@@ -275,7 +275,7 @@ export default function SettingsPage() {
             const data = await res.json();
             if (res.ok) {
                 showToast('success', 'Security update successful.');
-                setTimeout(() => window.location.href = '/pages/auth/login', 1500);
+                setTimeout(() => window.location.href = '/auth/login', 1500);
             } else {
                 showToast('error', data.message || 'Verification failed.');
             }
@@ -291,7 +291,7 @@ export default function SettingsPage() {
         try {
             const res = await fetch(`${API_BASE_URL}/auth/logout-all`, { method: 'POST', credentials: "include" });
             if (res.ok) {
-                window.location.href = '/pages/auth/login';
+                window.location.href = '/auth/login';
             } else {
                 showToast('error', 'Session termination failed.');
             }
@@ -510,7 +510,7 @@ export default function SettingsPage() {
                                 <p className="text-[10px] font-black text-gray-500 uppercase tracking-widest">Active Credit Balance</p>
                                 <p className="text-4xl font-black text-[var(--text-mode)] italic tabular-nums">{credits.toLocaleString()} <span className="text-sm text-gray-700 italic">CREDITs</span></p>
                             </div>
-                            <button onClick={() => router.push('/pages/price')} className="px-6 py-2.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-500 hover:text-black transition-all">Top Up</button>
+                            <button onClick={() => router.push('/price')} className="px-6 py-2.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-green-500 hover:text-black transition-all">Top Up</button>
                         </div>
                         <div className="w-full h-3 bg-black/40 rounded-full overflow-hidden border border-white/5">
                             <div className="h-full bg-green-500 shadow-[0_0_20px_rgba(74,222,128,0.5)] transition-all duration-1000" style={{ width: `${(credits / 1500) * 100}%` }} />
@@ -751,7 +751,7 @@ export default function SettingsPage() {
                 onClose={() => setModal({ ...modal, isOpen: false })}
                 title="Terminate Session"
                 actionLabel="Confirm Logout"
-                onAction={() => window.location.href = '/pages/auth/login'}
+                onAction={() => window.location.href = '/auth/login'}
                 danger
             >
                 <p className="text-sm text-gray-500 font-medium italic leading-relaxed">Ensure all operational telemetry has been synchronized before decoupling from this terminal.</p>

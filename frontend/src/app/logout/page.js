@@ -51,7 +51,7 @@ export default function LogoutPage() {
             </p>
 
             <button
-              onClick={() => (window.location.href = "/pages/auth/login")}
+              onClick={() => (window.location.href = "/auth/login")}
               className="w-full flex items-center justify-center gap-2 bg-green-500 text-black font-semibold py-3 rounded-lg hover:bg-green-400 transition"
             >
               <LogIn size={20} />
@@ -70,7 +70,7 @@ export default function LogoutPage() {
             </p>
 
             <button
-              onClick={() => (window.location.href = "/pages/auth/login")}
+              onClick={() => (window.location.href = "/auth/login")}
               className="w-full flex items-center justify-center gap-2 bg-green-500 text-black py-3 rounded-lg hover:bg-green-400 transition"
             >
               <LogIn size={20} />

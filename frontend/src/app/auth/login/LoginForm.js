@@ -80,7 +80,7 @@ export default function LoginForm() {
                 return;
             }
 
-            router.push("/pages/userpanel");
+            router.push("/userpanel");
         } catch (err) {
             console.error("Login error:", err);
             setError("We're having trouble connecting. Please check your internet and try again.");
@@ -249,7 +249,7 @@ export default function LoginForm() {
                         Don&apos;t have an account?{" "}
                     </span>
                     <button
-                        onClick={() => router.push("/pages/auth/register")}
+                        onClick={() => router.push("/auth/register")}
                         className="text-[14px] text-[#00FA92] font-semibold hover:underline"
                     >
                         Sign Up
