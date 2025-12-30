@@ -209,12 +209,18 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
 
           {/* Settings */}
           <li>
-            <button
-              className="w-full group flex items-center gap-3 px-6 py-3 transition-all hover:bg-green-900/5"
+            <Link
+              href="/pages/settings"
+              className={`group flex items-center gap-3 px-6 py-3 transition-all relative ${isActive('/pages/settings')
+                ? 'bg-green-900/10 border-r-2 border-green-500'
+                : 'hover:bg-green-900/5'
+                }`}
             >
-              <Settings className="w-5 h-5 text-gray-500 group-hover:text-green-400" />
-              <span className="text-sm text-gray-400 group-hover:text-gray-200">Settings</span>
-            </button>
+              <Settings className={`w-5 h-5 ${isActive('/pages/settings') ? 'text-green-400' : 'text-gray-500 group-hover:text-green-400'}`} />
+              <span className={`text-sm ${isActive('/pages/settings') ? 'text-green-400 font-semibold' : 'text-gray-400 group-hover:text-gray-200'}`}>
+                Settings
+              </span>
+            </Link>
           </li>
         </ul>
       </nav>
