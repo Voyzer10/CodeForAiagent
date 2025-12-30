@@ -667,6 +667,13 @@ const JobFoundContent = () => {
     setCurrentSession(result.currentSession);
   };
 
+  const getSavedSearchCount = (search, userJobs) => {
+    if (search === "All Jobs") return userJobs.length;
+
+    const result = getFilteredJobsBySearch(search, userJobs);
+    return result.filteredJobs.length;
+  };
+
   const handleSessionSelect = (session) => {
     const result = getFilteredJobsBySession(session, userJobs);
     setFilteredJobs(result.filteredJobs);
@@ -881,15 +888,8 @@ const JobFoundContent = () => {
                   const isEditing = editingSearch === search.name;
 
                   // Use search.jobs.length if available, else filter
-                  const jobCount = Array.isArray(search.jobs)
-                    ? search.jobs.length
-                    : userJobs.filter(j =>
-                      j.runId === search.runId ||
-                      j.sessionId === search.runId ||
-                      j.sessionid === search.runId ||
-                      j.runId === search.sessionId ||
-                      j.sessionId === search.sessionId
-                    ).length;
+                 const jobCount = getSavedSearchCount(search, userJobs);
+
 
                   return (
                     <div
@@ -930,7 +930,7 @@ const JobFoundContent = () => {
                           >
                             {search.name}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? "bg-green-500/10 text-green-400" : "bg-gray-800 text-gray-500"}`}>
-                              {jobCount}
+                               {getSavedSearchCount(search, userJobs)}
                             </span>
                           </button>
 
