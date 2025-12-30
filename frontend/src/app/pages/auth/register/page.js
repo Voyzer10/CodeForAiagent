@@ -55,7 +55,7 @@ export default function RegisterPage() {
             })
             setAlertState({ severity: 'success', message: 'Registration successful! Please log in.' })
             // Delay redirect slightly to show success message
-            setTimeout(() => router.push('/auth/login'), 1500)
+            setTimeout(() => router.push('/pages/auth/login'), 1500)
         } catch (error) {
             console.error(error)
             setAlertState({ severity: 'error', message: error?.response?.data?.message || 'Registration failed' })
@@ -212,7 +212,7 @@ export default function RegisterPage() {
 
                 <div className="mt-6 w-full text-center">
                     <p className="text-[14px] leading-[1.428] text-gray-300">
-                        Already have an account? <a href="/auth/login" className="text-[#00FA92] hover:opacity-90">Log in</a>
+                        Already have an account? <a href="/pages/auth/login" className="text-[#00FA92] hover:opacity-90">Log in</a>
                     </p>
                     <p className="mt-2 text-[14px] leading-[1.428]">
                         <a href="#" className="text-[#00FA92] hover:opacity-90">Forgot Password?</a>

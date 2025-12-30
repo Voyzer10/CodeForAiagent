@@ -20,6 +20,9 @@ const {
   updatePreferences,
   updateProfile,
   submitSupportTicket,
+  updateResume,
+  removeResume,
+  disconnectGmail,
 } = require("../controllers/userController.js");
 
 const {
@@ -55,6 +58,8 @@ router.post("/update-client", auth, updateClientData);
 router.post("/update-preferences", auth, updatePreferences);
 router.post("/update-profile", auth, updateProfile);
 router.post("/support-ticket", auth, submitSupportTicket);
+router.post("/update-resume", auth, updateResume);
+router.post("/remove-resume", auth, removeResume);
 
 /* ======================================================
    GOOGLE LOGIN (Website Sign-in)
@@ -67,7 +72,8 @@ router.get("/login/google/callback", googleLoginCallback);
 router.get("/gmail/connect", auth, gmailRedirect);
 router.get("/gmail/callback", gmailCallback);
 router.get("/gmail/tokens/:userId", getGmailTokens);
-router.post("/gmail/create-draft", createGmailDraft);
+router.post("/gmail/create-draft", auth, createGmailDraft);
+router.post("/gmail/disconnect", auth, disconnectGmail);
 
 router.post("/change-password", auth, changePassword);
 router.post("/logout-all", auth, logoutAllDevices);

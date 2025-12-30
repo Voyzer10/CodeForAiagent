@@ -498,8 +498,81 @@ const submitSupportTicket = async (req, res) => {
 };
 
 /* ======================================================
+   Resume Management
+====================================================== */
+const updateResume = async (req, res) => {
+  try {
+    const { url, filename, size } = req.body;
+    if (!url) return res.status(400).json({ error: "Resume URL is required" });
+
+    const query = resolveUserQuery(req.user.id);
+    const updatedUser = await User.findOneAndUpdate(
+      query,
+      {
+        $set: {
+          resume: {
+            url,
+            filename,
+            size,
+            uploadDate: new Date()
+          }
+        }
+      },
+      { new: true }
+    ).select("-password");
+
+    if (!updatedUser) return res.status(404).json({ error: "User not found" });
+
+    res.json({ success: true, message: "Resume synchronized", user: updatedUser });
+  } catch (err) {
+    console.error("Update resume error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+const removeResume = async (req, res) => {
+  try {
+    const query = resolveUserQuery(req.user.id);
+    const updatedUser = await User.findOneAndUpdate(
+      query,
+      {
+        $set: {
+          resume: { url: null, filename: null, size: null, uploadDate: null }
+        }
+      },
+      { new: true }
+    ).select("-password");
+
+    res.json({ success: true, message: "Resume detached", user: updatedUser });
+  } catch (err) {
+    console.error("Remove resume error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/* ======================================================
    Exports
 ====================================================== */
+const disconnectGmail = async (req, res) => {
+  try {
+    const query = resolveUserQuery(req.user.id);
+    await User.findOneAndUpdate(query, {
+      $set: {
+        gmailEmail: null,
+        gmailAccessToken: null,
+        gmailRefreshToken: null,
+        gmailTokenExpiry: null,
+        clientId: null,
+        clientSecret: null
+      }
+    });
+    res.json({ success: true, message: "Gmail disconnected" });
+  } catch (err) {
+    console.error("Disconnect Gmail error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
 module.exports = {
   updateSocialLinks,
   updateClientData,
@@ -512,5 +585,8 @@ module.exports = {
   getSavedJobs,
   updatePreferences,
   updateProfile,
-  submitSupportTicket
+  submitSupportTicket,
+  updateResume,
+  removeResume,
+  disconnectGmail,
 };

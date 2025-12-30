@@ -5,10 +5,12 @@
 ============================== */
 :root {
   --primary: #00FA92;
+  --primary-rgb: 0, 250, 146;
   --primary-dark: #00d67d;
   --background-mode: #0a110a;
   --surface-mode: #121e12;
   --text-mode: #ffffff;
+  --text-mode-rgb: 255, 255, 255;
   --border-mode: rgba(255, 255, 255, 0.08);
 }
 
@@ -16,6 +18,7 @@
   --background-mode: #f1f5f9;
   --surface-mode: #ffffff;
   --text-mode: #0f172a;
+  --text-mode-rgb: 15, 23, 42;
   --border-mode: rgba(0, 0, 0, 0.08);
 }
 
@@ -48,7 +51,7 @@ body {
 }
 
 .glass-card {
-  background: rgba(var(--text-mode), 0.03);
+  background: rgba(var(--text-mode-rgb), 0.03);
   border: 1px solid var(--border-mode);
   transition: all 0.3s ease;
 }

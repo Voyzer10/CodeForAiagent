@@ -54,7 +54,7 @@ export default function GoogleCallbackPage() {
 
         // Redirect to login after 3 seconds on error
         setTimeout(() => {
-          router.push("/auth/login");
+          router.push("/pages/auth/login");
         }, 3000);
         return;
       }
@@ -71,7 +71,7 @@ export default function GoogleCallbackPage() {
         setErrorMessage("Authentication failed unexpectedly. Redirecting...");
         setStatus("error");
         setTimeout(() => {
-          router.push("/auth/login");
+          router.push("/pages/auth/login");
         }, 2000);
       }
     };
@@ -112,7 +112,7 @@ export default function GoogleCallbackPage() {
             <h1 className="text-xl font-semibold mb-2 text-red-400">Authentication Error</h1>
             <p className="text-gray-300 text-sm mb-4">{errorMessage}</p>
             <button
-              onClick={() => router.push("/auth/login")}
+              onClick={() => router.push("/pages/auth/login")}
               className="px-6 py-2 bg-green-600 hover:bg-green-500 rounded-lg font-medium transition-colors"
             >
               Return to Login

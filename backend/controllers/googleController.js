@@ -166,7 +166,7 @@ exports.googleLoginCallback = async (req, res) => {
     if (!code) {
       console.error("❌ No authorization code received");
       AuthEventLogger.logOAuthFail("google", "/auth/login/google/callback", "no_code", "No authorization code", req);
-      return res.redirect(`${frontend}/auth/login?error=no_code`);
+      return res.redirect(`${frontend}/pages/auth/login?error=no_code`);
     }
 
     // Attempt token exchange with retry logic
@@ -177,7 +177,7 @@ exports.googleLoginCallback = async (req, res) => {
       const errorType = result.error || "unknown";
       console.error(`❌ OAuth failed: ${errorType}`);
       AuthEventLogger.logOAuthFail("google", "/auth/login/google/callback", result.error, result.message, req);
-      return res.redirect(`${frontend}/auth/login?error=${errorType}`);
+      return res.redirect(`${frontend}/pages/auth/login?error=${errorType}`);
     }
 
     const { tokens } = result;
@@ -219,13 +219,13 @@ exports.googleLoginCallback = async (req, res) => {
     const processingTime = Date.now() - startTime;
     AuthEventLogger.logOAuthSuccess("google", "/auth/login/google/callback", user.userId, req, processingTime);
 
-    return res.redirect(`${frontend}/auth/google?token=${encodeURIComponent(token)}`);
+    return res.redirect(`${frontend}/pages/auth/google?token=${encodeURIComponent(token)}`);
 
   } catch (err) {
     console.error("❌ Google Login Callback Critical Error:", err);
     AuthEventLogger.logOAuthFail("google", "/auth/login/google/callback", "critical_error", err.message, req);
     // Redirect with generic error - don't expose internal details
-    return res.redirect(`${frontend}/auth/login?error=auth_failed`);
+    return res.redirect(`${frontend}/pages/auth/login?error=auth_failed`);
   }
 };
 

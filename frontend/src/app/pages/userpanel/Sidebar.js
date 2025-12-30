@@ -259,7 +259,7 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
                 credentials: "include",
               });
               if (res.ok) {
-                window.location.href = "/login";
+                window.location.href = "/pages/auth/login";
               }
             } catch (e) {
               console.error("Logout failed", e);

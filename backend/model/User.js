@@ -95,6 +95,12 @@ const userSchema = new mongoose.Schema(
     preferredLocations: { type: [String], default: [] },
     theme: { type: String, enum: ["dark", "light", "system"], default: "dark" },
     tokenVersion: { type: Number, default: 0 },
+    resume: {
+      url: { type: String, default: null },
+      filename: { type: String, default: null },
+      size: { type: Number, default: null },
+      uploadDate: { type: Date, default: null }
+    },
   },
   { timestamps: true }
 );

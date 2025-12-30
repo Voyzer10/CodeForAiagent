@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { Loader2, LogIn } from "lucide-react";
 
+let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+
 export default function LogoutPage() {
   const [status, setStatus] = useState("processing"); // processing | done | error
-
-  let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-  if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-  while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
   useEffect(() => {
     const logoutUser = async () => {
@@ -51,7 +51,7 @@ export default function LogoutPage() {
             </p>
 
             <button
-              onClick={() => (window.location.href = "/pages/login")}
+              onClick={() => (window.location.href = "/pages/auth/login")}
               className="w-full flex items-center justify-center gap-2 bg-green-500 text-black font-semibold py-3 rounded-lg hover:bg-green-400 transition"
             >
               <LogIn size={20} />
@@ -70,7 +70,7 @@ export default function LogoutPage() {
             </p>
 
             <button
-              onClick={() => (window.location.href = "/pages/login")}
+              onClick={() => (window.location.href = "/pages/auth/login")}
               className="w-full flex items-center justify-center gap-2 bg-green-500 text-black py-3 rounded-lg hover:bg-green-400 transition"
             >
               <LogIn size={20} />

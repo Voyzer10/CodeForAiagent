@@ -249,7 +249,7 @@ export default function LoginForm() {
                         Don&apos;t have an account?{" "}
                     </span>
                     <button
-                        onClick={() => router.push("/auth/register")}
+                        onClick={() => router.push("/pages/auth/register")}
                         className="text-[14px] text-[#00FA92] font-semibold hover:underline"
                     >
                         Sign Up
