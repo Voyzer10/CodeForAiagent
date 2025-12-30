@@ -138,9 +138,9 @@ const Modal = ({ isOpen, onClose, title, children, actionLabel, onAction, danger
     );
 };
 
-let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
-while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
+/* ==============================
+   MAIN PAGE COMPONENT
+============================== */
 
 export default function SettingsPage() {
     const { t, i18n } = useTranslation();
@@ -168,6 +168,9 @@ export default function SettingsPage() {
     const router = useRouter();
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
 
+    let API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+    if (API_BASE_URL.length > 2048) API_BASE_URL = API_BASE_URL.slice(0, 2048);
+    while (API_BASE_URL.endsWith('/')) API_BASE_URL = API_BASE_URL.slice(0, -1);
 
     const categories = [
         { id: "account", label: "Account & Profile", icon: User },
@@ -187,7 +190,7 @@ export default function SettingsPage() {
         } catch (err) {
             console.error("Failed to fetch sessions", err);
         }
-    }, []);
+    }, [API_BASE_URL]);
 
     const fetchData = useCallback(async () => {
         try {
@@ -205,7 +208,7 @@ export default function SettingsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [API_BASE_URL]);
 
     useEffect(() => {
         fetchData();
