@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import LocationDropdown from "../../components/LocationDropdown";
+import LocationDropdown from "../components/LocationDropdown";
 import {
   Loader2,
   Search,
@@ -44,7 +44,7 @@ const GithubSVG = ({ size = 14, className = "" }) => (
 import UserNavbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import { useRouter } from "next/navigation";
-import Alert from "../../components/Alert";
+import Alert from "../components/Alert";
 
 
 

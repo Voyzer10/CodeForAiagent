@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import Sidebar from "../../pages/userpanel/Sidebar";
-import UserNavbar from "../../pages/userpanel/Navbar";
+import Sidebar from "../../userpanel/Sidebar";
+import UserNavbar from "../../userpanel/Navbar";
 import { Loader2, RefreshCw, FileText, AlertTriangle } from "lucide-react";
 
 export default function LogsPage() {

@@ -5,9 +5,9 @@ import Sidebar from "../userpanel/Sidebar";
 import UserNavbar from "../userpanel/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import Alert from "../../components/Alert"; // Imported Alert
-import JobDetailsPanel from "../../components/JobDetailsPanel";
-import { normalizeJobs, getFilteredJobsBySearch, getFilteredJobsBySession } from "../../../lib/jobSearchEngine";
+import Alert from "../components/Alert"; // Imported Alert
+import JobDetailsPanel from "../components/JobDetailsPanel";
+import { normalizeJobs, getFilteredJobsBySearch, getFilteredJobsBySession } from "../../lib/jobSearchEngine";
 
 const JobListItemSkeleton = () => (
   <div className="px-4 py-3">
@@ -888,7 +888,7 @@ const JobFoundContent = () => {
                   const isEditing = editingSearch === search.name;
 
                   // Use search.jobs.length if available, else filter
-                 const jobCount = getSavedSearchCount(search, userJobs);
+                  const jobCount = getSavedSearchCount(search, userJobs);
 
 
                   return (
@@ -930,7 +930,7 @@ const JobFoundContent = () => {
                           >
                             {search.name}
                             <span className={`px-2 py-0.5 rounded-full text-[10px] ${isActive ? "bg-green-500/10 text-green-400" : "bg-gray-800 text-gray-500"}`}>
-                               {getSavedSearchCount(search, userJobs)}
+                              {getSavedSearchCount(search, userJobs)}
                             </span>
                           </button>
 

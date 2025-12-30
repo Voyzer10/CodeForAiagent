@@ -5,7 +5,7 @@ import { Lock, Mail, User, ArrowRight, Eye, EyeOff } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import axios from 'axios'
-import Alert from '../../../components/Alert'
+import Alert from '../../components/Alert'
 
 export default function RegisterPage() {
 
