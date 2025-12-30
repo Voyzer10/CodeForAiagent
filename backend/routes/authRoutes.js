@@ -8,12 +8,18 @@ const {
   getUserById,
   getCurrentUser,
   logoutUser,
+  changePassword,
+  logoutAllDevices,
+  getActiveSessions,
+  revokeSession,
 } = require("../controllers/authController.js");
 
 const {
   updateSocialLinks,
   updateClientData,
   updatePreferences,
+  updateProfile,
+  submitSupportTicket,
 } = require("../controllers/userController.js");
 
 const {
@@ -47,6 +53,8 @@ router.get("/me", auth, getCurrentUser);
 router.post("/update-socials", auth, updateSocialLinks);
 router.post("/update-client", auth, updateClientData);
 router.post("/update-preferences", auth, updatePreferences);
+router.post("/update-profile", auth, updateProfile);
+router.post("/support-ticket", auth, submitSupportTicket);
 
 /* ======================================================
    GOOGLE LOGIN (Website Sign-in)
@@ -60,6 +68,11 @@ router.get("/gmail/connect", auth, gmailRedirect);
 router.get("/gmail/callback", gmailCallback);
 router.get("/gmail/tokens/:userId", getGmailTokens);
 router.post("/gmail/create-draft", createGmailDraft);
+
+router.post("/change-password", auth, changePassword);
+router.post("/logout-all", auth, logoutAllDevices);
+router.get("/sessions", auth, getActiveSessions);
+router.delete("/sessions/:requestId", auth, revokeSession);
 ;
 
 module.exports = router;

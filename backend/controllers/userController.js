@@ -441,6 +441,63 @@ const updatePreferences = async (req, res) => {
 };
 
 /* ======================================================
+   Update Profile (Name/Theme)
+====================================================== */
+const updateProfile = async (req, res) => {
+  try {
+    const { name, theme } = req.body;
+    const query = resolveUserQuery(req.user.id);
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (theme !== undefined) updateData.theme = theme;
+
+    const updatedUser = await User.findOneAndUpdate(
+      query,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!updatedUser) return res.status(404).json({ error: "User not found" });
+
+    res.json({ success: true, message: "Profile updated", user: updatedUser });
+  } catch (err) {
+    console.error("Update profile error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/* ======================================================
+   Submit Support Ticket
+====================================================== */
+const submitSupportTicket = async (req, res) => {
+  try {
+    const { subject, category, message } = req.body;
+    if (!subject || !message) {
+      return res.status(400).json({ error: "Subject and message are required" });
+    }
+
+    const query = resolveUserQuery(req.user.id);
+    const user = await User.findOne(query);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const SupportTicket = require("../model/SupportTicket");
+    const ticket = await SupportTicket.create({
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      subject,
+      category,
+      message
+    });
+
+    res.json({ success: true, message: "Ticket submitted successfully", ticketId: ticket._id });
+  } catch (err) {
+    console.error("Support ticket error:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+/* ======================================================
    Exports
 ====================================================== */
 module.exports = {
@@ -453,5 +510,7 @@ module.exports = {
   renameSavedSearch,
   toggleSavedJob,
   getSavedJobs,
-  updatePreferences
+  updatePreferences,
+  updateProfile,
+  submitSupportTicket
 };

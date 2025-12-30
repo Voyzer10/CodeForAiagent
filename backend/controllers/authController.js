@@ -169,7 +169,12 @@ const login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.userId ?? user._id, email: user.email, role: user.role },
+      {
+        id: user.userId ?? user._id,
+        email: user.email,
+        role: user.role,
+        tokenVersion: user.tokenVersion || 0
+      },
       process.env.JWT_SECRET,
       { expiresIn: '4h' }
     );
@@ -293,6 +298,114 @@ const logoutUser = async (req, res) => {
   }
 };
 
+/* ============================================================
+   CHANGE PASSWORD
+============================================================ */
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Both current and new passwords are required' });
+    }
+
+    const query = resolveUserQuery(req.user.id);
+    const user = await User.findOne(query);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Incorrect current password' });
+
+    // Validate new password strength
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,128}$/;
+    if (!passwordRegex.test(newPassword)) {
+      return res.status(400).json({ message: 'New password does not meet security requirements' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    // Invalidate all tokens on password change
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    return res.json({ success: true, message: 'Password changed successfully. Please log in again.' });
+  } catch (error) {
+    console.error('❌ changePassword error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/* ============================================================
+   LOGOUT FROM ALL DEVICES
+============================================================ */
+const logoutAllDevices = async (req, res) => {
+  try {
+    const query = resolveUserQuery(req.user.id);
+    const user = await User.findOne(query);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+    await user.save();
+
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+
+    return res.json({ success: true, message: 'Logged out from all devices' });
+  } catch (error) {
+    console.error('❌ logoutAllDevices error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/* ============================================================
+   GET ACTIVE SESSIONS
+============================================================ */
+const getActiveSessions = async (req, res) => {
+  try {
+    const AuthEvent = require("../model/AuthEvent");
+    const sessions = await AuthEvent.find({
+      userId: req.user.id,
+      eventType: 'LOGIN_SUCCESS'
+    })
+      .sort({ timestamp: -1 })
+      .limit(10)
+      .lean();
+
+    return res.json({ success: true, sessions });
+  } catch (error) {
+    console.error('❌ getActiveSessions error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+/* ============================================================
+   REVOKE INDIVIDUAL SESSION
+============================================================ */
+const revokeSession = async (req, res) => {
+  try {
+    const { requestId } = req.params;
+    const AuthEvent = require("../model/AuthEvent");
+
+    // In this simple implementation, revoking just hides it from history
+    // Real revoking would require session-specific tokens
+    const result = await AuthEvent.deleteOne({
+      userId: req.user.id,
+      requestId: requestId
+    });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Session not found' });
+    }
+
+    return res.json({ success: true, message: 'Session revoked from history' });
+  } catch (error) {
+    console.error('❌ revokeSession error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -300,4 +413,8 @@ module.exports = {
   getUsers,
   getUserById,
   logoutUser,
+  changePassword,
+  logoutAllDevices,
+  getActiveSessions,
+  revokeSession,
 };

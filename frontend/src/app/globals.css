@@ -6,8 +6,17 @@
 :root {
   --primary: #00FA92;
   --primary-dark: #00d67d;
-  --background-dark: #0a110a;
-  --surface-dark: #121e12;
+  --background-mode: #0a110a;
+  --surface-mode: #121e12;
+  --text-mode: #ffffff;
+  --border-mode: rgba(255, 255, 255, 0.08);
+}
+
+.light {
+  --background-mode: #f1f5f9;
+  --surface-mode: #ffffff;
+  --text-mode: #0f172a;
+  --border-mode: rgba(0, 0, 0, 0.08);
 }
 
 @theme {
@@ -18,10 +27,11 @@
    Global Styles
 ============================== */
 body {
-  background: var(--background-dark);
-  color: #ffffff;
+  background: var(--background-mode);
+  color: var(--text-mode);
   font-family: 'Outfit', sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 ::selection {
@@ -31,15 +41,15 @@ body {
 
 /* Glassmorphism */
 .glass-panel {
-  background: rgba(18, 30, 18, 0.6);
+  background: var(--surface-mode);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-mode);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(var(--text-mode), 0.03);
+  border: 1px solid var(--border-mode);
   transition: all 0.3s ease;
 }
 
@@ -72,11 +82,11 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #0a110a;
+  background: var(--background-mode);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #121e12;
+  background: var(--surface-mode);
   border-radius: 4px;
 }
 

@@ -27,6 +27,18 @@ export default function UserNavbar({ onSidebarToggle, className }) {
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || "Failed to fetch user");
                 setUser(data.user);
+
+                // Apply theme globally
+                if (data.user.theme) {
+                    const root = window.document.documentElement;
+                    root.classList.remove('light', 'dark');
+                    if (data.user.theme === 'system') {
+                        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                        root.classList.add(systemTheme);
+                    } else {
+                        root.classList.add(data.user.theme);
+                    }
+                }
             } catch (err) {
                 console.error("Fetch user error:", err);
                 setError(err.message);
@@ -51,7 +63,7 @@ export default function UserNavbar({ onSidebarToggle, className }) {
     };
 
     return (
-        <nav className={`flex justify-between fixed top-0 left-0 items-center w-full bg-[#0a0f0d] p-4 text-white z-50 cursor-pointer ${className || ""}`}>
+        <nav className={`flex justify-between fixed top-0 left-0 items-center w-full bg-[var(--background-mode)] border-b border-[var(--border-mode)] p-4 text-[var(--text-mode)] z-50 cursor-pointer ${className || ""}`}>
             <button
                 onClick={onSidebarToggle}
                 className="text-2xl focus:outline-none cursor-pointer py-3"

@@ -78,11 +78,11 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
       aria-hidden={!isOpen}
       // place sidebar below navbar (adjust 64px to your navbar height if needed)
       style={{ top: '64px', height: 'calc(100% - 64px)' }}
-      className={`fixed left-0 w-72 bg-[#07110f] transform ${isOpen ? 'translate-x-0' : '-translate-x-full'
-        } transition-transform duration-300 ease-in-out z-50 border-r border-[#11221b] flex flex-col`}
+      className={`fixed left-0 w-72 bg-[var(--background-mode)] transform ${isOpen ? 'translate-x-0' : '-translate-x-full'
+        } transition-transform duration-300 ease-in-out z-50 border-r border-[var(--border-mode)] flex flex-col`}
     >
       {/* Profile / Header */}
-      <div className="px-6 pt-4 pb-4 border-b border-[#11221b]">
+      <div className="px-6 pt-4 pb-4 border-b border-[var(--border-mode)]">
         <div className="flex items-center gap-3">
           <div
             className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0"
@@ -107,8 +107,8 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
           </div>
 
           <div>
-            <div className="text-sm font-semibold text-[#ffffff] leading-tight">{user?.name || 'Loading...'}</div>
-            <div className="text-xs text-[#9ca3af]">Premium Member</div>
+            <div className="text-sm font-semibold text-[var(--text-mode)] leading-tight">{user?.name || 'Loading...'}</div>
+            <div className="text-xs text-gray-500">Premium Member</div>
           </div>
         </div>
       </div>
@@ -226,8 +226,8 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
       </nav>
 
       {/* Recent Searches */}
-      <div className="px-4 pb-4 border-t border-[#11221b]">
-        <h4 className="text-[#9fffcf] text-sm font-semibold px-1">Recent Searches</h4>
+      <div className="px-4 pb-4 border-t border-[var(--border-mode)]">
+        <h4 className="text-green-400 text-sm font-semibold px-1 mt-4">Recent Searches</h4>
 
         <div className="mt-3 space-y-2">
           {recentSearches.length > 0 ? (
@@ -235,7 +235,7 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
               <button
                 key={idx}
                 onClick={() => onSelectSearch?.(search)}
-                className="w-full text-left px-3 py-2 rounded-md bg-[#071a16] text-sm text-[#c7d7cf] hover:bg-[#062217] transition-colors"
+                className="w-full text-left px-3 py-2 rounded-md bg-[rgba(var(--text-mode),0.02)] text-sm text-gray-400 hover:bg-green-500/5 hover:text-green-400 transition-colors"
               >
                 {search.name} ({search.jobs?.length || 0})
               </button>
@@ -247,7 +247,7 @@ export default function Sidebar({ isOpen, onSelectSearch, recentSearches: propRe
       </div>
 
       {/* Logout at bottom */}
-      <div className="px-4 py-4 border-t border-[#11221b]">
+      <div className="px-4 py-4 border-t border-[var(--border-mode)]">
         <button
           type="button"
           disabled={isLoggingOut}

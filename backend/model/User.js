@@ -93,6 +93,8 @@ const userSchema = new mongoose.Schema(
 
     preferredJobTitles: { type: [String], default: [] },
     preferredLocations: { type: [String], default: [] },
+    theme: { type: String, enum: ["dark", "light", "system"], default: "dark" },
+    tokenVersion: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
