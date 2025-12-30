@@ -9,7 +9,7 @@ export default function LoginPage() {
       <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-[#030604] via-[#041208] to-[#030604] text-white">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-gray-400">Loading...</p>
+          <p className="text-gray-400">Loading.</p>
         </div>
       </div>
     }>
