@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import I18nProvider from "@/components/I18nProvider";
+import { cookies } from "next/headers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,9 +17,25 @@ export const metadata = {
   description: "Advanced Job Automation Platform",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  let theme = "dark";
+
+  if (token) {
+    try {
+      // Decode JWT payload without a library to keep it lightweight
+      const payloadBase64 = token.split(".")[1];
+      const payloadJson = Buffer.from(payloadBase64, "base64").toString();
+      const payload = JSON.parse(payloadJson);
+      theme = payload.theme || "dark";
+    } catch (e) {
+      console.error("JWT theme parse error:", e);
+    }
+  }
+
   return (
-    <html lang="en">
+    <html lang="en" className={theme !== "system" ? theme : ""}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -29,14 +45,11 @@ export default function RootLayout({ children }) {
             __html: `
               (function() {
                 try {
-                  const theme = localStorage.getItem('theme') || 'dark';
+                  const theme = "${theme}";
                   const root = document.documentElement;
-                  root.classList.remove('light', 'dark');
                   if (theme === 'system') {
                     const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
                     root.classList.add(systemTheme);
-                  } else {
-                    root.classList.add(theme);
                   }
                 } catch (e) {}
               })();
@@ -47,9 +60,7 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-['Outfit'] bg-[var(--background-mode)] text-[var(--text-mode)] selection:bg-[var(--primary)] selection:text-black`}
       >
-        <I18nProvider>
-          {children}
-        </I18nProvider>
+        {children}
       </body>
     </html>
   );

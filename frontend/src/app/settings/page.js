@@ -1,5 +1,5 @@
 'use client';
-export const dynamic = "force-dynamic";
+
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import UserNavbar from "../userpanel/Navbar";
 import Sidebar from "../userpanel/Sidebar";
-import { useTranslation } from "react-i18next";
+
 import moment from "moment-timezone";
 
 /* ==============================
@@ -144,7 +144,7 @@ const Modal = ({ isOpen, onClose, title, children, actionLabel, onAction, danger
 ============================== */
 
 export default function SettingsPage() {
-    const { t, i18n } = useTranslation();
+    const t = (key) => key;
     const [activeCategory, setActiveCategory] = useState("account");
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -201,8 +201,6 @@ export default function SettingsPage() {
                 setUser(data.user);
                 setName(data.user.name);
                 setTheme(data.user.theme || 'dark');
-                // Persist theme to localStorage if not there
-                if (!localStorage.getItem('theme')) localStorage.setItem('theme', data.user.theme || 'dark');
             }
         } catch (err) {
             console.error("Failed to fetch settings data", err);
@@ -221,7 +219,6 @@ export default function SettingsPage() {
     useEffect(() => {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
-        localStorage.setItem('theme', theme);
         if (theme === 'system') {
             const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
             root.classList.add(systemTheme);
@@ -430,20 +427,7 @@ export default function SettingsPage() {
                                 <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
                             </div>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black text-gray-600 uppercase tracking-widest ml-1">Protocol Dialect (Language)</label>
-                            <div className="relative">
-                                <select
-                                    value={i18n.language}
-                                    onChange={(e) => i18n.changeLanguage(e.target.value)}
-                                    className="w-full bg-black/40 border border-white/5 rounded-2xl px-5 py-4 text-sm text-[var(--text-mode)] focus:border-green-500/50 outline-none appearance-none font-semibold uppercase tracking-widest"
-                                >
-                                    <option value="en">EN-US (Global)</option>
-                                    <option value="es">ES-ES (Español)</option>
-                                </select>
-                                <ChevronDown className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" size={16} />
-                            </div>
-                        </div>
+
                     </div>
                 </div>
             </SettingsCard>
