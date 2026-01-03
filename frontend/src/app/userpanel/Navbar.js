@@ -56,7 +56,7 @@ export default function UserNavbar({ onSidebarToggle, className }) {
             });
 
             setUser(null);
-            router.push("/pages/logout");
+            router.push("/logout");
         } catch (err) {
             console.error("Logout error:", err);
         }

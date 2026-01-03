@@ -155,8 +155,8 @@ export default function Price() {
             if (verifyRes.ok && verifyData.success) {
               setPaymentStatus("success");
               alert(`🎉 Payment successful for ${plan.name}!`);
-              // redirect to userpanel (your app uses /pages/userpanel)
-              setTimeout(() => (window.location.href = "/pages/userpanel"), 900);
+              // redirect to userpanel (your app uses / userpanel)
+              setTimeout(() => (window.location.href = "/userpanel"), 900);
             } else {
               setPaymentStatus("failed");
               alert("⚠️ Payment verification failed. Please contact support.");
@@ -266,3 +266,4 @@ export default function Price() {
     </div>
   );
 }
+

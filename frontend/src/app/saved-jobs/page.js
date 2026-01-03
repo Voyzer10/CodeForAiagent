@@ -82,7 +82,7 @@ export default function SavedJobs() {
                         {/* Header */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                             <div>
-                                <Link href="/pages/job-found" className="text-green-500 flex items-center gap-2 text-sm mb-2 hover:underline">
+                                <Link href="/job-found" className="text-green-500 flex items-center gap-2 text-sm mb-2 hover:underline">
                                     <ArrowLeft size={16} />
                                     Back to Job Search
                                 </Link>
@@ -195,7 +195,7 @@ export default function SavedJobs() {
                                                 </button>
 
                                                 <Link
-                                                    href={`/pages/job-found?jobId=${jobUUID}`}
+                                                    href={`/ job-found?jobId=${jobUUID}`}
                                                     className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-green-500 text-black font-bold hover:bg-green-400 transition-all order-1 md:order-2"
                                                 >
                                                     View Details
@@ -218,7 +218,7 @@ export default function SavedJobs() {
                                         : "You haven't bookmarked any jobs yet. Start exploring or search for jobs to save them here."}
                                 </p>
                                 <Link
-                                    href="/pages/job-found"
+                                    href="/job-found"
                                     className="mt-8 px-8 py-3 bg-green-500 text-black font-bold rounded-full hover:bg-green-400 transition-all shadow-lg shadow-green-500/10"
                                 >
                                     Explore Jobs
@@ -231,3 +231,4 @@ export default function SavedJobs() {
         </div>
     );
 }
+

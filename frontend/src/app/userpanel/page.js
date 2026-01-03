@@ -238,7 +238,7 @@ export default function UserPanel() {
         message: "Insufficient credits! You need at least 100 credits. Redirecting to plans..."
       });
       setTimeout(() => {
-        router.push("/pages/price");
+        router.push("/price");
       }, 2000);
       return;
     }
@@ -524,7 +524,7 @@ export default function UserPanel() {
 
                 <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md">
                   <button
-                    onClick={() => router.push(`/pages/job-found?runId=${response.runId}`)}
+                    onClick={() => router.push(`/job-found?runId=${response.runId}`)}
                     className="flex-1 bg-green-500 hover:bg-green-400 text-black py-4 rounded-xl font-black transition-all transform hover:scale-[1.03] active:scale-[0.98] shadow-xl shadow-green-500/20 flex items-center justify-center gap-2"
                   >
                     View All Jobs
@@ -599,7 +599,7 @@ export default function UserPanel() {
                       if (!res.ok) throw new Error("Failed to save search");
                       setModalSearchName("");
                       setShowSaveModal(false);
-                      router.push(`/pages/job-found?runId=${response.runId}`);
+                      router.push(`/job-found?runId=${response.runId}`);
                     } catch (err) {
                       setAlertState({ severity: "error", message: err.message || "Error saving search" });
                     }
@@ -628,7 +628,7 @@ export default function UserPanel() {
                       setAlertState({ severity: "success", message: "Search saved successfully!" });
                       setModalSearchName("");
                       setShowSaveModal(false);
-                      router.push(`/pages/job-found?runId=${response.runId}`);
+                      router.push(`/job-found?runId=${response.runId}`);
                     } catch (err) {
                       setAlertState({ severity: "error", message: err.message || "Error saving search" });
                     }

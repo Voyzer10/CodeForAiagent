@@ -183,7 +183,7 @@ function ApplyPageContent() {
           <Alert severity={alertState.severity}>{alertState.message}</Alert>
         </div>
         <button
-          onClick={() => router.push("/pages/job-found")}
+          onClick={() => router.push("/job-found")}
           className="text-green-400 hover:underline"
         >
           Go back
@@ -198,7 +198,7 @@ function ApplyPageContent() {
     <div className="min-h-screen bg-black text-white flex items-center justify-center p-6 relative">
       <div className="bg-[#0e1614] border border-green-900 rounded-xl p-8 shadow-2xl w-full max-w-3xl relative">
         <button
-          onClick={() => router.push("/pages/job-found")}
+          onClick={() => router.push("/job-found")}
           className="absolute top-6 left-6 text-gray-400 hover:text-green-400 flex items-center gap-1.5 text-xs font-medium transition-colors group"
         >
           <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition-transform" />
@@ -249,3 +249,4 @@ export default function ApplyPage() {
     </Suspense>
   );
 }
+

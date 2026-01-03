@@ -414,7 +414,7 @@ export default function ProfilePage() {
                 <Info size={18} className="text-blue-500" /> System Wiki
               </h4>
               <p className="text-[11px] text-gray-600 font-bold leading-relaxed uppercase tracking-widest mb-8 italic">Your localized profiles and preferences directly influence the autonomous scraping algorithms.</p>
-              <Link href="/pages/settings" className="w-full py-4 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-center block hover:bg-white hover:text-black transition-all mt-auto shadow-xl">
+              <Link href="/settings" className="w-full py-4 rounded-2xl bg-white/5 border border-white/5 text-[10px] font-black uppercase tracking-widest text-center block hover:bg-white hover:text-black transition-all mt-auto shadow-xl">
                 Configure Settings
               </Link>
             </div>
@@ -442,3 +442,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

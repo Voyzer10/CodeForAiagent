@@ -34,7 +34,7 @@ function GmailConnectedContent() {
         )}
 
         <a
-          href="/pages/profile"
+          href="/profile"
           className="bg-green-500 text-black px-4 py-2 rounded-lg font-medium hover:bg-green-400"
         >
           Go Back to Profile
@@ -51,3 +51,4 @@ export default function GmailConnected() {
     </Suspense>
   );
 }
+

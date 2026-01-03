@@ -29,7 +29,7 @@ export default function Footer() {
                         <h4 className="text-white font-bold mb-4">Product</h4>
                         <ul className="space-y-2 text-sm text-gray-400">
                             <li><Link href="/about" className="hover:text-[#00FA92] transition-colors text-gray-400">Features</Link></li>
-                            <li><Link href="/pages/price" className="hover:text-[#00FA92] transition-colors text-gray-400">Pricing</Link></li>
+                            <li><Link href="/price" className="hover:text-[#00FA92] transition-colors text-gray-400">Pricing</Link></li>
                             <li><a className="hover:text-[#00FA92] transition-colors text-gray-400" href="#">Integrations</a></li>
                             <li><a className="hover:text-[#00FA92] transition-colors text-gray-400" href="#">Changelog</a></li>
                         </ul>
@@ -67,3 +67,4 @@ export default function Footer() {
         </footer>
     );
 }
+
